@@ -1,0 +1,9 @@
+{
+  "/api/rooms/route": "app/api/rooms/route.js",
+  "/api/rooms/[code]/route": "app/api/rooms/[code]/route.js",
+  "/api/rooms/[code]/game-type/route": "app/api/rooms/[code]/game-type/route.js",
+  "/api/rooms/[code]/start/route": "app/api/rooms/[code]/start/route.js",
+  "/api/rooms/[code]/action/route": "app/api/rooms/[code]/action/route.js",
+  "/page": "app/page.js",
+  "/room/[code]/page": "app/room/[code]/page.js"
+}

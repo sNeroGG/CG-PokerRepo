@@ -1,0 +1,23 @@
+# dependencies
+node_modules
+frontend/node_modules
+backend/node_modules
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# env
+.env
+.env*.local
+frontend/.env.local
+
+# vercel
+.vercel
+
+# misc
+*.tsbuildinfo
+next-env.d.ts
+
+# legacy (eliminar si aún existe)
+/src

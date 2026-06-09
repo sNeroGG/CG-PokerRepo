@@ -1,0 +1,544 @@
+================================================================================
+  CG-PokerRepo — Guía completa: Nube, Supabase, Vercel y Tiempo Real
+  CHOLOS GROUP CORPORATION
+================================================================================
+
+Índice
+------
+  1. Arquitectura actual del proyecto
+  2. Qué ya existe en el repositorio
+  3. Qué falta para producción (nube + Supabase + realtime + responsive)
+  4. Funciones y servicios necesarios (por capa)
+  5. Configuración paso a paso en SUPABASE
+  6. Configuración paso a paso en VERCEL
+  7. Variables de entorno
+  8. Checklist de despliegue
+  9. Errores frecuentes y soluciones
+ 10. Orden recomendado de implementación
+ 11. Referencia de archivos del proyecto
+
+
+================================================================================
+1. ARQUITECTURA ACTUAL DEL PROYECTO
+================================================================================
+
+Stack
+-----
+  - Monorepo npm workspaces: frontend + backend (@cg/backend)
+  - Frontend: Next.js 15, React 19, Tailwind 3
+  - Backend: Lógica en @cg/backend, expuesta vía API routes de Next.js
+  - Base de datos: Supabase PostgreSQL (o memoria local solo para desarrollo)
+  - Tiempo real: Supabase Realtime + polling cada 2 segundos como respaldo
+  - Identidad de jugador: UUID en localStorage + nombre (sin Supabase Auth aún)
+  - Deploy previsto: Vercel (frontend) + Supabase (DB + Realtime)
+
+Flujo de una partida
+--------------------
+  1. Lobby
+     El usuario introduce su nombre.
+     POST /api/rooms          → crea sala
+     POST /api/rooms/[code]/join → unirse a sala
+     Redirección a /room/[code]
+
+  2. Host inicia juego
+     POST /api/rooms/[code]/game-type → elige blackjack o poker
+     POST /api/rooms/[code]/start     → status = "playing", game_state inicial
+
+  3. Gameplay
+     POST /api/rooms/[code]/action → valida acción, muta estado, guarda en DB
+     GET  /api/rooms/[code]?playerId=... → estado público (oculta cartas rivales)
+
+  4. Sincronización entre clientes
+     Hook useRoom() en el navegador:
+       - Suscripción Realtime al canal room:{code}
+       - Escucha cambios en tablas rooms y room_players
+       - Al detectar cambio → refetch vía REST
+       - Polling cada 2000 ms siempre activo (respaldo)
+
+Diagrama simplificado
+---------------------
+  Navegador
+      |
+      | REST (POST/GET /api/rooms/*)
+      v
+  Next.js API Routes
+      |
+      v
+  room-service.ts  -->  motores blackjack / poker
+      |
+      v
+  store.ts  -->  Supabase PostgreSQL  (producción)
+              -->  memoria global      (solo dev local)
+
+  Navegador
+      |
+      | useRoom() + Supabase Realtime
+      v
+  postgres_changes en rooms / room_players  -->  refetch estado
+
+
+================================================================================
+2. QUÉ YA EXISTE EN EL REPOSITORIO
+================================================================================
+
+Supabase
+--------
+  backend/supabase/migrations/001_initial_schema.sql
+    - Tablas: rooms, room_players
+    - game_state JSONB para estado del juego
+    - Realtime habilitado en ambas tablas
+    - RLS: políticas de solo lectura (SELECT) para clientes anónimos
+
+  backend/src/services/supabase.ts
+    - Cliente admin con SERVICE_ROLE_KEY (solo servidor)
+
+  backend/src/services/store.ts
+    - getRoom() / saveRoom() contra Supabase o memoria
+
+  frontend/src/lib/supabase/client.ts
+    - Cliente browser con ANON_KEY (solo Realtime)
+
+  frontend/.env.example
+    - Plantilla de las 3 variables de entorno
+
+API Routes (Next.js)
+--------------------
+  frontend/src/app/api/rooms/route.ts              POST  crear sala
+  frontend/src/app/api/rooms/[code]/route.ts      GET   estado de sala
+  frontend/src/app/api/rooms/[code]/join/route.ts  POST  unirse
+  frontend/src/app/api/rooms/[code]/game-type/route.ts POST elegir juego
+  frontend/src/app/api/rooms/[code]/start/route.ts POST  iniciar partida
+  frontend/src/app/api/rooms/[code]/action/route.ts POST acción de juego
+  frontend/src/app/api/games/route.ts              GET   listar juegos
+
+Lógica de salas y juegos
+------------------------
+  backend/src/services/room-service.ts
+    - createRoom()
+    - joinRoom()
+    - setGameType()
+    - startGame()
+    - applyGameAction()
+    - getPublicRoom()
+
+  backend/src/games/blackjack/engine.ts   Motor Blackjack
+  backend/src/games/poker/engine.ts       Motor Texas Hold'em
+  backend/src/games/engine.ts             Interfaz común de motores
+
+Tiempo real
+-----------
+  frontend/src/hooks/useRoom.ts
+    - Canal Supabase: room:{code}
+    - postgres_changes en rooms (filtrado por code)
+    - postgres_changes en room_players (sin filtro por sala aún)
+    - Polling cada 2000 ms
+
+Deploy
+------
+  vercel.json
+    - framework: nextjs
+    - rootDirectory: frontend
+
+  frontend/next.config.ts
+    - transpilePackages: ["@cg/backend"]
+
+  README.md
+    - Instrucciones básicas de inicio local y deploy
+
+UI responsiva (parcial)
+-----------------------
+  - Lobby / auth: breakpoints Tailwind sm, md, lg
+  - Blackjack live-casino: @media en live-casino.css (768px, 1200px)
+  - Poker: grid básico sm:grid-cols-2 lg:grid-cols-3
+
+
+================================================================================
+3. QUÉ FALTA PARA PRODUCCIÓN
+================================================================================
+
+Nube (Vercel)
+-------------
+  [ ] Supabase obligatorio en producción (memoria no funciona entre instancias)
+  [ ] Variables de entorno configuradas en Vercel
+  [ ] Install Command correcto para monorepo (@cg/backend)
+  [ ] CI/CD (GitHub Actions) — no existe aún
+  [ ] Entorno staging/preview documentado
+
+Supabase
+--------
+  [ ] Supabase Auth (cuentas reales) — opcional pero recomendado
+  [ ] Migración 002 (presencia, índices, mejoras)
+  [ ] upsertRoomPlayers() en lugar de borrar/reinsertar todos los jugadores
+  [ ] RPC apply_game_action para transacciones atómicas (opcional)
+  [ ] Edge Function de limpieza de salas inactivas (opcional)
+  [ ] Supabase CLI local (supabase init) — no configurado
+
+Tiempo real multijugador
+------------------------
+  [ ] Desactivar polling cuando Realtime esté SUBSCRIBED
+  [ ] Filtrar room_players por room_id (hoy escucha todas las salas)
+  [ ] POST /api/rooms/[code]/leave + disconnectPlayer()
+  [ ] heartbeat(code, playerId) para presencia
+  [ ] withRoomLock() para evitar condiciones de carrera en serverless
+  [ ] Timers de apuesta validados en servidor (hoy solo en UI cliente)
+  [ ] transitionRoomStatus('finished') — el estado existe pero no se usa
+  [ ] Broadcast opcional tras applyGameAction para menor latencia
+
+Responsive
+----------
+  [ ] Barra de acciones fija en móvil (poker)
+  [ ] Lobby optimizado en pantallas estrechas
+  [ ] Controles de apuesta táctiles (blackjack)
+  [ ] Auth responsive en globals.css
+  [ ] Tamaños de carta adaptativos en poker
+
+
+================================================================================
+4. FUNCIONES Y SERVICIOS NECESARIOS (POR CAPA)
+================================================================================
+
+API — Existente
+---------------
+  POST /api/rooms                    crear sala
+  POST /api/rooms/[code]/join        unirse
+  POST /api/rooms/[code]/game-type   elegir juego (host)
+  POST /api/rooms/[code]/start       iniciar (host)
+  POST /api/rooms/[code]/action      acción de juego
+  GET  /api/rooms/[code]             estado de sala
+
+API — Por añadir
+----------------
+  POST /api/rooms/[code]/leave       marcar jugador desconectado
+  POST /api/rooms/[code]/heartbeat   actualizar presencia / last_seen
+
+room-service.ts — Existente
+---------------------------
+  createRoom, joinRoom, setGameType, startGame, applyGameAction, getPublicRoom
+
+room-service.ts — Por añadir
+--------------------------
+  disconnectPlayer(code, playerId)
+  heartbeat(code, playerId)
+  transitionRoomStatus(room, 'finished')
+  validateHostAction() — centralizar checks de host
+
+store.ts — Por añadir
+---------------------
+  upsertRoomPlayers() — sync eficiente de jugadores
+  withRoomLock(code, fn) — lock/transacción para acciones concurrentes
+
+useRoom.ts — Por mejorar
+------------------------
+  - Polling solo si Realtime no está conectado
+  - Filtro room_players por room_id
+  - (Opcional) optimistic updates en UI
+
+Supabase — Por añadir (migraciones)
+-----------------------------------
+  002_presence.sql (sugerido):
+    - Columna last_seen_at en room_players
+    - Índices adicionales si hace falta
+
+  RPC apply_game_action (opcional):
+    - Read-modify-write atómico de game_state
+
+UI responsive — Archivos a tocar
+----------------------------------
+  frontend/src/components/games/poker/PokerTable.tsx
+  frontend/src/components/ui/GameButton.tsx
+  frontend/src/app/room/[code]/page.tsx
+  frontend/src/components/games/blackjack/live-casino/LiveCasinoBlackjackUI.tsx
+  frontend/src/app/globals.css
+  frontend/src/components/cards/PlayingCard.tsx
+
+
+================================================================================
+5. CONFIGURACIÓN PASO A PASO EN SUPABASE
+================================================================================
+
+Paso 1 — Crear proyecto
+-----------------------
+  1. Ir a https://supabase.com
+  2. New project
+  3. Elegir nombre, contraseña de base de datos y región cercana a usuarios
+  4. Esperar a que el proyecto termine de crearse (~2 minutos)
+
+Paso 2 — Ejecutar migración SQL
+-------------------------------
+  1. Dashboard Supabase → SQL Editor → New query
+  2. Copiar TODO el contenido del archivo:
+       backend/supabase/migrations/001_initial_schema.sql
+  3. Pulsar Run
+
+  Esto crea:
+    - Tabla rooms (salas, game_state JSONB, status lobby/playing/finished)
+    - Tabla room_players (jugadores, chips, is_connected)
+    - Índices en code y room_id
+    - Trigger updated_at en rooms
+    - Realtime en rooms y room_players
+    - RLS con políticas rooms_read y players_read (solo SELECT)
+
+  NOTA: Si falla "ALTER PUBLICATION supabase_realtime ADD TABLE...",
+  puede que las tablas ya estén en la publicación. En ese caso:
+    Database → Replication → activar manualmente rooms y room_players.
+
+Paso 3 — Verificar Realtime
+---------------------------
+  1. Database → Replication (o Publications)
+  2. Confirmar que rooms y room_players están en supabase_realtime
+
+Paso 4 — Copiar claves API
+--------------------------
+  Project Settings → API
+
+  Guardar estos tres valores:
+
+    NEXT_PUBLIC_SUPABASE_URL      → Project URL
+    NEXT_PUBLIC_SUPABASE_ANON_KEY → anon public key
+    SUPABASE_SERVICE_ROLE_KEY     → service_role secret key
+
+  IMPORTANTE:
+    - SERVICE_ROLE_KEY solo en servidor (Vercel env vars, .env.local)
+    - NUNCA subir SERVICE_ROLE_KEY a GitHub ni usarla en código del browser
+    - ANON_KEY sí puede ir al cliente (prefijo NEXT_PUBLIC_)
+
+Paso 5 — Probar en local (recomendado antes de Vercel)
+--------------------------------------------------------
+  1. Copiar frontend/.env.example → frontend/.env.local
+  2. Pegar las 3 variables con los valores de Supabase
+  3. En la raíz del repo:
+       npm install
+       npm run dev
+  4. Abrir http://localhost:3000
+  5. Crear sala, abrir misma sala en otra pestaña/navegador
+  6. Verificar sincronización de estado
+  7. En Supabase → Table Editor → rooms: deben aparecer filas al crear salas
+
+Paso 6 — Qué NO hace falta configurar ahora
+---------------------------------------------
+  - Supabase Auth (el juego usa UUID en localStorage)
+  - Edge Functions (la lógica está en API routes de Next.js)
+  - Storage
+  - Docker
+
+
+================================================================================
+6. CONFIGURACIÓN PASO A PASO EN VERCEL
+================================================================================
+
+Paso 1 — Conectar repositorio
+-----------------------------
+  1. Ir a https://vercel.com
+  2. Add New Project
+  3. Importar repositorio GitHub: CG-PokerRepo
+
+Paso 2 — Configuración del monorepo (CRÍTICO)
+---------------------------------------------
+  La app depende del workspace @cg/backend. Si Vercel solo hace npm install
+  dentro de frontend/, el build FALLARÁ con "Cannot find module '@cg/backend'".
+
+  OPCIÓN A — Recomendada (raíz del repositorio)
+  ----------------------------------------------
+    Root Directory:     .  (raíz del repo, no solo frontend)
+    Framework Preset:   Next.js
+    Install Command:    npm install
+    Build Command:      npm run build
+    (Output: Vercel detecta frontend/.next según configuración)
+
+  OPCIÓN B — Root Directory = frontend
+  --------------------------------------
+    Root Directory:     frontend
+    Install Command:    cd .. && npm install
+    Build Command:      npm run build
+
+  El vercel.json en la raíz ya indica:
+    "framework": "nextjs"
+    "rootDirectory": "frontend"
+
+  Si usas Opción A, revisa que Build Command ejecute el script del monorepo
+  que hace: npm run build --workspace=frontend
+
+Paso 3 — Variables de entorno
+-----------------------------
+  Settings → Environment Variables
+
+  Añadir las 3 variables para Production, Preview y Development:
+
+    NEXT_PUBLIC_SUPABASE_URL
+    NEXT_PUBLIC_SUPABASE_ANON_KEY
+    SUPABASE_SERVICE_ROLE_KEY
+
+  Valores: los mismos copiados de Supabase (sección 5, paso 4).
+
+Paso 4 — Deploy
+---------------
+  1. Pulsar Deploy
+  2. Si falla: revisar logs de build
+  3. Error típico: @cg/backend no encontrado → corregir Install Command
+
+Paso 5 — Probar en producción
+-----------------------------
+  1. Abrir URL de Vercel (ej: https://tu-app.vercel.app)
+  2. Crear una sala
+  3. Abrir la misma URL de sala en otro dispositivo o navegador
+  4. Host: elegir juego e iniciar partida
+  5. Hacer acciones → el otro cliente debe actualizarse
+  6. Verificar en Supabase Table Editor que game_state cambia en rooms
+
+
+================================================================================
+7. VARIABLES DE ENTORNO
+================================================================================
+
+Archivo local: frontend/.env.local (NO subir a Git)
+
+  NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Uso en el código
+----------------
+  NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+    → frontend/src/lib/supabase/client.ts (Realtime en browser)
+
+  NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+    → backend/src/services/supabase.ts (lecturas/escrituras en API routes)
+
+Sin Supabase configurado
+------------------------
+  El proyecto funciona en MEMORIA (globalThis.__cgRooms).
+  Solo válido para desarrollo local en una misma instancia del servidor.
+  En Vercel SIN Supabase: multijugador NO funciona entre usuarios reales.
+
+
+================================================================================
+8. CHECKLIST DE DESPLIEGUE
+================================================================================
+
+Supabase
+  [ ] Proyecto creado en supabase.com
+  [ ] Migración 001_initial_schema.sql ejecutada en SQL Editor
+  [ ] Realtime activo en tablas rooms y room_players
+  [ ] Tres claves API copiadas (URL, anon, service_role)
+  [ ] Prueba local con .env.local OK
+  [ ] Filas visibles en Table Editor al crear salas
+
+Vercel
+  [ ] Repositorio conectado
+  [ ] Install Command correcto para monorepo
+  [ ] Tres variables de entorno configuradas (Prod + Preview)
+  [ ] Deploy exitoso sin errores de @cg/backend
+  [ ] Multijugador probado con 2 clientes en URL de producción
+
+Post-despliegue (mejoras recomendadas)
+  [ ] useRoom: polling condicional
+  [ ] Filtro Realtime por room_id en room_players
+  [ ] Endpoint /leave + heartbeat
+  [ ] Lock de concurrencia en applyGameAction
+  [ ] UI responsive móvil (poker + lobby)
+
+
+================================================================================
+9. ERRORES FRECUENTES Y SOLUCIONES
+================================================================================
+
+Problema: Las salas no se comparten entre usuarios en producción
+Solución: Configurar las 3 variables de Supabase en Vercel. Sin ellas,
+          cada instancia serverless usa memoria aislada.
+
+Problema: Build falla — Cannot find module '@cg/backend'
+Solución: Install Command desde raíz del monorepo:
+          cd .. && npm install  (si Root Directory = frontend)
+          o Root Directory = . con npm install en raíz.
+
+Problema: Realtime no actualiza la UI
+Solución: Verificar Replication en Supabase; confirmar NEXT_PUBLIC_SUPABASE_ANON_KEY
+          en Vercel; revisar consola del browser por errores de canal.
+
+Problema: Solo funciona en una pestaña / un usuario
+Solución: Modo memoria activo → falta Supabase o SERVICE_ROLE_KEY incorrecta.
+
+Problema: SERVICE_ROLE_KEY expuesta
+Solución: Nunca en código cliente ni en repositorio. Solo env vars de servidor.
+
+Problema: Error al ejecutar ALTER PUBLICATION en SQL
+Solución: Activar Realtime manualmente en Database → Replication para
+          rooms y room_players.
+
+Problema: Acciones de juego lentas o duplicadas
+Solución: Implementar withRoomLock y reducir polling redundante en useRoom.
+
+
+================================================================================
+10. ORDEN RECOMENDADO DE IMPLEMENTACIÓN
+================================================================================
+
+  Fase 1 — Producción básica (hacer primero)
+    1. Supabase: proyecto + migración + claves
+    2. Vercel: monorepo + env vars + deploy
+    3. Prueba multijugador en URL de producción
+
+  Fase 2 — Tiempo real fiable
+    4. useRoom: polling solo si Realtime desconectado
+    5. Filtro room_players por sala
+    6. POST /leave + heartbeat
+
+  Fase 3 — Estabilidad multijugador
+    7. withRoomLock en applyGameAction
+    8. upsertRoomPlayers en store.ts
+
+  Fase 4 — Experiencia de usuario
+    9. Responsive móvil (poker, lobby, blackjack)
+   10. (Opcional) Supabase Auth para cuentas persistentes
+
+
+================================================================================
+11. REFERENCIA DE ARCHIVOS DEL PROYECTO
+================================================================================
+
+Estructura principal
+--------------------
+  CG-PokerRepo/
+  ├── frontend/                    Next.js (desplegar en Vercel)
+  │   ├── src/app/api/rooms/       API REST del juego
+  │   ├── src/hooks/useRoom.ts     Sincronización Realtime + polling
+  │   ├── src/lib/supabase/        Cliente browser Supabase
+  │   ├── src/components/games/    UI Blackjack y Poker
+  │   ├── .env.example             Plantilla variables de entorno
+  │   └── next.config.ts
+  ├── backend/
+  │   ├── src/games/               Motores de juego
+  │   ├── src/services/            room-service, store, supabase
+  │   └── supabase/migrations/     Schema SQL
+  ├── vercel.json                  Config deploy (rootDirectory: frontend)
+  ├── package.json                 Workspaces monorepo
+  └── README.md                    Guía rápida
+
+Juegos soportados
+-----------------
+  blackjack  → backend/src/games/blackjack/engine.ts
+               frontend/.../live-casino/LiveCasinoBlackjackUI.tsx
+
+  poker      → backend/src/games/poker/engine.ts
+               frontend/.../poker/PokerTable.tsx
+
+Rutas de la aplicación
+----------------------
+  /                    Lobby (crear/unirse a sala)
+  /room/[code]         Sala multijugador
+  /blackjack-live      Redirige a / (demo estática deprecada)
+
+Comandos útiles
+---------------
+  npm install          Instalar dependencias (raíz monorepo)
+  npm run dev            Servidor desarrollo (frontend)
+  npm run build          Build producción (frontend + @cg/backend)
+
+Scripts Windows
+---------------
+  start-local.bat        Inicio rápido local
+
+================================================================================
+  Fin del documento — Actualizado para CG-PokerRepo
+  Para dudas de deploy: revisar logs de Vercel y Table Editor de Supabase
+================================================================================

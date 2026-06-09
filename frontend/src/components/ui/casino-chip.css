@@ -1,0 +1,94 @@
+/* Ficha estilo casino — plano, número negro sobre círculo blanco */
+
+.casino-chip {
+  --chip-size: 44px;
+  position: relative;
+  width: var(--chip-size);
+  height: var(--chip-size);
+  flex-shrink: 0;
+}
+
+.casino-chip--xs { --chip-size: 28px; }
+.casino-chip--sm { --chip-size: 36px; }
+.casino-chip--md { --chip-size: 44px; }
+.casino-chip--lg { --chip-size: 52px; }
+
+.casino-chip--stacked {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.casino-chip__body {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.casino-chip__body::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.casino-chip--red .casino-chip__body { background: #c62828; }
+.casino-chip--blue .casino-chip__body { background: #1565c0; }
+.casino-chip--green .casino-chip__body { background: #2e7d32; }
+
+.casino-chip__inlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52%;
+  height: 52%;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  z-index: 1;
+}
+
+.casino-chip__value {
+  font-size: calc(var(--chip-size) * 0.19);
+  font-weight: 800;
+  line-height: 1;
+  color: #0a0a0a;
+  letter-spacing: -0.03em;
+  user-select: none;
+}
+
+.casino-chip--xs .casino-chip__value {
+  font-size: calc(var(--chip-size) * 0.22);
+}
+
+.chip-stack {
+  position: relative;
+  width: var(--chip-size, 44px);
+  min-height: calc(var(--chip-size, 44px) + 12px);
+}
+
+.chip-stack--sm { --chip-size: 36px; }
+.chip-stack--md { --chip-size: 44px; }
+
+.casino-chip--fly-to-table {
+  animation: casinoChipFlyToTable 0.55s ease-out forwards;
+}
+
+@keyframes casinoChipFlyToTable {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 100px) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}

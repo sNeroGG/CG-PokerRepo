@@ -1,0 +1,1466 @@
+/* ── Live Casino Blackjack — Negro · Dorado · Blanco ── */
+
+@keyframes glowDrift {
+  0%, 100% { opacity: 0.4; transform: translate(0, 0); }
+  50% { opacity: 0.7; transform: translate(10px, -8px); }
+}
+
+@keyframes goldPulse {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.5), 0 0 20px rgba(212, 175, 55, 0.2);
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 16px rgba(212, 175, 55, 0.9), 0 0 32px rgba(212, 175, 55, 0.4);
+    opacity: 0.92;
+  }
+}
+
+@keyframes goldBorder {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(212, 175, 55, 0.45),
+      0 0 24px rgba(212, 175, 55, 0.2),
+      inset 0 0 12px rgba(212, 175, 55, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(212, 175, 55, 0.7),
+      0 0 40px rgba(212, 175, 55, 0.35),
+      inset 0 0 16px rgba(212, 175, 55, 0.15);
+  }
+}
+
+@keyframes shuffleFan {
+  0%, 100% { transform: rotateY(0deg) rotateZ(-2deg); }
+  25% { transform: rotateY(12deg) rotateZ(3deg); }
+  50% { transform: rotateY(-8deg) rotateZ(-4deg); }
+  75% { transform: rotateY(6deg) rotateZ(2deg); }
+}
+
+@keyframes timerTick {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes cardDealIn {
+  0% {
+    opacity: 0;
+    transform: perspective(800px) rotateX(55deg) rotateZ(-12deg) translateY(-80px) scale(0.4);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: perspective(800px) rotateX(8deg) rotateZ(2deg) translateY(6px) scale(1.04);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(800px) rotateX(4deg) rotateZ(var(--card-tilt, -2deg)) translateY(0) scale(1);
+  }
+}
+
+@keyframes cardDrawFromDealer {
+  0% {
+    opacity: 0;
+    transform: perspective(900px) rotateX(40deg) rotateZ(-8deg) translateY(-120px) translateX(20px) scale(0.35);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: perspective(900px) rotateX(10deg) rotateZ(4deg) translateY(8px) scale(1.06);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(800px) rotateX(5deg) rotateZ(var(--card-tilt, -2deg)) translateY(0) scale(1);
+  }
+}
+
+@keyframes cardFlipReveal {
+  0% {
+    transform: perspective(800px) rotateY(180deg) rotateX(8deg) scale(0.92);
+  }
+  45% {
+    transform: perspective(800px) rotateY(90deg) rotateX(6deg) scale(1.02);
+  }
+  100% {
+    transform: perspective(800px) rotateY(0deg) rotateX(5deg) rotateZ(var(--card-tilt, -2deg)) scale(1);
+  }
+}
+
+@keyframes dealerDrawPulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes victoryPop {
+  0% { opacity: 0; transform: perspective(900px) rotateX(20deg) scale(0.7); }
+  70% { transform: perspective(900px) rotateX(6deg) scale(1.05); }
+  100% { opacity: 1; transform: perspective(900px) rotateX(5deg) scale(1); }
+}
+
+@keyframes victoryGlow {
+  0%, 100% { box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 20px rgba(212,175,55,0.2); }
+  50% { box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 36px rgba(212,175,55,0.4); }
+}
+
+@keyframes dealingFlash {
+  0%, 100% { opacity: 0; }
+  30%, 70% { opacity: 1; }
+}
+
+.live-casino-root {
+  --brand-gold: #d4af37;
+  --brand-gold-light: #f0d060;
+  --brand-gold-dark: #b8860b;
+  --brand-black: #0a0a0a;
+  --brand-black-soft: #111111;
+  --brand-white: #faf8f5;
+  --felt-base: #0d0d0d;
+  --felt-dark: #080808;
+  --silver-muted: rgba(250, 248, 245, 0.45);
+  --chip-red-mid: #c62828;
+  --chip-red-deep: #7f0000;
+  --chip-blue-mid: #1565c0;
+  --chip-blue-deep: #0d47a1;
+  --chip-green-mid: #2e7d32;
+  --chip-green-deep: #1b5e20;
+  /* alias legacy */
+  --neon-purple: var(--brand-gold);
+  --neon-violet: var(--brand-gold-dark);
+}
+
+.live-casino-root {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+
+.live-casino-ambient {
+  display: none;
+}
+
+.live-players-panel {
+  position: absolute;
+  top: 4.5rem;
+  right: 1rem;
+  z-index: 25;
+  min-width: 160px;
+  border-radius: 12px;
+  padding: 0.5rem 0.65rem;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.live-player-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.live-player-row.is-me {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.live-player-row.is-me span:first-child {
+  color: var(--neon-purple);
+}
+
+.live-bet-done {
+  color: #60e8a0;
+  font-weight: 700;
+}
+
+.live-bet-pending {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Background Table Layer ── */
+.live-table-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  perspective: 1400px;
+  padding: 3.5rem 1rem 11rem;
+}
+
+.live-table-wrapper {
+  position: relative;
+  width: min(92vw, 1100px);
+  transform: rotateX(28deg) scale(0.95);
+  transform-style: preserve-3d;
+}
+
+.live-table-rail {
+  position: absolute;
+  inset: -18px -28px;
+  border-radius: 50% / 42%;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.live-table-rail::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: inherit;
+  border: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.live-table-felt {
+  position: relative;
+  min-height: 420px;
+  border-radius: 50% / 42%;
+  padding: 2.5rem 3rem 3rem;
+  background: var(--felt-base);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.live-table-felt::before {
+  display: none;
+}
+
+.live-table-brand {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.25);
+  white-space: nowrap;
+}
+
+.live-table-rules {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 0.55rem;
+  line-height: 1.7;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--silver-muted);
+  white-space: nowrap;
+}
+
+/* Dealer area — top-left */
+.live-dealer-zone {
+  position: absolute;
+  top: 6%;
+  left: 6%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  z-index: 5;
+}
+
+.live-dealer-hands {
+  position: relative;
+  width: 90px;
+  height: 70px;
+}
+
+.live-dealer-sleeve {
+  position: absolute;
+  width: 28px;
+  height: 55px;
+  background: linear-gradient(180deg, #1a1a1a, #050505);
+  border-radius: 6px 6px 14px 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.live-dealer-sleeve.left {
+  left: 8px;
+  top: 8px;
+  transform: rotate(-18deg);
+}
+
+.live-dealer-sleeve.right {
+  right: 8px;
+  top: 4px;
+  transform: rotate(12deg);
+}
+
+.live-dealer-hand-card {
+  position: absolute;
+  width: 32px;
+  height: 44px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #fff 0%, #e8e4dc 100%);
+  border: 1px solid #ccc;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+}
+
+.live-dealer-hand-card.card-1 {
+  left: 22px;
+  top: 0;
+  transform: rotate(-8deg);
+  color: #c41e3a;
+}
+
+.live-dealer-hand-card.card-2 {
+  left: 38px;
+  top: 6px;
+  transform: rotate(6deg);
+  color: #111;
+}
+
+.live-dealer-badge {
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(10, 10, 10, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.live-dealer-badge span {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-purple);
+}
+
+.live-dealer-badge small {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Frontal table cards (immersive slight diagonal) ── */
+.live-table-card {
+  --card-tilt: -3deg;
+  flex-shrink: 0;
+  perspective: 600px;
+}
+
+.live-table-card-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: #faf8f5;
+  border: 1px solid #d8d4cc;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  padding: 6px 5px;
+  font-weight: 800;
+  transform: perspective(800px) rotateX(5deg) rotateZ(var(--card-tilt));
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease;
+}
+
+.live-table-card:hover .live-table-card-inner {
+  transform: perspective(800px) rotateX(3deg) rotateZ(var(--card-tilt)) translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.live-table-card--sm { width: 44px; height: 62px; font-size: 0.55rem; }
+.live-table-card--md { width: 62px; height: 88px; font-size: 0.72rem; }
+.live-table-card--lg { width: 76px; height: 108px; font-size: 0.85rem; }
+
+.live-table-card--sm .live-table-card-suit { font-size: 1rem; }
+.live-table-card--md .live-table-card-suit { font-size: 1.45rem; }
+.live-table-card--lg .live-table-card-suit { font-size: 1.75rem; }
+
+.live-table-card--red { color: #c41e3a; }
+.live-table-card--black { color: #111; }
+
+.live-table-card--back .live-table-card-inner {
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.12);
+  align-items: center;
+  justify-content: center;
+}
+
+.live-table-card-logo {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: rgba(212, 175, 55, 0.75);
+}
+
+.live-table-card-suit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.live-table-card-rank--bl {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.live-table-card--deal .live-table-card-inner {
+  animation: cardDealIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.live-table-card--draw .live-table-card-inner {
+  animation: cardDrawFromDealer 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.live-table-card--flip .live-table-card-inner {
+  animation: cardFlipReveal 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  transform-style: preserve-3d;
+}
+
+.live-felt-zone--dealer-active {
+  outline: 1px solid rgba(212, 175, 55, 0.2);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.live-dealer-draw-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-gold);
+}
+
+.live-dealer-draw-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-gold);
+  animation: dealerDrawPulse 0.9s ease-in-out infinite;
+}
+
+.live-felt-placeholder--center {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.live-table-card--victory .live-table-card-inner {
+  animation: none;
+}
+
+.live-table-card--victory.live-table-card--deal .live-table-card-inner {
+  animation: none;
+}
+
+.live-table-card:nth-child(odd) { --card-tilt: -4deg; }
+.live-table-card:nth-child(even) { --card-tilt: 3deg; }
+
+/* Felt zones — cards laid on table */
+.live-felt-zone {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  z-index: 4;
+}
+
+.live-felt-zone--dealer {
+  top: 14%;
+  width: 80%;
+}
+
+.live-felt-zone--player {
+  top: 42%;
+  width: 75%;
+}
+
+.live-felt-zone-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.live-felt-card-spread {
+  display: flex;
+  gap: 0.45rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0.25rem;
+}
+
+.live-felt-card-spread--victory {
+  gap: 0.6rem;
+}
+
+.live-felt-card-spread--victory .live-table-card--lg {
+  width: 84px;
+  height: 118px;
+}
+
+.live-dealer-badge--felt {
+  margin-bottom: 0.15rem;
+}
+
+.live-dealing-flash {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.live-dealing-flash span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  animation: dealingFlash 1.2s ease-in-out;
+}
+
+.live-table-scene--dealing .live-felt-card-spread .live-table-card--deal .live-table-card-inner {
+  animation-duration: 0.55s;
+}
+
+/* ── Player sidebar (cards + bet on the side) ── */
+.live-sidebar-brand {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  margin-bottom: 0.15rem;
+}
+
+.live-player-sidebar {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-52%);
+  z-index: 22;
+  width: min(200px, 28vw);
+  padding: 0.85rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(8, 0, 18, 0.82);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 0 24px rgba(212, 175, 55, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.live-sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  padding-bottom: 0.45rem;
+}
+
+.live-sidebar-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--neon-purple);
+  letter-spacing: 0.06em;
+}
+
+.live-sidebar-you {
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.live-sidebar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.live-sidebar-hand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.live-sidebar-hand.is-active {
+  border-color: rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.live-sidebar-hand-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.live-sidebar-card-row {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.live-sidebar-card-row .live-table-card--lg {
+  width: 68px;
+  height: 96px;
+}
+
+.live-sidebar-hand-total {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.live-sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  opacity: 0.4;
+}
+
+.live-sidebar-empty-card {
+  width: 50px;
+  height: 70px;
+  border-radius: 6px;
+  border: 2px dashed rgba(212, 175, 55, 0.25);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.live-sidebar-empty span {
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.live-sidebar-status {
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.live-sidebar-status--revealing {
+  color: rgba(212, 175, 55, 0.9);
+  border-color: rgba(212, 175, 55, 0.25);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.live-sidebar-status--gan,
+.live-sidebar-status--ganaste,
+.live-sidebar-status--blackjack {
+  color: #7cb896;
+  border-color: rgba(124, 184, 150, 0.35);
+  background: rgba(124, 184, 150, 0.08);
+}
+
+.live-sidebar-status--perdi,
+.live-sidebar-status--perdiste,
+.live-sidebar-status--tepasaste {
+  color: #d49090;
+  border-color: rgba(212, 144, 144, 0.35);
+  background: rgba(212, 144, 144, 0.08);
+}
+
+.live-sidebar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.live-sidebar-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.live-sidebar-stat--bet {
+  grid-column: 1 / -1;
+  border-color: rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.live-sidebar-stat--total {
+  grid-column: 1 / -1;
+}
+
+.live-sidebar-stat-label {
+  font-size: 0.45rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.live-sidebar-stat strong {
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.live-sidebar-stat--bet strong {
+  color: var(--brand-gold);
+  font-size: 1rem;
+}
+
+/* ── Resultado de ronda — overlay en pantalla (no en la mesa) ── */
+.live-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 5rem 1.25rem 11rem;
+}
+
+.live-result-card {
+  width: min(100%, 300px);
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  background: rgba(12, 12, 12, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: liveResultIn 0.3s ease-out;
+}
+
+@keyframes liveResultIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.live-result-card--win { border-left: 3px solid #6aab82; }
+.live-result-card--gold { border-left: 3px solid #d4af37; }
+.live-result-card--lose { border-left: 3px solid #c87878; }
+.live-result-card--neutral { border-left: 3px solid rgba(255, 255, 255, 0.3); }
+
+.live-result-card__eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.live-result-card__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #faf8f5;
+}
+
+.live-result-card--win .live-result-card__title { color: #8fd4a8; }
+.live-result-card--gold .live-result-card__title { color: #d4af37; }
+.live-result-card--lose .live-result-card__title { color: #e0a0a0; }
+.live-result-card--neutral .live-result-card__title { color: rgba(255, 255, 255, 0.85); }
+
+.live-result-card__payout {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Chip racks on felt */
+.live-chip-racks {
+  position: absolute;
+  bottom: 12%;
+  display: flex;
+  gap: 2.5rem;
+}
+
+.live-chip-racks.left { left: 14%; }
+.live-chip-racks.right { right: 14%; }
+
+.live-chip-rack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.live-chip-rack-tray {
+  width: 56px;
+  padding: 5px 4px 4px;
+  border-radius: 8px;
+  background: rgba(10, 10, 10, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.live-rack-chip {
+  position: relative;
+  width: 44px;
+  height: 10px;
+  border-radius: 50%;
+  margin: -1px auto 0;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.live-rack-chip::before {
+  content: "";
+  position: absolute;
+  inset: 1px 5px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+.live-rack-chip__inlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  z-index: 1;
+}
+
+.live-rack-chip--red { background: #c62828; }
+.live-rack-chip--blue { background: #1565c0; }
+.live-rack-chip--green { background: #2e7d32; }
+
+/* Apuesta del jugador sobre el felt */
+.live-table-bet-spot {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.live-table-bet-spot__ring {
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+}
+
+.live-table-bet-spot__label {
+  font-size: 0.45rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.live-table-bet-spot__stack {
+  position: relative;
+  min-height: 58px;
+}
+
+.live-table-bet-spot__total {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.live-table-bet-spot--animating .live-table-bet-spot__ring {
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.live-compact-status {
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+/* ── Foreground Tablet UI ── */
+.live-tablet-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 1rem 0.5rem;
+  pointer-events: none;
+}
+
+.live-tablet-panel {
+  pointer-events: auto;
+  width: min(96vw, 960px);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: rgba(12, 12, 12, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 1rem 1.5rem;
+  align-items: center;
+}
+
+.live-tablet-panel::before {
+  display: none;
+}
+
+.live-tablet-panel--compact {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem 0.75rem;
+  width: min(96vw, 720px);
+}
+
+.live-tablet-panel--compact .live-betting-section {
+  grid-column: 1;
+  grid-row: auto;
+  gap: 0.5rem;
+}
+
+.live-tablet-panel--compact .live-action-buttons {
+  justify-content: center;
+}
+
+.live-tablet-panel--round-end {
+  padding: 0.5rem 1rem 0.6rem;
+  width: min(90vw, 420px);
+  background: rgba(10, 10, 10, 0.75);
+}
+
+/* Shuffling section — left */
+.live-shuffle-section {
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+}
+
+.live-shuffle-deck {
+  position: relative;
+  width: 120px;
+  height: 90px;
+  perspective: 600px;
+}
+
+.live-shuffle-card {
+  position: absolute;
+  width: 36px;
+  height: 52px;
+  border-radius: 4px;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform-origin: bottom center;
+  animation: shuffleFan 3s ease-in-out infinite;
+}
+
+.live-shuffle-idle .live-shuffle-card {
+  animation: none;
+}
+
+.live-shuffle-pct {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
+.live-felt-placeholder {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.live-status-banner {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.live-status-betting,
+.live-status-playerTurn,
+.live-status-dealing {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.live-status-roundEnd {
+  background: rgba(0, 180, 80, 0.12);
+  border: 1px solid rgba(0, 200, 100, 0.3);
+  color: #8fe8b0;
+}
+
+.live-status-error {
+  background: rgba(120, 0, 40, 0.35);
+  border: 1px solid rgba(255, 80, 120, 0.35);
+  color: #ffb0c8;
+}
+
+.live-countdown-urgent .live-countdown-time {
+  color: #e080a0;
+}
+
+.live-no-cards {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.08em;
+}
+
+.live-hand-badge {
+  font-size: 0.4rem;
+  text-transform: uppercase;
+  color: var(--neon-purple);
+  margin-top: 1px;
+}
+
+.live-waiting-msg {
+  text-align: center;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+  padding: 0.25rem;
+}
+
+.live-btn-hit {
+  background: #2e7d4a;
+  color: #fff;
+}
+
+.live-btn-stand {
+  background: #1565c0;
+  color: #fff;
+}
+
+.live-btn-double {
+  background: #b8860b;
+  color: #0a0a0a;
+}
+
+.live-btn-split {
+  background: #c45c26;
+  color: #fff;
+}
+
+.live-btn-hit:hover,
+.live-btn-stand:hover,
+.live-btn-double:hover,
+.live-btn-split:hover {
+  filter: brightness(1.08);
+}
+
+.live-shuffle-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.live-shuffle-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-gold);
+  transition: width 0.6s ease;
+}
+
+.live-shuffle-progress-glow {
+  display: none;
+}
+
+.live-shuffle-progress {
+  width: 100%;
+  max-width: 160px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Countdown — center */
+.live-countdown-section {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-countdown-ring {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: timerTick 1s ease-in-out infinite;
+}
+
+.live-countdown-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.live-countdown-ring circle.track {
+  fill: none;
+  stroke: rgba(212, 175, 55, 0.15);
+  stroke-width: 4;
+}
+
+.live-countdown-ring circle.progress {
+  fill: none;
+  stroke: var(--brand-gold);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.live-countdown-time {
+  font-size: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: #fff;
+  z-index: 1;
+}
+
+.live-countdown-sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+
+/* Betting panel — bottom-right */
+.live-betting-section {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-self: end;
+}
+
+.live-bet-status-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.live-digital-chips {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.live-chip-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.live-chip-pile-stack {
+  position: relative;
+  width: 48px;
+  height: 52px;
+}
+
+.live-chip-pile-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(212, 175, 55, 0.75);
+  text-transform: uppercase;
+}
+
+/* Digital hand cards */
+.live-digital-hand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-mini-card {
+  width: 42px;
+  height: 58px;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #fff, #e8e4dc);
+  border: 1px solid #ccc;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  padding: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.live-mini-card.red { color: #c41e3a; }
+.live-mini-card.black { color: #111; }
+
+.live-hand-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.live-hand-score span {
+  font-size: 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.live-hand-score strong {
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.live-current-bet {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.live-current-bet em {
+  font-style: normal;
+  color: var(--brand-gold);
+}
+
+/* Action buttons */
+.live-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.live-btn {
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+.live-btn:active {
+  transform: scale(0.96);
+}
+
+.live-btn-primary {
+  background: linear-gradient(180deg, #f0d060, #d4af37);
+  color: #0a0a0a;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
+}
+
+.live-btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.45);
+}
+
+.live-btn-increase {
+  background: rgba(26, 0, 51, 0.8);
+  color: #fff;
+  border: 2px solid var(--neon-purple);
+  animation: neonBorder 1.5s ease-in-out infinite;
+}
+
+.live-btn-increase:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.live-btn-muted {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.live-btn-muted:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.live-btn-danger {
+  background: rgba(80, 0, 40, 0.4);
+  color: rgba(255, 150, 180, 0.85);
+  border: 1px solid rgba(255, 80, 120, 0.25);
+}
+
+.live-btn-danger:hover {
+  background: rgba(120, 0, 50, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .live-table-scene {
+    padding: 2.5rem 0.5rem 9rem;
+  }
+
+  .live-table-wrapper {
+    transform: rotateX(20deg) scale(0.82);
+  }
+
+  .live-player-sidebar {
+    left: 0.35rem;
+    width: min(150px, 34vw);
+    padding: 0.6rem 0.5rem;
+    top: auto;
+    bottom: 5.5rem;
+    transform: none;
+  }
+
+  .live-sidebar-card-row .live-table-card--lg {
+    width: 52px;
+    height: 74px;
+  }
+
+  .live-players-panel {
+    top: 3.5rem;
+    right: 0.35rem;
+    min-width: 130px;
+  }
+
+  .live-tablet-panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1.25rem;
+  }
+
+  .live-shuffle-section {
+    grid-row: auto;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .live-countdown-section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .live-betting-section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .live-action-buttons {
+    justify-content: center;
+  }
+
+  .live-bet-status-row {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1200px) {
+  .live-table-scene {
+    padding-top: 3.5rem;
+    padding-bottom: 9rem;
+  }
+
+  .live-player-sidebar {
+    left: 1.5rem;
+    width: 210px;
+  }
+
+  .live-tablet-overlay {
+    padding-bottom: 0.5rem;
+  }
+
+  .live-tablet-panel {
+    width: min(90vw, 1040px);
+  }
+}

@@ -1,0 +1,569 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-black text-white antialiased;
+    background-color: #000;
+    background-image:
+      radial-gradient(ellipse 100% 50% at 50% -10%, rgba(212, 175, 55, 0.08) 0%, transparent 55%),
+      radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply rounded-xl bg-gradient-to-b from-casino-goldLight to-casino-gold px-6 py-3
+      font-semibold text-casino-feltDark shadow-lg shadow-black/30
+      transition-all hover:brightness-110 hover:shadow-casino-gold/20
+      active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply rounded-xl border border-casino-gold/40 bg-white/5 px-6 py-3
+      font-semibold text-casino-gold backdrop-blur-sm transition-all
+      hover:border-casino-gold hover:bg-casino-gold/10
+      active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .card-surface {
+    @apply rounded-2xl border border-white/10 bg-black/50 p-6
+      shadow-2xl shadow-black/40 backdrop-blur-md;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/15 bg-black/40 px-4 py-3
+      text-white placeholder-gray-500 outline-none backdrop-blur-sm
+      transition-colors focus:border-casino-gold/60 focus:ring-2 focus:ring-casino-gold/20;
+  }
+
+  /* ── Playing Cards ── */
+  .playing-card {
+    @apply relative shrink-0 animate-deal-in select-none rounded-lg shadow-lg;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.15) inset;
+  }
+
+  .card-face {
+    @apply bg-gradient-to-br from-white to-gray-100;
+    border: 1px solid #d4d0c8;
+  }
+
+  .card-corner {
+    @apply absolute flex flex-col items-center leading-none;
+  }
+
+  .card-corner.top-left {
+    @apply left-1 top-1;
+  }
+
+  .card-corner.bottom-right {
+    @apply bottom-1 right-1 rotate-180;
+  }
+
+  .card-rank {
+    @apply font-bold leading-tight;
+  }
+
+  .card-suit-sm {
+    @apply text-[0.65em] leading-none;
+  }
+
+  .card-center {
+    @apply absolute inset-0 flex items-center justify-center;
+  }
+
+  .suit-red {
+    @apply text-casino-red;
+  }
+
+  .suit-black {
+    @apply text-gray-900;
+  }
+
+  .card-back {
+    @apply overflow-hidden border-2 border-casino-gold/30;
+    background: linear-gradient(135deg, #1a237e 0%, #0d1642 100%);
+  }
+
+  .card-back-inner {
+    @apply relative flex h-full w-full items-center justify-center;
+  }
+
+  .card-back-pattern {
+    @apply absolute inset-1 rounded-md border border-casino-gold/20;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(212, 175, 55, 0.08) 4px,
+        rgba(212, 175, 55, 0.08) 8px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 4px,
+        rgba(212, 175, 55, 0.08) 4px,
+        rgba(212, 175, 55, 0.08) 8px
+      );
+  }
+
+  .card-back-logo {
+    @apply relative z-10 font-display text-sm font-bold tracking-widest text-casino-gold/80;
+  }
+
+  .card-slot {
+    @apply shrink-0 rounded-lg border-2 border-dashed border-white/10 bg-black/20;
+  }
+
+  .card-hand {
+    @apply flex items-center justify-center;
+  }
+
+  .card-hand-overlap .card-hand-item:not(:first-child) {
+    margin-left: -18px;
+  }
+
+  .card-hand-overlap .card-hand-item:hover {
+    @apply z-20;
+    transform: translateY(-4px);
+    transition: transform 0.2s;
+  }
+
+  /* ── Game Table ── */
+  .game-table-wrap {
+    @apply relative mx-auto w-full max-w-3xl p-3;
+  }
+
+  .game-table-rail {
+    @apply absolute inset-0 rounded-[50%] bg-gradient-to-b from-amber-900/80 to-amber-950;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  }
+
+  .game-table-felt {
+    @apply relative m-3 min-h-[280px] rounded-[50%] px-6 py-8;
+    background:
+      radial-gradient(ellipse at center, #1a7a42 0%, #0d5c2e 40%, #094020 100%);
+    box-shadow: inset 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .game-table-label {
+    @apply mb-4 text-center text-[10px] font-semibold uppercase tracking-[0.25em] text-white/30;
+  }
+
+  /* ── Dealer ── */
+  .dealer-area {
+    @apply flex flex-col items-center gap-3;
+  }
+
+  .dealer-badge {
+    @apply flex items-center gap-3 rounded-full border border-white/10 bg-black/30 px-4 py-2 backdrop-blur-sm;
+  }
+
+  .dealer-icon {
+    @apply text-2xl;
+  }
+
+  .dealer-title {
+    @apply text-sm font-semibold text-casino-gold;
+  }
+
+  .dealer-sub {
+    @apply text-[11px] text-white/50;
+  }
+
+  .hand-total {
+    @apply rounded-full bg-black/40 px-4 py-1 text-sm text-white/80;
+  }
+
+  .hand-total strong {
+    @apply text-casino-goldLight;
+  }
+
+  /* ── Chips (CasinoChip component) ── */
+  .chip-display {
+    @apply flex flex-col items-center gap-1;
+  }
+
+  .chip-label {
+    @apply text-[10px] uppercase tracking-wider text-white/40;
+  }
+
+  /* ── Action Bar ── */
+  .action-bar {
+    @apply flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-white/10
+      bg-black/40 p-4 backdrop-blur-md;
+  }
+
+  .btn-action {
+    @apply rounded-xl px-5 py-2.5 text-sm font-semibold transition-all
+      active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-action-primary {
+    @apply bg-gradient-to-b from-casino-goldLight to-casino-gold text-casino-feltDark shadow-md hover:brightness-110;
+  }
+
+  .btn-action-secondary {
+    @apply border border-white/20 bg-white/5 text-white hover:bg-white/10;
+  }
+
+  .btn-action-danger {
+    @apply border border-red-500/40 bg-red-900/40 text-red-300 hover:bg-red-900/60;
+  }
+
+  /* ── Status ── */
+  .status-banner {
+    @apply flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm;
+  }
+
+  .status-info {
+    @apply bg-white/5 text-white/70;
+  }
+
+  .status-turn {
+    @apply border border-casino-gold/30 bg-casino-gold/10 text-casino-goldLight;
+  }
+
+  .status-success {
+    @apply border border-green-500/30 bg-green-900/20 text-green-300;
+  }
+
+  .status-error {
+    @apply border border-red-500/30 bg-red-900/20 text-red-300;
+  }
+
+  .status-dot {
+    @apply h-2 w-2 animate-pulse rounded-full bg-casino-gold;
+  }
+
+  /* ── Player seat ── */
+  .player-seat {
+    @apply rounded-xl border border-white/10 bg-black/30 p-4 backdrop-blur-sm transition-all;
+  }
+
+  .player-seat.is-me {
+    @apply border-casino-gold/40 bg-casino-gold/5 ring-1 ring-casino-gold/30;
+  }
+
+  .player-seat.is-active {
+    @apply animate-pulse-glow border-casino-gold/50;
+  }
+
+  .player-seat.is-folded {
+    @apply opacity-40 grayscale;
+  }
+
+  .player-avatar {
+    @apply flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br
+      from-casino-gold/30 to-casino-gold/10 text-sm font-bold text-casino-gold;
+  }
+
+  /* ── Lobby cards decoration ── */
+  .lobby-cards {
+    @apply pointer-events-none absolute inset-0 overflow-hidden opacity-20;
+  }
+
+  .lobby-card-float {
+    @apply absolute animate-deal-in;
+  }
+
+  /* ── Community row ── */
+  .community-row {
+    @apply flex items-center justify-center gap-2 py-2;
+  }
+
+  .pot-display {
+    @apply inline-flex items-center gap-2 rounded-full border border-casino-gold/30
+      bg-black/50 px-5 py-2 text-lg font-bold text-casino-gold shadow-lg;
+  }
+
+  .phase-badge {
+    @apply rounded-full bg-black/40 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/50;
+  }
+
+  /* ── Auth / Menu / Lobby (negro · dorado · blanco) ── */
+  .auth-page {
+    @apply relative min-h-screen overflow-hidden bg-black text-white;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(212, 175, 55, 0.12) 0%, transparent 55%),
+      radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.06) 0%, transparent 40%);
+  }
+
+  .auth-page::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0;
+    background-image:
+      linear-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212, 175, 55, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .auth-glow {
+    @apply pointer-events-none absolute left-1/2 top-0 h-64 w-96 -translate-x-1/2 rounded-full;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+    filter: blur(40px);
+  }
+
+  .auth-panel {
+    @apply relative rounded-2xl border border-casino-gold/25 bg-[#0a0a0a] p-8 shadow-2xl;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 24px 48px rgba(0, 0, 0, 0.8),
+      0 0 60px rgba(212, 175, 55, 0.06);
+  }
+
+  .auth-panel::before,
+  .auth-panel::after {
+    content: "";
+    @apply absolute h-8 w-8 border-casino-gold/50;
+  }
+
+  .auth-panel::before {
+    @apply left-3 top-3 border-l-2 border-t-2;
+  }
+
+  .auth-panel::after {
+    @apply bottom-3 right-3 border-b-2 border-r-2;
+  }
+
+  .auth-logo-ring {
+    @apply mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full
+      border border-casino-gold/40 bg-black p-2;
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.2);
+  }
+
+  .auth-title {
+    @apply font-display text-4xl font-bold tracking-wide text-white sm:text-5xl;
+  }
+
+  .auth-title--brand {
+    @apply text-lg leading-snug sm:text-xl md:text-2xl;
+  }
+
+  .auth-title-gold {
+    @apply bg-gradient-to-r from-casino-goldLight via-casino-gold to-casino-goldLight
+      bg-clip-text text-transparent;
+  }
+
+  .auth-subtitle {
+    @apply mt-2 text-sm tracking-widest text-white/60 uppercase;
+  }
+
+  .auth-divider {
+    @apply flex items-center gap-3 py-1;
+  }
+
+  .auth-divider-line {
+    @apply h-px flex-1 bg-gradient-to-r from-transparent via-casino-gold/40 to-transparent;
+  }
+
+  .auth-divider-text {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-casino-gold/70;
+  }
+
+  .auth-label {
+    @apply text-xs font-semibold uppercase tracking-wider text-white/50;
+  }
+
+  .auth-input {
+    @apply w-full rounded-xl border border-white/10 bg-black px-4 py-3.5
+      text-white placeholder-white/25 outline-none transition-all
+      focus:border-casino-gold/60 focus:ring-2 focus:ring-casino-gold/15;
+  }
+
+  .auth-input-code {
+    @apply auth-input text-center font-display text-3xl font-bold tracking-[0.35em] text-casino-gold;
+  }
+
+  .auth-btn-primary {
+    @apply w-full rounded-xl bg-gradient-to-b from-casino-goldLight to-casino-gold
+      px-6 py-3.5 font-semibold text-black shadow-lg transition-all
+      hover:brightness-110 hover:shadow-casino-gold/30
+      active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+  }
+
+  .auth-btn-secondary {
+    @apply w-full rounded-xl border border-casino-gold/50 bg-transparent px-6 py-3.5
+      font-semibold text-white transition-all
+      hover:border-casino-gold hover:bg-casino-gold/10 hover:text-casino-goldLight
+      active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .auth-game-card {
+    @apply rounded-2xl border border-white/10 bg-black p-6 text-left transition-all;
+  }
+
+  .auth-game-card:hover:not(:disabled) {
+    @apply border-casino-gold/40;
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.08);
+  }
+
+  .auth-game-card-selected {
+    @apply border-casino-gold bg-casino-gold/5;
+    box-shadow: 0 0 32px rgba(212, 175, 55, 0.12);
+  }
+
+  .auth-sidebar {
+    @apply auth-panel h-fit space-y-4 p-5;
+  }
+
+  .auth-error {
+    @apply rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-2.5 text-center text-sm text-red-200;
+  }
+
+  .auth-badge {
+    @apply inline-flex items-center rounded-full border border-casino-gold/30
+      bg-casino-gold/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-casino-gold;
+  }
+
+  .auth-player-row {
+    @apply flex items-center justify-between rounded-xl border border-white/5
+      bg-black px-3 py-2.5 text-sm transition-colors;
+  }
+
+  .auth-player-row-active {
+    @apply border-casino-gold/40 bg-casino-gold/5;
+  }
+
+  .auth-avatar {
+    @apply flex h-9 w-9 items-center justify-center rounded-full border border-casino-gold/30
+      bg-black text-sm font-bold text-casino-gold;
+  }
+
+  .auth-suits {
+    @apply flex justify-center gap-3 text-lg;
+  }
+
+  .auth-suit-gold {
+    @apply text-casino-gold;
+  }
+
+  .auth-suit-white {
+    @apply text-white/40;
+  }
+
+  /* ── Deck pile on table ── */
+  .game-table-wrap {
+    @apply relative;
+  }
+
+  .game-table-content {
+    @apply relative z-10;
+  }
+
+  .table-brand {
+    @apply absolute left-1/2 top-3 -translate-x-1/2 font-display text-[10px]
+      font-bold tracking-[0.35em] text-amber-700/60;
+  }
+
+  .deck-pile {
+    @apply absolute right-4 top-1/2 z-20 -translate-y-1/2;
+  }
+
+  .deck-card {
+    @apply h-14 w-10 rounded-md border border-casino-gold/30;
+    background: linear-gradient(135deg, #1a237e, #0d1642);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .deck-card-2 {
+    @apply absolute -left-1 -top-1 rotate-3;
+  }
+
+  .deck-card-3 {
+    @apply absolute -left-2 -top-2 rotate-6 opacity-80;
+  }
+
+  .dealer-avatar {
+    @apply flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-xl;
+  }
+
+  /* ── Game action buttons ── */
+  .action-bar-title {
+    @apply mb-2 w-full text-center text-xs font-semibold uppercase tracking-wider text-casino-gold/80;
+  }
+
+  .action-bar-buttons {
+    @apply flex flex-wrap items-center justify-center gap-2;
+  }
+
+  .game-btn {
+    @apply flex min-w-[100px] flex-col items-center gap-0.5 rounded-xl px-4 py-2.5
+      font-semibold shadow-md transition-all active:scale-95;
+  }
+
+  .game-btn-disabled {
+    @apply cursor-not-allowed opacity-40;
+  }
+
+  .game-btn-icon {
+    @apply text-lg leading-none;
+  }
+
+  .game-btn-text {
+    @apply flex flex-col items-center;
+  }
+
+  .game-btn-label {
+    @apply text-sm leading-tight;
+  }
+
+  .game-btn-sub {
+    @apply text-[10px] font-normal opacity-70;
+  }
+
+  .game-btn-hit {
+    @apply bg-gradient-to-b from-green-400 to-green-600 text-white hover:brightness-110;
+  }
+
+  .game-btn-stand {
+    @apply bg-gradient-to-b from-blue-400 to-blue-600 text-white hover:brightness-110;
+  }
+
+  .game-btn-double {
+    @apply bg-gradient-to-b from-purple-400 to-purple-600 text-white hover:brightness-110;
+  }
+
+  .game-btn-bet {
+    @apply bg-gradient-to-b from-casino-goldLight to-casino-gold text-casino-feltDark;
+  }
+
+  .game-btn-fold {
+    @apply border border-red-500/50 bg-red-950/60 text-red-300 hover:bg-red-900/60;
+  }
+
+  .game-btn-check {
+    @apply bg-gradient-to-b from-teal-400 to-teal-600 text-white;
+  }
+
+  .game-btn-call {
+    @apply bg-gradient-to-b from-cyan-500 to-cyan-700 text-white;
+  }
+
+  .game-btn-raise {
+    @apply bg-gradient-to-b from-amber-500 to-amber-700 text-white;
+  }
+
+  .game-btn-allin {
+    @apply bg-gradient-to-b from-red-500 to-red-700 text-white animate-pulse;
+  }
+
+  .game-btn-primary {
+    @apply bg-gradient-to-b from-casino-goldLight to-casino-gold text-casino-feltDark;
+  }
+
+  .game-btn-secondary {
+    @apply border border-white/20 bg-white/5 text-white hover:bg-white/10;
+  }
+
+  .animate-turn-ring {
+    animation: turnRing 1.5s ease-in-out infinite;
+  }
+}
