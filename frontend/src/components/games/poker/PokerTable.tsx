@@ -6,6 +6,7 @@ import { PlayingCard, CardSlot } from "@/components/cards/PlayingCard";
 import { GameTable } from "@/components/table/GameTable";
 import { PlayerSeat } from "@/components/table/PlayerSeat";
 import { ActionBar, GameButton, StatusBanner } from "@/components/ui/GameButton";
+import { LandscapeToggle } from "@/components/ui/LandscapeToggle";
 import { dealDelay } from "@/lib/game-logic/animations";
 import { api } from "@/lib/client";
 
@@ -23,21 +24,28 @@ export function PokerTable({
   room,
   playerId,
   onUpdate,
+  isHost = false,
 }: {
   room: Room;
   playerId: string;
   onUpdate: (room: Room) => void;
+  isHost?: boolean;
 }) {
   const state = room.gameState as PokerState;
   const [raiseAmount, setRaiseAmount] = useState(state.currentBet + state.bigBlind);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isMyTurn =
-    ["preflop", "flop", "turn", "river"].includes(state.phase) &&
-    state.players[state.currentPlayerIndex]?.playerId === playerId;
+  const currentTurnId = ["preflop", "flop", "turn", "river"].includes(state.phase)
+    ? state.players[state.currentPlayerIndex]?.playerId
+    : null;
+  const currentTurnName = currentTurnId
+    ? room.players.find((p) => p.id === currentTurnId)?.name ?? "Jugador"
+    : null;
 
-  const canStart = ["waiting", "roundEnd", "showdown"].includes(state.phase);
+  const isMyTurn = currentTurnId === playerId;
+  const isWaitingTurn = !!currentTurnId && !isMyTurn;
+  const canStart = isHost && ["waiting", "roundEnd", "showdown"].includes(state.phase);
   const myBet = state.players.find((p) => p.playerId === playerId)?.bet ?? 0;
   const toCall = state.currentBet - myBet;
 
@@ -57,13 +65,24 @@ export function PokerTable({
     }
   }
 
+  const statusMessage = isMyTurn
+    ? "Tu turno"
+    : isWaitingTurn
+      ? `Turno de ${currentTurnName}`
+      : canStart
+        ? "Inicia la siguiente mano"
+        : ["waiting", "roundEnd", "showdown"].includes(state.phase)
+          ? "Esperando al host..."
+          : state.message;
+
   return (
-    <div className="space-y-5">
-      <GameTable label="Cartas comunitarias" gameName="TEXAS HOLD'EM">
-        <div className="flex flex-col items-center gap-4">
+    <>
+      <LandscapeToggle />
+      <div className="poker-table-root landscape-play-root space-y-4">
+      <GameTable label="" gameName="Texas Hold'em">
+        <div className="flex flex-col items-center gap-3">
           <div className="pot-display">
-            <span>🪙</span>
-            <span>Bote: ${state.pot}</span>
+            <span>Bote ${state.pot}</span>
           </div>
           <div className="community-row">
             {Array.from({ length: 5 }).map((_, i) => {
@@ -76,16 +95,14 @@ export function PokerTable({
             })}
           </div>
           <span className="phase-badge">{PHASE[state.phase] ?? state.phase}</span>
-          <p className="text-center text-xs text-white/40">{state.dealerMessage}</p>
         </div>
       </GameTable>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="poker-seats-grid grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {state.players.map((ps) => {
           const player = room.players.find((p) => p.id === ps.playerId);
           const isMe = ps.playerId === playerId;
-          const isCurrent =
-            state.players[state.currentPlayerIndex]?.playerId === ps.playerId;
+          const isCurrent = currentTurnId === ps.playerId;
 
           return (
             <PlayerSeat
@@ -97,12 +114,7 @@ export function PokerTable({
               isMe={isMe}
               isActive={isCurrent}
               isFolded={ps.folded}
-              badge={ps.allIn ? "ALL-IN" : ps.lastAction?.toUpperCase()}
-              footer={
-                ps.lastAction ? (
-                  <span className="text-[10px] uppercase text-white/30">{ps.lastAction}</span>
-                ) : undefined
-              }
+              badge={ps.allIn ? "ALL-IN" : isCurrent ? "TURNO" : ps.lastAction?.toUpperCase()}
             />
           );
         })}
@@ -114,19 +126,19 @@ export function PokerTable({
           <StatusBanner
             key={w.playerId}
             type="success"
-            message={`🏆 ${player?.name} gana $${w.amount} — ${w.hand}`}
+            message={`${player?.name} gana $${w.amount} — ${w.hand}`}
           />
         );
       })}
 
-      <StatusBanner message={state.message} type={isMyTurn ? "turn" : "info"} />
+      <StatusBanner message={statusMessage} type={isMyTurn ? "turn" : "info"} />
       {error && <StatusBanner message={error} type="error" />}
 
-      <ActionBar title={isMyTurn ? "Tu turno — elige acción" : undefined}>
+      <ActionBar title={isMyTurn ? "Tu turno" : undefined}>
         {canStart && (
           <GameButton
             variant="primary"
-            label={state.phase === "waiting" ? "Iniciar Mano" : "Siguiente Mano"}
+            label={state.phase === "waiting" ? "Iniciar mano" : "Siguiente mano"}
             disabled={loading}
             onClick={() => act({ type: "startHand" })}
           />
@@ -144,13 +156,19 @@ export function PokerTable({
               min={state.currentBet + state.bigBlind}
               value={raiseAmount}
               onChange={(e) => setRaiseAmount(Number(e.target.value))}
-              className="input-field w-24 text-center"
+              className="input-field w-20 text-center sm:w-24"
             />
             <GameButton variant="raise" label="Subir" disabled={loading} onClick={() => act({ type: "raise", amount: raiseAmount })} />
             <GameButton variant="allin" label="All-In" disabled={loading} onClick={() => act({ type: "all-in" })} />
           </>
         )}
+        {isWaitingTurn && (
+          <p className="w-full text-center text-sm text-white/50">
+            Esperando a {currentTurnName}...
+          </p>
+        )}
       </ActionBar>
-    </div>
+      </div>
+    </>
   );
 }

@@ -11,6 +11,7 @@ import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import "@/components/brand/brand-slots.css";
 import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
+import { LandscapeToggle } from "@/components/ui/LandscapeToggle";
 import { groupChipStacks, getChipColorForValue } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
 import "@/components/ui/casino-chip.css";
@@ -354,76 +355,6 @@ function RoundResultOverlay({ result }: { result: HandResult }) {
   );
 }
 
-function ShufflingDeck({ active }: { active: boolean }) {
-  const cards = Array.from({ length: 9 }, (_, i) => ({
-    angle: -36 + i * 9,
-    delay: i * 0.12,
-    i,
-  }));
-
-  return (
-    <div className={`live-shuffle-deck ${active ? "" : "live-shuffle-idle"}`} aria-hidden>
-      {cards.map(({ angle, delay, i }) => (
-        <div
-          key={i}
-          className="live-shuffle-card"
-          style={{
-            left: "42px",
-            bottom: "0",
-            transform: `rotate(${angle}deg)`,
-            animationDelay: active ? `${delay}s` : "0s",
-            zIndex: i,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function CountdownClock({
-  seconds,
-  totalSeconds,
-  label,
-  sublabel,
-}: {
-  seconds: number;
-  totalSeconds: number;
-  label: string;
-  sublabel: string;
-}) {
-  const radius = 48;
-  const circumference = 2 * Math.PI * radius;
-  const progress = Math.max(0, seconds / totalSeconds);
-  const offset = circumference * (1 - progress);
-
-  return (
-    <div className="live-countdown-section">
-      <div className={`live-countdown-ring ${seconds <= 5 ? "live-countdown-urgent" : ""}`}>
-        <svg viewBox="0 0 110 110">
-          <defs>
-            <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#b8860b" />
-              <stop offset="50%" stopColor="#d4af37" />
-              <stop offset="100%" stopColor="#f0d060" />
-            </linearGradient>
-          </defs>
-          <circle className="track" cx="55" cy="55" r={radius} />
-          <circle
-            className="progress"
-            cx="55"
-            cy="55"
-            r={radius}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <span className="live-countdown-time">{label}</span>
-      </div>
-      <p className="live-countdown-sub">{sublabel}</p>
-    </div>
-  );
-}
-
 function RackChipSlice({ value }: { value: number }) {
   const color = getChipColorForValue(value);
   return (
@@ -568,12 +499,10 @@ function TableBackground({
             <span className="brand-table-logo-zone__name">{BRAND_NAME}</span>
           </div>
 
-          {!isRoundEnd && (
-            <p className="live-table-rules">
-              Dealer must stand on 17 and draw to 16
-              <br />
-              Blackjack pays {state.blackjackPayout ?? "3:2"}
-            </p>
+          {(state.phase === "dealing" || dealerReveal.isAnimating) && (
+            <div className="live-dealing-flash" aria-hidden>
+              <span>{dealerReveal.isAnimating ? "Crupier" : "Repartiendo"}</span>
+            </div>
           )}
 
           {(state.dealerHand.length > 0 || state.phase === "betting") && (
@@ -594,14 +523,8 @@ function TableBackground({
 
           {state.phase === "betting" && state.dealerHand.length === 0 && (
             <span className="live-felt-placeholder live-felt-placeholder--center">
-              Esperando apuestas...
+              Apuestas
             </span>
-          )}
-
-          {(state.phase === "dealing" || dealerReveal.isAnimating) && (
-            <div className="live-dealing-flash" aria-hidden>
-              <span>{dealerReveal.isAnimating ? "Crupier jugando..." : "Repartiendo..."}</span>
-            </div>
           )}
 
           {tableBetAmount > 0 && !isRoundEnd && (
@@ -620,7 +543,6 @@ function ControlTablet({
   state,
   displayBet,
   seconds,
-  shufflePct,
   shuffling,
   chips,
   step,
@@ -628,6 +550,9 @@ function ControlTablet({
   canBet,
   betPlaced,
   isMyTurn,
+  isWaitingTurn,
+  currentTurnName,
+  isHost,
   loading,
   error,
   onBet,
@@ -648,7 +573,6 @@ function ControlTablet({
   state: BlackjackState;
   displayBet: number;
   seconds: number;
-  shufflePct: number;
   shuffling: boolean;
   chips: number;
   step: number;
@@ -656,6 +580,9 @@ function ControlTablet({
   canBet: boolean;
   betPlaced: boolean;
   isMyTurn: boolean;
+  isWaitingTurn: boolean;
+  currentTurnName: string | null;
+  isHost: boolean;
   loading: boolean;
   error: string;
   onBet: () => void;
@@ -674,114 +601,83 @@ function ControlTablet({
   dealerAnimating: boolean;
 }) {
   const phase = state.phase;
-
-  const countdownLabel =
-    phase === "betting" ? formatTime(seconds)
-      : phase === "playerTurn" && isMyTurn ? "¡TÚ!"
-      : phase === "dealerTurn" ? "CPU"
-      : phase === "roundEnd" ? "FIN"
-      : formatTime(seconds);
-
-  const countdownSub =
-    phase === "betting" ? `TIEMPO PARA APOSTAR: ${seconds}s`
-      : phase === "dealing" ? "REPARTIENDO CARTAS..."
-      : phase === "playerTurn" && isMyTurn ? "TU TURNO"
-      : phase === "dealerTurn" ? "CRUPIER JUEGA"
-      : phase === "roundEnd" ? "RONDA TERMINADA"
-      : state.message;
-
-  const shuffleLabel =
-    phase === "dealing" || shuffling ? "BARAJEANDO..." : phase === "betting" ? "PREPARANDO MESA..." : "EN JUEGO";
-
   const isCompact = phase === "playerTurn" || phase === "dealerTurn" || phase === "roundEnd" || dealerAnimating;
+
+  const statusLine =
+    dealerAnimating
+      ? "Crupier revelando..."
+      : phase === "betting" && canBet
+        ? `Apostar · ${formatTime(seconds)}`
+        : phase === "betting" && betPlaced
+          ? "Esperando apuestas..."
+          : phase === "playerTurn" && isMyTurn
+            ? "Tu turno"
+            : phase === "playerTurn" && currentTurnName
+              ? `Turno de ${currentTurnName}`
+              : phase === "dealing" || shuffling
+                ? "Repartiendo..."
+                : phase === "roundEnd"
+                  ? "Fin de ronda"
+                  : "En juego";
 
   return (
     <div className="live-tablet-overlay">
       <div className={`live-tablet-panel ${isCompact ? "live-tablet-panel--compact" : ""} ${phase === "roundEnd" ? "live-tablet-panel--round-end" : ""}`}>
         {error && <div className="live-status-banner live-status-error">{error}</div>}
 
-        {!isCompact && (
-          <>
-            <div className="live-shuffle-section">
-              <ShufflingDeck active={phase === "dealing" || shuffling} />
-              <span className="live-shuffle-label">{shuffleLabel}</span>
-              <div className="live-shuffle-progress">
-                <div className="live-shuffle-progress-fill" style={{ width: `${shufflePct}%` }} />
-              </div>
-              <span className="live-shuffle-pct">{shufflePct}% completado</span>
-            </div>
-            <CountdownClock
-              seconds={phase === "betting" ? seconds : 0}
-              totalSeconds={BET_WINDOW_SECONDS}
-              label={countdownLabel}
-              sublabel={countdownSub}
-            />
-          </>
-        )}
+        <p className="live-turn-status">{statusLine}</p>
 
         <div className="live-betting-section">
-          {!isCompact && (
+          {!isCompact && phase === "betting" && canBet && (
             <div className="live-bet-status-row">
               <BetChipPreview amount={displayBet} />
               <div className="live-current-bet">
-                APUESTA: <em>{formatCurrency(displayBet)}</em>
-              </div>
-              <div className="live-current-bet live-current-bet--chips">
-                FICHAS: <em>{formatCurrency(chips)}</em>
+                Apuesta: <em>{formatCurrency(displayBet)}</em>
               </div>
             </div>
           )}
 
-          {(isCompact && phase !== "roundEnd") || dealerAnimating ? (
-            <p className="live-compact-status">
-              {dealerAnimating
-                ? "Crupier sacando cartas..."
-                : phase === "playerTurn" && isMyTurn
-                  ? "Tu turno"
-                  : phase === "dealerTurn"
-                    ? "Crupier..."
-                    : "En juego"}
-              {" · "}Apuesta {formatCurrency(displayBet)}
-            </p>
-          ) : null}
-
           {phase === "betting" && canBet && !betPlaced && (
             <div className="live-action-buttons">
               <button type="button" className="live-btn live-btn-primary" disabled={loading || displayBet < minBet || displayBet > chips} onClick={onBet}>
-                APOSTAR ({formatCurrency(displayBet)})
+                Apostar {formatCurrency(displayBet)}
               </button>
               <button type="button" className="live-btn live-btn-increase" disabled={loading || displayBet + step > chips} onClick={onIncrease}>
                 +{formatCurrency(step)}
               </button>
               <button type="button" className="live-btn live-btn-muted" disabled={loading || displayBet <= minBet} onClick={onDecrease}>
-                -{formatCurrency(step)}
+                −
               </button>
               <button type="button" className="live-btn live-btn-danger" disabled={loading} onClick={onClear}>
-                BORRAR
+                Borrar
               </button>
             </div>
           )}
 
-          {phase === "betting" && betPlaced && (
-            <p className="live-waiting-msg">Apuesta confirmada — esperando jugadores...</p>
+          {isWaitingTurn && (
+            <p className="live-waiting-msg">Esperando a {currentTurnName}...</p>
           )}
 
           {isMyTurn && (
             <div className="live-action-buttons">
-              <button type="button" className="live-btn live-btn-hit" disabled={loading} onClick={onHit}>PEDIR</button>
-              <button type="button" className="live-btn live-btn-stand" disabled={loading} onClick={onStand}>PLANTARSE</button>
-              {showDouble && <button type="button" className="live-btn live-btn-double" disabled={loading} onClick={onDouble}>DOBLAR</button>}
-              {showSplit && <button type="button" className="live-btn live-btn-split" disabled={loading} onClick={onSplit}>DIVIDIR</button>}
-              {showSurrender && <button type="button" className="live-btn live-btn-danger" disabled={loading} onClick={onSurrender}>RENDIRSE</button>}
+              <button type="button" className="live-btn live-btn-hit" disabled={loading} onClick={onHit}>Pedir</button>
+              <button type="button" className="live-btn live-btn-stand" disabled={loading} onClick={onStand}>Plantarse</button>
+              {showDouble && <button type="button" className="live-btn live-btn-double" disabled={loading} onClick={onDouble}>Doblar</button>}
+              {showSplit && <button type="button" className="live-btn live-btn-split" disabled={loading} onClick={onSplit}>Dividir</button>}
+              {showSurrender && <button type="button" className="live-btn live-btn-danger" disabled={loading} onClick={onSurrender}>Rendirse</button>}
             </div>
           )}
 
-          {phase === "roundEnd" && !dealerAnimating && (
+          {phase === "roundEnd" && !dealerAnimating && isHost && (
             <div className="live-action-buttons">
               <button type="button" className="live-btn live-btn-primary" disabled={loading} onClick={onNewRound}>
-                NUEVA RONDA
+                Nueva ronda
               </button>
             </div>
+          )}
+
+          {phase === "roundEnd" && !dealerAnimating && !isHost && (
+            <p className="live-waiting-msg">Esperando al host...</p>
           )}
         </div>
       </div>
@@ -827,10 +723,12 @@ export function LiveCasinoBlackjackUI({
   room,
   playerId,
   onUpdate,
+  isHost = false,
 }: {
   room: Room;
   playerId: string;
   onUpdate: (room: Room) => void;
+  isHost?: boolean;
 }) {
   const state = room.gameState as BlackjackState;
   const myState = state.players.find((p) => p.playerId === playerId);
@@ -849,6 +747,15 @@ export function LiveCasinoBlackjackUI({
     state.players[state.currentPlayerIndex]?.playerId === playerId &&
     activeHand?.status === "active";
 
+  const currentTurnId = state.phase === "playerTurn"
+    ? state.players[state.currentPlayerIndex]?.playerId
+    : null;
+  const currentTurnName = currentTurnId
+    ? room.players.find((p) => p.id === currentTurnId)?.name ?? "Jugador"
+    : null;
+  const isWaitingTurn =
+    state.phase === "playerTurn" && !isMyTurn && !!myState;
+
   const betPlaced = state.phase === "betting" && committedBet >= state.minBet;
   const canBet = state.phase === "betting" && !betPlaced;
 
@@ -856,7 +763,6 @@ export function LiveCasinoBlackjackUI({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [seconds, setSeconds] = useState(BET_WINDOW_SECONDS);
-  const [shufflePct, setShufflePct] = useState(0);
   const [copied, setCopied] = useState(false);
   const [betAnimating, setBetAnimating] = useState(false);
   const prevCommittedBetRef = useRef(0);
@@ -904,15 +810,6 @@ export function LiveCasinoBlackjackUI({
     if (state.phase !== "betting") return;
     const id = setInterval(() => setSeconds((s) => (s <= 0 ? BET_WINDOW_SECONDS : s - 1)), 1000);
     return () => clearInterval(id);
-  }, [state.phase]);
-
-  useEffect(() => {
-    if (state.phase === "dealing") { setShufflePct(100); return; }
-    if (state.phase === "betting") {
-      const id = setInterval(() => setShufflePct((p) => (p >= 90 ? 0 : p + 2)), 400);
-      return () => clearInterval(id);
-    }
-    setShufflePct(100);
   }, [state.phase]);
 
   useEffect(() => {
@@ -964,7 +861,9 @@ export function LiveCasinoBlackjackUI({
   const showResultOverlay = isRoundEnd && dealerReveal.complete && !!myResult;
 
   return (
-    <div className="live-casino-root">
+    <>
+      <LandscapeToggle />
+      <div className="live-casino-root landscape-play-root">
       <BrandHeaderBar
         roomCode={room.code}
         copied={copied}
@@ -978,15 +877,18 @@ export function LiveCasinoBlackjackUI({
       <div className="live-casino-ambient" aria-hidden />
 
       <div className="live-players-panel">
-        {room.players.map((p) => {
+        {room.players
+          .filter((p) => (p.seatStatus ?? "active") === "active")
+          .map((p) => {
           const ps = state.players.find((s) => s.playerId === p.id);
           const bet = ps?.hands[0]?.bet ?? 0;
           const isMe = p.id === playerId;
+          const isTurn = currentTurnId === p.id;
           return (
-            <div key={p.id} className={`live-player-row ${isMe ? "is-me" : ""}`}>
-              <span>{p.name}{isMe ? " (Tú)" : ""}</span>
+            <div key={p.id} className={`live-player-row ${isMe ? "is-me" : ""} ${isTurn ? "is-turn" : ""}`}>
+              <span>{p.name}{isMe ? " (Tú)" : ""}{isTurn ? " ◀" : ""}</span>
               <span>{formatCurrency(p.chips)}</span>
-              {state.phase === "betting" && (
+              {state.phase === "betting" && ps && (
                 <span className={bet >= state.minBet ? "live-bet-done" : "live-bet-pending"}>
                   {bet >= state.minBet ? "✓" : "…"}
                 </span>
@@ -1024,7 +926,6 @@ export function LiveCasinoBlackjackUI({
         state={state}
         displayBet={displayBet}
         seconds={seconds}
-        shufflePct={shufflePct}
         shuffling={shuffling}
         chips={chips}
         step={step}
@@ -1032,6 +933,9 @@ export function LiveCasinoBlackjackUI({
         canBet={canBet}
         betPlaced={betPlaced}
         isMyTurn={isMyTurn}
+        isWaitingTurn={isWaitingTurn}
+        currentTurnName={currentTurnName}
+        isHost={isHost}
         loading={loading}
         error={error}
         onBet={onBet}
@@ -1050,5 +954,6 @@ export function LiveCasinoBlackjackUI({
         dealerAnimating={dealerReveal.isAnimating}
       />
     </div>
+    </>
   );
 }

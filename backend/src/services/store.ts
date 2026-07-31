@@ -31,6 +31,8 @@ function dbPlayerToPlayer(row: DatabasePlayer): Player {
     isHost: row.is_host,
     isConnected: row.is_connected,
     joinedAt: new Date(row.joined_at).getTime(),
+    seatStatus: row.seat_status ?? "active",
+    gameVote: (row.game_vote as GameType | null) ?? null,
   };
 }
 
@@ -127,6 +129,8 @@ export async function saveRoom(room: Room): Promise<void> {
           chips: p.chips,
           is_host: p.isHost,
           is_connected: p.isConnected,
+          seat_status: p.seatStatus ?? "active",
+          game_vote: p.gameVote ?? null,
         }))
       );
     }

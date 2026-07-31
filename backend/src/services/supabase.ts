@@ -42,4 +42,6 @@ export type DatabasePlayer = {
   is_host: boolean;
   is_connected: boolean;
   joined_at: string;
+  seat_status?: "active" | "waiting";
+  game_vote?: "blackjack" | "poker" | null;
 };

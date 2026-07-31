@@ -301,7 +301,11 @@ function resolveAgainstDealer(state: BlackjackState): BlackjackState {
 }
 
 function finalizeRound(state: BlackjackState): BlackjackState {
-  return { ...state, dealerHand: revealDealer(state.dealerHand) };
+  return {
+    ...state,
+    dealerHand: revealDealer(state.dealerHand),
+    dealerRevealAt: state.dealerRevealAt ?? Date.now(),
+  };
 }
 
 function updatePlayerHand(

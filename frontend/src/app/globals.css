@@ -566,4 +566,30 @@
   .animate-turn-ring {
     animation: turnRing 1.5s ease-in-out infinite;
   }
+
+  .poker-table-root {
+    @apply pb-4;
+  }
+
+  .poker-seats-grid .player-seat {
+    @apply p-3;
+  }
+
+  @media (max-width: 640px) {
+    .poker-table-root .action-bar {
+      @apply sticky bottom-0 z-20 rounded-t-2xl border-b-0 p-3;
+    }
+
+    .poker-seats-grid {
+      @apply grid-cols-1 gap-2;
+    }
+
+    .poker-table-root .community-row {
+      @apply scale-90;
+    }
+
+    .poker-table-root .game-btn {
+      @apply min-w-[72px] px-2 py-2 text-xs;
+    }
+  }
 }

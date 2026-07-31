@@ -7,10 +7,19 @@ export function BlackjackTable({
   room,
   playerId,
   onUpdate,
+  isHost = false,
 }: {
   room: Room;
   playerId: string;
   onUpdate: (room: Room) => void;
+  isHost?: boolean;
 }) {
-  return <LiveCasinoBlackjackUI room={room} playerId={playerId} onUpdate={onUpdate} />;
+  return (
+    <LiveCasinoBlackjackUI
+      room={room}
+      playerId={playerId}
+      onUpdate={onUpdate}
+      isHost={isHost}
+    />
+  );
 }

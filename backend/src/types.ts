@@ -20,6 +20,8 @@ export interface Card {
   hidden?: boolean;
 }
 
+export type SeatStatus = "active" | "waiting";
+
 export interface Player {
   id: string;
   name: string;
@@ -27,6 +29,10 @@ export interface Player {
   isHost: boolean;
   isConnected: boolean;
   joinedAt: number;
+  /** active = en mesa; waiting = en sala de espera hasta la próxima ronda */
+  seatStatus?: SeatStatus;
+  /** Voto de juego en lobby (blackjack | poker) */
+  gameVote?: GameType | null;
 }
 
 export type GameType = "blackjack" | "poker";
@@ -97,6 +103,8 @@ export interface BlackjackState extends BaseGameState {
   blackjackPayout: "3:2" | "6:5";
   /** Rendición temprana disponible (50% de apuesta) */
   allowSurrender: boolean;
+  /** Timestamp servidor — sincroniza animación del crupier en todos los clientes */
+  dealerRevealAt?: number;
 }
 
 // ─── Poker (Texas Hold'em) ───────────────────────────────────

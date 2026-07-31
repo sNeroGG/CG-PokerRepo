@@ -11,6 +11,39 @@ import type {
 
 const STARTING_CHIPS = 1000;
 
+function promoteWaitingPlayers(room: Room): void {
+  for (const p of room.players) {
+    if (p.seatStatus === "waiting") p.seatStatus = "active";
+  }
+}
+
+function getSeatedPlayers(room: Room): Player[] {
+  return room.players.filter(
+    (p) => p.isConnected && (p.seatStatus ?? "active") === "active"
+  );
+}
+
+function resolveGameFromVotes(room: Room): GameType | null {
+  if (room.gameType) return room.gameType;
+
+  const connected = room.players.filter((p) => p.isConnected);
+  const votes = connected.map((p) => p.gameVote).filter(Boolean) as GameType[];
+  if (votes.length === 0) return null;
+
+  let blackjack = 0;
+  let poker = 0;
+  for (const v of votes) {
+    if (v === "blackjack") blackjack++;
+    else poker++;
+  }
+
+  if (blackjack > poker) return "blackjack";
+  if (poker > blackjack) return "poker";
+
+  const host = connected.find((p) => p.id === room.hostId);
+  return host?.gameVote ?? votes[0] ?? null;
+}
+
 function syncBlackjackPayouts(room: Room): void {
   const state = room.gameState as BlackjackState;
   if (state.phase !== "roundEnd") return;
@@ -56,6 +89,7 @@ export async function createRoom(hostName: string, hostId: string): Promise<Room
     isHost: true,
     isConnected: true,
     joinedAt: Date.now(),
+    seatStatus: "active",
   };
 
   const room: Room = {
@@ -80,7 +114,6 @@ export async function joinRoom(
 ): Promise<{ room: Room } | { error: string }> {
   const room = await getRoom(code);
   if (!room) return { error: "Sala no encontrada" };
-  if (room.status !== "lobby") return { error: "La partida ya comenzó" };
 
   const existing = room.players.find((p) => p.id === playerId);
   if (existing) {
@@ -92,6 +125,8 @@ export async function joinRoom(
 
   if (room.players.length >= 6) return { error: "Sala llena (máx. 6 jugadores)" };
 
+  const joiningMidGame = room.status === "playing";
+
   room.players.push({
     id: playerId,
     name: playerName,
@@ -99,6 +134,7 @@ export async function joinRoom(
     isHost: false,
     isConnected: true,
     joinedAt: Date.now(),
+    seatStatus: joiningMidGame ? "waiting" : "active",
   });
 
   await saveRoom(room);
@@ -120,6 +156,23 @@ export async function setGameType(
   return { room };
 }
 
+export async function voteGame(
+  code: string,
+  playerId: string,
+  gameType: GameType
+): Promise<{ room: Room } | { error: string }> {
+  const room = await getRoom(code);
+  if (!room) return { error: "Sala no encontrada" };
+  if (room.status !== "lobby") return { error: "La partida ya comenzó" };
+
+  const player = room.players.find((p) => p.id === playerId);
+  if (!player) return { error: "Jugador no encontrado" };
+
+  player.gameVote = gameType;
+  await saveRoom(room);
+  return { room };
+}
+
 export async function startGame(
   code: string,
   hostId: string
@@ -127,18 +180,22 @@ export async function startGame(
   const room = await getRoom(code);
   if (!room) return { error: "Sala no encontrada" };
   if (room.hostId !== hostId) return { error: "Solo el host puede iniciar" };
-  if (!room.gameType) return { error: "Selecciona un juego primero" };
   if (room.status !== "lobby") return { error: "La partida ya comenzó" };
 
-  const connected = room.players.filter((p) => p.isConnected);
+  const gameType = resolveGameFromVotes(room);
+  if (!gameType) return { error: "Vota por un juego primero" };
+
+  room.gameType = gameType;
+
+  const seated = getSeatedPlayers(room);
   const engine = getEngine(room.gameType);
 
-  if (connected.length < engine.minPlayers) {
+  if (seated.length < engine.minPlayers) {
     return { error: `Mínimo ${engine.minPlayers} jugador(es) requerido(s)` };
   }
 
   room.status = "playing";
-  room.gameState = engine.createInitialState(connected);
+  room.gameState = engine.createInitialState(seated);
   await saveRoom(room);
   return { room };
 }
@@ -155,6 +212,16 @@ export async function applyGameAction(
   const engine = getEngine(room.gameType);
   const player = room.players.find((p) => p.id === playerId);
   if (!player) return { error: "Jugador no encontrado" };
+  if (player.seatStatus === "waiting") {
+    return { error: "Estás en sala de espera hasta la próxima ronda" };
+  }
+
+  if (
+    (action.type === "newRound" || action.type === "startHand") &&
+    room.hostId !== playerId
+  ) {
+    return { error: "Solo el host puede iniciar la siguiente ronda" };
+  }
 
   const valid = engine.getValidActions(room.gameState, playerId);
   if (!valid.some((v) => v.type === action.type)) {
@@ -185,15 +252,17 @@ export async function applyGameAction(
   }
 
   if (action.type === "newRound" && room.gameType === "blackjack") {
-    const connected = room.players.filter((p) => p.isConnected);
-    room.gameState = engine.createInitialState(connected);
+    promoteWaitingPlayers(room);
+    const seated = getSeatedPlayers(room);
+    room.gameState = engine.createInitialState(seated);
     await saveRoom(room);
     return { room };
   }
 
   if (action.type === "startHand" && room.gameType === "poker") {
-    const connected = room.players.filter((p) => p.isConnected);
-    room.gameState = engine.createInitialState(connected);
+    promoteWaitingPlayers(room);
+    const seated = getSeatedPlayers(room);
+    room.gameState = engine.createInitialState(seated);
     room.gameState = engine.applyAction(room.gameState, playerId, action);
     deductPokerBlinds(room);
     await saveRoom(room);
