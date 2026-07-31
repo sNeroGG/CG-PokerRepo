@@ -423,6 +423,16 @@
       bg-casino-gold/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-casino-gold;
   }
 
+  .lobby-vote-btn {
+    @apply flex flex-col items-center gap-0.5 rounded-xl border border-white/15
+      bg-white/5 px-3 py-2 transition-all hover:border-casino-gold/40 hover:bg-casino-gold/10
+      disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .lobby-vote-btn--active {
+    @apply border-casino-gold/50 bg-casino-gold/15 ring-1 ring-casino-gold/30;
+  }
+
   .auth-player-row {
     @apply flex items-center justify-between rounded-xl border border-white/5
       bg-black px-3 py-2.5 text-sm transition-colors;

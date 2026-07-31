@@ -39,9 +39,7 @@ export function PlayerList({
                   <span className="ml-1.5 text-[10px] text-white/40">(Espera)</span>
                 )}
                 {player.gameVote && (
-                  <span className="ml-1.5 text-[10px] text-casino-gold/70">
-                    {player.gameVote === "blackjack" ? "🃏" : "♠️"}
-                  </span>
+                  <span className="ml-1.5 text-[10px]" title="Votó por un juego">😊</span>
                 )}
               </span>
               <div className="flex items-center gap-1.5">

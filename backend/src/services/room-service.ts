@@ -45,34 +45,6 @@ function setLobbyVote(room: Room, playerId: string, gameType: GameType): void {
   if (player) player.gameVote = gameType;
 }
 
-function getPlayerVote(room: Room, player: Player): GameType | null {
-  if (player.gameVote) return player.gameVote;
-  return getLobbyVotes(room)[player.id] ?? null;
-}
-
-function resolveGameFromVotes(room: Room): GameType | null {
-  if (room.gameType) return room.gameType;
-
-  const connected = room.players.filter((p) => p.isConnected);
-  const votes = connected
-    .map((p) => getPlayerVote(room, p))
-    .filter(Boolean) as GameType[];
-  if (votes.length === 0) return null;
-
-  let blackjack = 0;
-  let poker = 0;
-  for (const v of votes) {
-    if (v === "blackjack") blackjack++;
-    else poker++;
-  }
-
-  if (blackjack > poker) return "blackjack";
-  if (poker > blackjack) return "poker";
-
-  const host = connected.find((p) => p.id === room.hostId);
-  return (host ? getPlayerVote(room, host) : null) ?? votes[0] ?? null;
-}
-
 function syncBlackjackPayouts(room: Room): void {
   const state = room.gameState as BlackjackState;
   if (state.phase !== "roundEnd") return;
@@ -182,7 +154,7 @@ export async function setGameType(
 
   room.gameType = gameType;
   await saveRoom(room);
-  return { room };
+  return { room: hydrateLobbyVotes(room) };
 }
 
 export async function voteGame(
@@ -210,11 +182,7 @@ export async function startGame(
   if (!room) return { error: "Sala no encontrada" };
   if (room.hostId !== hostId) return { error: "Solo el host puede iniciar" };
   if (room.status !== "lobby") return { error: "La partida ya comenzó" };
-
-  const gameType = resolveGameFromVotes(room);
-  if (!gameType) return { error: "Vota por un juego primero" };
-
-  room.gameType = gameType;
+  if (!room.gameType) return { error: "El host debe seleccionar un juego primero" };
 
   const seated = getSeatedPlayers(room);
   const engine = getEngine(room.gameType);

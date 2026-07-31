@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPlayerId, api } from "@/lib/client";
 import { useRoom } from "@/hooks/useRoom";
@@ -22,6 +22,10 @@ function countVotes(players: Room["players"], gameId: GameType) {
   return players.filter((p) => p.isConnected && p.gameVote === gameId).length;
 }
 
+function votersFor(players: Room["players"], gameId: GameType) {
+  return players.filter((p) => p.isConnected && p.gameVote === gameId);
+}
+
 export default function RoomPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const router = useRouter();
@@ -35,17 +39,10 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const me = room?.players.find((p) => p.id === playerId);
   const isWaiting = me?.seatStatus === "waiting";
   const myVote = me?.gameVote ?? null;
+  const selectedGame = room?.gameType ?? null;
 
-  const leadingGame = useMemo(() => {
-    if (!room) return null;
-    const bj = countVotes(room.players, "blackjack");
-    const pk = countVotes(room.players, "poker");
-    if (bj > pk) return "blackjack";
-    if (pk > bj) return "poker";
-    return null;
-  }, [room]);
-
-  async function voteGame(gameType: GameType) {
+  async function voteGame(gameType: GameType, e?: React.MouseEvent) {
+    e?.stopPropagation();
     setActionLoading(true);
     setActionError("");
     try {
@@ -54,8 +51,25 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({ playerId, gameType }),
       });
       setRoom(updated);
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Error");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function selectGame(gameType: GameType) {
+    if (!isHost) return;
+    setActionLoading(true);
+    setActionError("");
+    try {
+      const { room: updated } = await api<{ room: Room }>(`/api/rooms/${code}/game-type`, {
+        method: "POST",
+        body: JSON.stringify({ playerId, gameType }),
+      });
+      setRoom(updated);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Error");
     } finally {
       setActionLoading(false);
     }
@@ -70,8 +84,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({ playerId }),
       });
       setRoom(updated);
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Error");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Error");
     } finally {
       setActionLoading(false);
     }
@@ -101,7 +115,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   const playing = room.status === "playing";
   const isBlackjack = playing && room.gameType === "blackjack";
-  const totalVotes = room.players.filter((p) => p.isConnected && p.gameVote).length;
 
   if (playing && isWaiting) {
     return (
@@ -198,18 +211,20 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           <PlayerList players={room.players} currentPlayerId={playerId} variant="auth" />
           <p className="border-t border-white/5 pt-3 text-xs text-white/40">
             {isHost
-              ? "Inicia cuando haya votos suficientes"
-              : "Vota por el juego que quieres jugar"}
+              ? "Tú eliges el juego. Los demás solo votan 😊"
+              : "Vota 😊 tu preferencia. El host elige el juego."}
           </p>
         </aside>
 
         <section className="auth-panel min-h-[420px] space-y-6">
           <div className="text-center">
-            <h2 className="font-display text-xl text-white">Vota por el juego</h2>
+            <h2 className="font-display text-xl text-white">
+              {isHost ? "Elige el juego" : "Lobby de espera"}
+            </h2>
             <p className="auth-subtitle !mt-1 !normal-case !tracking-normal">
-              {totalVotes > 0
-                ? `${totalVotes} voto${totalVotes !== 1 ? "s" : ""} registrado${totalVotes !== 1 ? "s" : ""}`
-                : "Todos pueden votar antes de empezar"}
+              {isHost
+                ? "Selecciona un juego para jugar. Los votos 😊 son solo referencia."
+                : "Pulsa 😊 para votar. El host decide cuál se juega."}
             </p>
           </div>
 
@@ -217,33 +232,79 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             {GAMES.map((g) => {
               const votes = countVotes(room.players, g.id);
               const isMyVote = myVote === g.id;
-              const isLeading = leadingGame === g.id && votes > 0;
+              const isSelected = selectedGame === g.id;
+              const voterNames = votersFor(room.players, g.id)
+                .map((p) => (p.id === playerId ? "Tú" : p.name))
+                .slice(0, 4);
 
               return (
-                <button
+                <div
                   key={g.id}
-                  disabled={actionLoading}
-                  onClick={() => voteGame(g.id)}
-                  className={`auth-game-card disabled:opacity-60
-                    ${isMyVote ? "auth-game-card-selected" : ""}
-                    ${isLeading ? "ring-1 ring-casino-gold/40" : ""}`}
+                  role={isHost ? "button" : undefined}
+                  tabIndex={isHost ? 0 : undefined}
+                  onClick={isHost ? () => selectGame(g.id) : undefined}
+                  onKeyDown={
+                    isHost
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") selectGame(g.id);
+                        }
+                      : undefined
+                  }
+                  className={`auth-game-card text-left transition-all
+                    ${isSelected ? "auth-game-card-selected ring-2 ring-casino-gold" : ""}
+                    ${isHost ? "cursor-pointer hover:border-casino-gold/40" : "cursor-default"}`}
                 >
-                  <span className="text-4xl">{g.icon}</span>
-                  <h3 className="mt-3 font-display text-lg font-bold text-white">{g.name}</h3>
-                  <p className="mt-1 text-sm text-white/50">{g.desc}</p>
-                  <p className="mt-3 text-xs text-casino-gold">
-                    {g.min}–{g.max} jugadores
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    <span className="auth-badge">{votes} voto{votes !== 1 ? "s" : ""}</span>
-                    {isMyVote && (
-                      <span className="text-[10px] text-casino-gold">✓ Tu voto</span>
-                    )}
-                    {isLeading && votes > 0 && (
-                      <span className="text-[10px] text-white/50">Liderando</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-4xl">{g.icon}</span>
+                    {isSelected && (
+                      <span className="auth-badge shrink-0">Elegido</span>
                     )}
                   </div>
-                </button>
+                  <h3 className="mt-3 font-display text-lg font-bold text-white">{g.name}</h3>
+                  <p className="mt-1 text-sm text-white/50">{g.desc}</p>
+                  <p className="mt-2 text-xs text-casino-gold">
+                    {g.min}–{g.max} jugadores
+                  </p>
+
+                  {/* Votos — todos */}
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-white/40">
+                        Votos
+                      </p>
+                      <p className="text-sm text-white/70">
+                        {votes > 0 ? (
+                          <>
+                            {votes} 😊
+                            <span className="ml-1 text-xs text-white/40">
+                              ({voterNames.join(", ")})
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-white/30">Nadie aún</span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={(e) => voteGame(g.id, e)}
+                      className={`lobby-vote-btn shrink-0 ${isMyVote ? "lobby-vote-btn--active" : ""}`}
+                      title="Votar por este juego"
+                    >
+                      <span className="text-xl leading-none">😊</span>
+                      <span className="text-[10px] font-semibold">
+                        {isMyVote ? "Votaste" : "Votar"}
+                      </span>
+                    </button>
+                  </div>
+
+                  {isHost && (
+                    <p className="mt-2 text-center text-[10px] text-white/35">
+                      {isSelected ? "✓ Seleccionado para jugar" : "Clic en la tarjeta para elegir"}
+                    </p>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -252,21 +313,18 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             <div className="text-center space-y-2">
               <button
                 className="auth-btn-primary max-w-xs mx-auto"
-                disabled={actionLoading || totalVotes === 0}
+                disabled={actionLoading || !selectedGame}
                 onClick={startGame}
               >
                 {actionLoading ? "Iniciando..." : "▶ Iniciar Partida"}
               </button>
-              {totalVotes === 0 && (
-                <p className="text-xs text-white/40">Se necesita al menos un voto</p>
+              {!selectedGame && (
+                <p className="text-xs text-white/40">Selecciona un juego en las tarjetas de arriba</p>
               )}
-              {leadingGame && totalVotes > 0 && (
-                <p className="text-xs text-white/40">
-                  Se iniciará: {GAMES.find((g) => g.id === leadingGame)?.name}
+              {selectedGame && (
+                <p className="text-xs text-casino-gold/80">
+                  Juego elegido: {GAMES.find((g) => g.id === selectedGame)?.name}
                 </p>
-              )}
-              {!leadingGame && totalVotes > 0 && (
-                <p className="text-xs text-white/40">Empate — gana el voto del host</p>
               )}
             </div>
           )}
@@ -274,8 +332,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           {!isHost && (
             <p className="text-center text-xs text-white/40">
               {myVote
-                ? "Esperando a que el host inicie la partida..."
-                : "Selecciona un juego para votar"}
+                ? `Votaste por ${GAMES.find((g) => g.id === myVote)?.name}. Esperando al host...`
+                : "Pulsa 😊 en el juego que prefieres"}
             </p>
           )}
 
