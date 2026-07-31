@@ -59,7 +59,7 @@ export interface Room {
   gameType: GameType | null;
   status: RoomStatus;
   players: Player[];
-  gameState: GameState | null;
+  gameState: GameState | LobbyState | null;
   createdAt: number;
   updatedAt: number;
 }

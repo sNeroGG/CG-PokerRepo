@@ -195,7 +195,9 @@ export async function applyGameAction(
 ): Promise<{ room: Room } | { error: string }> {
   const room = await getRoom(code);
   if (!room) return { error: "Sala no encontrada" };
-  if (!room.gameType || !room.gameState) return { error: "No hay partida activa" };
+  if (!room.gameType || !room.gameState || isLobbyState(room.gameState)) {
+    return { error: "No hay partida activa" };
+  }
 
   const engine = getEngine(room.gameType);
   const player = room.players.find((p) => p.id === playerId);
@@ -324,7 +326,12 @@ function deductPokerAction(
 
 export function getPublicRoom(room: Room, viewerId?: string): Room {
   const hydrated = hydrateLobbyVotes(room);
-  if (hydrated.status === "lobby" || !hydrated.gameType || !hydrated.gameState) {
+  if (
+    hydrated.status === "lobby" ||
+    !hydrated.gameType ||
+    !hydrated.gameState ||
+    isLobbyState(hydrated.gameState)
+  ) {
     return hydrated;
   }
   const engine = getEngine(hydrated.gameType);
