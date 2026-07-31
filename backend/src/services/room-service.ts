@@ -24,15 +24,6 @@ function getSeatedPlayers(room: Room): Player[] {
   );
 }
 
-export function hydrateLobbyVotes(room: Room): Room {
-  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return room;
-  const votes = room.gameState.lobbyVotes;
-  for (const player of room.players) {
-    if (votes[player.id]) player.gameVote = votes[player.id];
-  }
-  return room;
-}
-
 function getLobbyVotes(room: Room): Record<string, GameType> {
   if (room.status !== "lobby" || !isLobbyState(room.gameState)) return {};
   return room.gameState.lobbyVotes;
