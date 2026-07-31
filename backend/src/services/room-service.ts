@@ -1,5 +1,5 @@
 import { getEngine } from "../games/registry";
-import { generateRoomCode, getRoom, saveRoom } from "./store";
+import { generateRoomCode, getRoom, saveRoom, hydrateLobbyVotes } from "./store";
 import type {
   BlackjackState,
   GameActionPayload,
@@ -8,6 +8,7 @@ import type {
   PokerState,
   Room,
 } from "../types";
+import { isLobbyState } from "../types";
 
 const STARTING_CHIPS = 1000;
 
@@ -23,11 +24,39 @@ function getSeatedPlayers(room: Room): Player[] {
   );
 }
 
+export function hydrateLobbyVotes(room: Room): Room {
+  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return room;
+  const votes = room.gameState.lobbyVotes;
+  for (const player of room.players) {
+    if (votes[player.id]) player.gameVote = votes[player.id];
+  }
+  return room;
+}
+
+function getLobbyVotes(room: Room): Record<string, GameType> {
+  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return {};
+  return room.gameState.lobbyVotes;
+}
+
+function setLobbyVote(room: Room, playerId: string, gameType: GameType): void {
+  const votes = { ...getLobbyVotes(room), [playerId]: gameType };
+  room.gameState = { lobbyVotes: votes };
+  const player = room.players.find((p) => p.id === playerId);
+  if (player) player.gameVote = gameType;
+}
+
+function getPlayerVote(room: Room, player: Player): GameType | null {
+  if (player.gameVote) return player.gameVote;
+  return getLobbyVotes(room)[player.id] ?? null;
+}
+
 function resolveGameFromVotes(room: Room): GameType | null {
   if (room.gameType) return room.gameType;
 
   const connected = room.players.filter((p) => p.isConnected);
-  const votes = connected.map((p) => p.gameVote).filter(Boolean) as GameType[];
+  const votes = connected
+    .map((p) => getPlayerVote(room, p))
+    .filter(Boolean) as GameType[];
   if (votes.length === 0) return null;
 
   let blackjack = 0;
@@ -41,7 +70,7 @@ function resolveGameFromVotes(room: Room): GameType | null {
   if (poker > blackjack) return "poker";
 
   const host = connected.find((p) => p.id === room.hostId);
-  return host?.gameVote ?? votes[0] ?? null;
+  return (host ? getPlayerVote(room, host) : null) ?? votes[0] ?? null;
 }
 
 function syncBlackjackPayouts(room: Room): void {
@@ -168,9 +197,9 @@ export async function voteGame(
   const player = room.players.find((p) => p.id === playerId);
   if (!player) return { error: "Jugador no encontrado" };
 
-  player.gameVote = gameType;
+  setLobbyVote(room, playerId, gameType);
   await saveRoom(room);
-  return { room };
+  return { room: hydrateLobbyVotes(room) };
 }
 
 export async function startGame(
@@ -335,10 +364,13 @@ function deductPokerAction(
 }
 
 export function getPublicRoom(room: Room, viewerId?: string): Room {
-  if (!room.gameState || !room.gameType) return room;
-  const engine = getEngine(room.gameType);
+  const hydrated = hydrateLobbyVotes(room);
+  if (hydrated.status === "lobby" || !hydrated.gameType || !hydrated.gameState) {
+    return hydrated;
+  }
+  const engine = getEngine(hydrated.gameType);
   return {
-    ...room,
-    gameState: engine.getPublicState(room.gameState, viewerId),
+    ...hydrated,
+    gameState: engine.getPublicState(hydrated.gameState, viewerId),
   };
 }

@@ -39,6 +39,20 @@ export type GameType = "blackjack" | "poker";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
+/** Votos de juego en lobby — se guarda en rooms.game_state mientras status === "lobby" */
+export interface LobbyState {
+  lobbyVotes: Record<string, GameType>;
+}
+
+export function isLobbyState(state: unknown): state is LobbyState {
+  return (
+    typeof state === "object" &&
+    state !== null &&
+    "lobbyVotes" in state &&
+    typeof (state as LobbyState).lobbyVotes === "object"
+  );
+}
+
 export interface Room {
   code: string;
   hostId: string;

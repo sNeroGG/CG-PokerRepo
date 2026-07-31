@@ -4,6 +4,7 @@ import {
   type DatabaseRoom,
 } from "./supabase";
 import type { GameType, Player, Room, RoomStatus } from "../types";
+import { isLobbyState } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const memoryRooms = new Map<string, Room>();
@@ -38,7 +39,7 @@ function dbPlayerToPlayer(row: DatabasePlayer): Player {
 }
 
 function assembleRoom(row: DatabaseRoom, players: DatabasePlayer[]): Room {
-  return {
+  const room: Room = {
     code: row.code,
     hostId: row.host_id,
     gameType: row.game_type as GameType | null,
@@ -48,6 +49,16 @@ function assembleRoom(row: DatabaseRoom, players: DatabasePlayer[]): Room {
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
   };
+  return hydrateLobbyVotes(room);
+}
+
+export function hydrateLobbyVotes(room: Room): Room {
+  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return room;
+  const votes = room.gameState.lobbyVotes;
+  for (const player of room.players) {
+    if (votes[player.id]) player.gameVote = votes[player.id];
+  }
+  return room;
 }
 
 function isMissingColumnError(message: string): boolean {
@@ -157,7 +168,8 @@ export async function getRoom(code: string): Promise<Room | null> {
     return assembleRoom(row as DatabaseRoom, (players ?? []) as DatabasePlayer[]);
   }
 
-  return globalMemory().get(normalized) ?? null;
+  const mem = globalMemory().get(normalized);
+  return mem ? hydrateLobbyVotes(structuredClone(mem)) : null;
 }
 
 export async function saveRoom(room: Room): Promise<void> {
