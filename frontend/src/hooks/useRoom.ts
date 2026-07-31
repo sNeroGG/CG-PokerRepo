@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Room } from "@cg/backend/types";
-import { api } from "@/lib/client";
+import { api, getPlayerName } from "@/lib/client";
 import { createSupabaseBrowser, isSupabaseEnabled } from "@/lib/supabase/client";
 
 const POLL_MS = 2000;
@@ -12,12 +12,35 @@ export function useRoom(code: string, playerId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const mounted = useRef(true);
+  const triedRejoin = useRef(false);
 
   const fetchRoom = useCallback(async () => {
     try {
-      const { room: data } = await api<{ room: Room }>(
+      let { room: data } = await api<{ room: Room }>(
         `/api/rooms/${code}?playerId=${playerId}`
       );
+
+      if (
+        playerId &&
+        !data.players.some((p) => p.id === playerId) &&
+        !triedRejoin.current
+      ) {
+        triedRejoin.current = true;
+        try {
+          const playerName = getPlayerName().trim() || "Jugador";
+          const joined = await api<{ room: Room }>(
+            `/api/rooms/${code}/join`,
+            {
+              method: "POST",
+              body: JSON.stringify({ playerId, playerName }),
+            }
+          );
+          data = joined.room;
+        } catch {
+          /* rejoin falló — se reintenta al recargar la página */
+        }
+      }
+
       if (mounted.current) {
         setRoom(data);
         setError("");

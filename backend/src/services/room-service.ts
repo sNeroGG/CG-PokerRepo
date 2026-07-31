@@ -131,7 +131,7 @@ export async function joinRoom(
     id: playerId,
     name: playerName,
     chips: STARTING_CHIPS,
-    isHost: false,
+    isHost: playerId === room.hostId,
     isConnected: true,
     joinedAt: Date.now(),
     seatStatus: joiningMidGame ? "waiting" : "active",
