@@ -11,8 +11,8 @@ import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import "@/components/brand/brand-slots.css";
 import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
-import { LandscapeToggle } from "@/components/ui/LandscapeToggle";
-import { groupChipStacks, getChipColorForValue } from "@/lib/game-logic/chips";
+import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
+import { groupChipStacks } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
 import "@/components/ui/casino-chip.css";
 import "./live-casino.css";
@@ -355,34 +355,6 @@ function RoundResultOverlay({ result }: { result: HandResult }) {
   );
 }
 
-function RackChipSlice({ value }: { value: number }) {
-  const color = getChipColorForValue(value);
-  return (
-    <div className={`live-rack-chip live-rack-chip--${color}`}>
-      <span className="live-rack-chip__inlay" aria-hidden />
-    </div>
-  );
-}
-
-function ChipRack({ side }: { side: "left" | "right" }) {
-  const rackValues =
-    side === "left"
-      ? [100, 100, 500, 500, 1000]
-      : [500, 100, 1000, 500, 100, 100];
-
-  return (
-    <div className={`live-chip-racks ${side}`}>
-      <div className="live-chip-rack">
-        <div className="live-chip-rack-tray">
-          {rackValues.map((value, i) => (
-            <RackChipSlice key={`${side}-${value}-${i}`} value={value} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function BetChipPreview({ amount }: { amount: number }) {
   const groups = groupChipStacks(amount);
 
@@ -420,21 +392,34 @@ function BetChipPreview({ amount }: { amount: number }) {
 
 function TableBetSpot({
   amount,
+  label,
   animating,
+  position = 0,
+  isMe = false,
+  compact = false,
 }: {
   amount: number;
+  label: string;
   animating: boolean;
+  position?: number;
+  isMe?: boolean;
+  compact?: boolean;
 }) {
   if (amount <= 0) return null;
 
   return (
-    <div className={`live-table-bet-spot ${animating ? "live-table-bet-spot--animating" : ""}`}>
+    <div
+      className={`live-table-bet-spot live-table-bet-spot--pos-${Math.min(position, 5)}
+        ${isMe ? "live-table-bet-spot--me" : ""}
+        ${compact ? "live-table-bet-spot--sm" : ""}
+        ${animating ? "live-table-bet-spot--animating" : ""}`}
+    >
       <div className="live-table-bet-spot__ring" aria-hidden />
-      <span className="live-table-bet-spot__label">Tu apuesta</span>
+      <span className="live-table-bet-spot__label">{label}</span>
       <CasinoChipStack
         amount={amount}
-        size="md"
-        maxChips={6}
+        size={compact ? "sm" : "md"}
+        maxChips={compact ? 4 : 6}
         animate={animating ? "fly-to-table" : "none"}
         className="live-table-bet-spot__stack"
       />
@@ -450,6 +435,8 @@ function TableBackground({
   dealerReveal,
   tableBetAmount,
   betAnimating,
+  room,
+  playerId,
 }: {
   state: BlackjackState;
   dealerMessage: string;
@@ -457,6 +444,8 @@ function TableBackground({
   dealerReveal: ReturnType<typeof useDealerRevealAnimation>;
   tableBetAmount: number;
   betAnimating: boolean;
+  room: Room;
+  playerId: string;
 }) {
   const prevCardCount = useRef(0);
   const [dealingBurst, setDealingBurst] = useState(false);
@@ -477,6 +466,8 @@ function TableBackground({
   const dealerPartial =
     dealerReveal.isAnimating ||
     dealerReveal.displayedHand.some((c) => c.hidden);
+
+  const activePlayers = room.players.filter((p) => (p.seatStatus ?? "active") === "active");
 
   return (
     <div className={`live-table-scene ${dealingBurst ? "live-table-scene--dealing" : ""}`}>
@@ -527,12 +518,29 @@ function TableBackground({
             </span>
           )}
 
-          {tableBetAmount > 0 && !isRoundEnd && (
-            <TableBetSpot amount={tableBetAmount} animating={betAnimating} />
-          )}
+          {activePlayers.map((p, index) => {
+            const ps = state.players.find((s) => s.playerId === p.id);
+            const placedBet = ps?.hands.reduce((sum, hand) => sum + hand.bet, 0) ?? 0;
+            const isMe = p.id === playerId;
+            const amount =
+              isMe && betAnimating && tableBetAmount > 0 ? tableBetAmount : placedBet;
 
-          <ChipRack side="left" />
-          <ChipRack side="right" />
+            if (amount <= 0 || (state.phase === "betting" && !isRoundEnd && placedBet < state.minBet && !(isMe && betAnimating))) {
+              return null;
+            }
+
+            return (
+              <TableBetSpot
+                key={p.id}
+                amount={amount}
+                label={isMe ? "Tu apuesta" : p.name}
+                animating={isMe && betAnimating}
+                position={index}
+                isMe={isMe}
+                compact={!isMe}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
@@ -622,7 +630,10 @@ function ControlTablet({
 
   return (
     <div className="live-tablet-overlay">
-      <div className={`live-tablet-panel ${isCompact ? "live-tablet-panel--compact" : ""} ${phase === "roundEnd" ? "live-tablet-panel--round-end" : ""}`}>
+      <div
+        className={`live-tablet-panel ${isCompact ? "live-tablet-panel--compact" : "live-tablet-panel--betting"}
+        ${phase === "roundEnd" ? "live-tablet-panel--round-end" : ""}`}
+      >
         {error && <div className="live-status-banner live-status-error">{error}</div>}
 
         <p className="live-turn-status">{statusLine}</p>
@@ -861,8 +872,7 @@ export function LiveCasinoBlackjackUI({
   const showResultOverlay = isRoundEnd && dealerReveal.complete && !!myResult;
 
   return (
-    <>
-      <LandscapeToggle />
+    <GameLandscapeGate>
       <div className="live-casino-root landscape-play-root">
       <BrandHeaderBar
         roomCode={room.code}
@@ -920,6 +930,8 @@ export function LiveCasinoBlackjackUI({
         dealerReveal={dealerReveal}
         tableBetAmount={tableBetAmount}
         betAnimating={betAnimating}
+        room={room}
+        playerId={playerId}
       />
 
       <ControlTablet
@@ -954,6 +966,6 @@ export function LiveCasinoBlackjackUI({
         dealerAnimating={dealerReveal.isAnimating}
       />
     </div>
-    </>
+    </GameLandscapeGate>
   );
 }

@@ -6,7 +6,7 @@ import { PlayingCard, CardSlot } from "@/components/cards/PlayingCard";
 import { GameTable } from "@/components/table/GameTable";
 import { PlayerSeat } from "@/components/table/PlayerSeat";
 import { ActionBar, GameButton, StatusBanner } from "@/components/ui/GameButton";
-import { LandscapeToggle } from "@/components/ui/LandscapeToggle";
+import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
 import { dealDelay } from "@/lib/game-logic/animations";
 import { api } from "@/lib/client";
 
@@ -76,8 +76,7 @@ export function PokerTable({
           : state.message;
 
   return (
-    <>
-      <LandscapeToggle />
+    <GameLandscapeGate>
       <div className="poker-table-root landscape-play-root space-y-4">
       <GameTable label="" gameName="Texas Hold'em">
         <div className="flex flex-col items-center gap-3">
@@ -169,6 +168,6 @@ export function PokerTable({
         )}
       </ActionBar>
       </div>
-    </>
+    </GameLandscapeGate>
   );
 }
