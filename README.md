@@ -19,7 +19,6 @@ CG-PokerRepo/
 │   │   │   ├── game-logic/  Lógica de cartas (cliente)
 │   │   │   └── supabase/    Cliente Realtime
 │   │   └── hooks/           useRoom + Realtime
-│   └── vercel.json
 │
 └── backend/           → Lógica servidor + Supabase
     ├── src/
