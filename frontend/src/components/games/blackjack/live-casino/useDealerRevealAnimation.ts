@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BlackjackState, Card } from "@cg/backend/types";
 import { handTotal } from "@/lib/game-logic/deck";
+import { CARD_DEAL_INTERVAL_MS } from "@/lib/table/deal-sequence";
 
-const START_DELAY_MS = 400;
-const FLIP_DELAY_MS = 550;
-const DRAW_DELAY_MS = 750;
+const START_DELAY_MS = 550;
+const FLIP_DURATION_MS = CARD_DEAL_INTERVAL_MS;
+const DRAW_INTERVAL_MS = CARD_DEAL_INTERVAL_MS;
 
 function handSignature(hand: Card[]) {
   return hand.map((c) => `${c.rank}${c.suit}`).join("|");
@@ -31,6 +32,8 @@ export function dealerCardsForPhase(fullHand: Card[], phase: number): Card[] {
   return fullHand.slice(0, count).map((c) => ({ ...c, hidden: false }));
 }
 
+export type DealerRevealStage = "idle" | "pause" | "flip" | "draw" | "done";
+
 function computeRevealState(
   elapsed: number,
   handLen: number
@@ -39,35 +42,71 @@ function computeRevealState(
   complete: boolean;
   flipHole: boolean;
   animatingCardIndex: number | null;
+  stage: DealerRevealStage;
+  visibleCount: number;
 } {
   if (handLen <= 0) {
-    return { phase: -1, complete: true, flipHole: false, animatingCardIndex: null };
+    return {
+      phase: -1,
+      complete: true,
+      flipHole: false,
+      animatingCardIndex: null,
+      stage: "done",
+      visibleCount: 0,
+    };
   }
 
   if (handLen === 1) {
-    return elapsed >= 300
-      ? { phase: 0, complete: true, flipHole: false, animatingCardIndex: null }
-      : { phase: 0, complete: false, flipHole: false, animatingCardIndex: null };
+    const done = elapsed >= FLIP_DURATION_MS * 0.5;
+    return {
+      phase: 0,
+      complete: done,
+      flipHole: false,
+      animatingCardIndex: done ? null : 0,
+      stage: done ? "done" : "draw",
+      visibleCount: done ? 1 : 0,
+    };
   }
 
   if (elapsed < START_DELAY_MS) {
-    return { phase: 0, complete: false, flipHole: false, animatingCardIndex: null };
+    return {
+      phase: 0,
+      complete: false,
+      flipHole: false,
+      animatingCardIndex: null,
+      stage: "pause",
+      visibleCount: 1,
+    };
   }
 
   const afterStart = elapsed - START_DELAY_MS;
 
-  if (afterStart < FLIP_DELAY_MS) {
-    return { phase: 0, complete: false, flipHole: true, animatingCardIndex: 1 };
+  if (afterStart < FLIP_DURATION_MS) {
+    return {
+      phase: 0,
+      complete: false,
+      flipHole: true,
+      animatingCardIndex: 1,
+      stage: "flip",
+      visibleCount: 1,
+    };
   }
 
-  const afterFlip = afterStart - FLIP_DELAY_MS;
+  const afterFlip = afterStart - FLIP_DURATION_MS;
 
   if (handLen === 2) {
-    return { phase: 1, complete: true, flipHole: false, animatingCardIndex: null };
+    return {
+      phase: 1,
+      complete: true,
+      flipHole: false,
+      animatingCardIndex: null,
+      stage: "done",
+      visibleCount: 2,
+    };
   }
 
   const extraCards = handLen - 2;
-  const drawIndex = Math.floor(afterFlip / DRAW_DELAY_MS);
+  const drawIndex = Math.floor(afterFlip / DRAW_INTERVAL_MS);
 
   if (drawIndex >= extraCards) {
     return {
@@ -75,6 +114,8 @@ function computeRevealState(
       complete: true,
       flipHole: false,
       animatingCardIndex: null,
+      stage: "done",
+      visibleCount: handLen,
     };
   }
 
@@ -83,6 +124,8 @@ function computeRevealState(
     complete: false,
     flipHole: false,
     animatingCardIndex: drawIndex + 2,
+    stage: "draw",
+    visibleCount: drawIndex + 2,
   };
 }
 
@@ -94,11 +137,17 @@ export function useDealerRevealAnimation(state: BlackjackState) {
   const needsAnimation = isRoundEnd && handLen >= 1;
   const revealAt = state.dealerRevealAt;
 
+  const anchorRef = useRef<number | null>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!needsAnimation || !revealAt) return;
-    const id = setInterval(() => setTick(Date.now()), 50);
+    if (!needsAnimation || !revealAt) {
+      anchorRef.current = null;
+      return;
+    }
+    anchorRef.current = revealAt;
+    setTick(Date.now());
+    const id = setInterval(() => setTick(Date.now()), 40);
     return () => clearInterval(id);
   }, [needsAnimation, revealAt, signature]);
 
@@ -110,13 +159,24 @@ export function useDealerRevealAnimation(state: BlackjackState) {
       animatingCardIndex: null as number | null,
       flipHole: false,
       complete: true,
+      stage: "done" as DealerRevealStage,
+      visibleCount: handLen,
+      totalCount: handLen,
     };
   }
 
-  const elapsed = revealAt ? Math.max(0, (tick || Date.now()) - revealAt) : 0;
-  const { phase, complete, flipHole, animatingCardIndex } = revealAt
+  const anchor = anchorRef.current ?? revealAt ?? Date.now();
+  const elapsed = Math.max(0, (tick || Date.now()) - anchor);
+  const { phase, complete, flipHole, animatingCardIndex, stage, visibleCount } = revealAt
     ? computeRevealState(elapsed, handLen)
-    : { phase: -1, complete: false, flipHole: false, animatingCardIndex: null };
+    : {
+        phase: -1,
+        complete: false,
+        flipHole: false,
+        animatingCardIndex: null,
+        stage: "pause" as DealerRevealStage,
+        visibleCount: 1,
+      };
 
   const displayedHand =
     !complete && revealAt ? dealerCardsForPhase(fullHand, phase) : state.dealerHand;
@@ -134,5 +194,8 @@ export function useDealerRevealAnimation(state: BlackjackState) {
     animatingCardIndex,
     flipHole: flipHole && phase === 0,
     complete: !needsAnimation || complete || !revealAt,
+    stage,
+    visibleCount,
+    totalCount: handLen,
   };
 }

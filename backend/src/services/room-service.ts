@@ -1,5 +1,6 @@
 import { getEngine } from "../games/registry";
 import { generateRoomCode, getRoom, saveRoom, hydrateLobbyVotes } from "./store";
+import { recordServerStats } from "./server-stats";
 import type {
   BlackjackState,
   GameActionPayload,
@@ -36,11 +37,19 @@ function setLobbyVote(room: Room, playerId: string, gameType: GameType): void {
   if (player) player.gameVote = gameType;
 }
 
-function syncBlackjackPayouts(room: Room): void {
+async function syncBlackjackPayouts(room: Room): Promise<void> {
   const state = room.gameState as BlackjackState;
   if (state.phase !== "roundEnd") return;
 
   const bjMult = state.blackjackPayout === "6:5" ? 2.2 : 2.5;
+  const delta = {
+    handsPlayed: 0,
+    playerWins: 0,
+    playerLosses: 0,
+    pushes: 0,
+    totalWagered: 0,
+    totalPaidOut: 0,
+  };
 
   for (const ps of state.players) {
     const player = room.players.find((p) => p.id === ps.playerId);
@@ -49,24 +58,85 @@ function syncBlackjackPayouts(room: Room): void {
     for (const hand of ps.hands) {
       if (hand.payoutDone) continue;
 
+      delta.handsPlayed += 1;
+      delta.totalWagered += hand.bet;
+      let paidOut = 0;
+
       switch (hand.status) {
         case "blackjack":
-          player.chips += Math.floor(hand.bet * bjMult);
+          paidOut = Math.floor(hand.bet * bjMult);
+          player.chips += paidOut;
+          delta.playerWins += 1;
           break;
         case "won":
-          player.chips += hand.bet * 2;
+          paidOut = hand.bet * 2;
+          player.chips += paidOut;
+          delta.playerWins += 1;
           break;
         case "push":
-          player.chips += hand.bet;
+          paidOut = hand.bet;
+          player.chips += paidOut;
+          delta.pushes += 1;
           break;
         case "surrendered":
-          player.chips += Math.floor(hand.bet * 0.5);
+          paidOut = Math.floor(hand.bet * 0.5);
+          player.chips += paidOut;
+          delta.playerLosses += 1;
           break;
         default:
+          delta.playerLosses += 1;
           break;
       }
+
+      delta.totalPaidOut += paidOut;
       hand.payoutDone = true;
     }
+  }
+
+  if (delta.handsPlayed > 0) {
+    try {
+      await recordServerStats({
+        handsPlayed: delta.handsPlayed,
+        playerWins: delta.playerWins,
+        playerLosses: delta.playerLosses,
+        pushes: delta.pushes,
+        totalWagered: delta.totalWagered,
+        totalPaidOut: delta.totalPaidOut,
+      });
+    } catch (err) {
+      console.error("[server-stats] blackjack", err);
+    }
+  }
+}
+
+async function syncPokerPayouts(room: Room): Promise<void> {
+  const state = room.gameState as PokerState;
+  if (state.phase !== "showdown" && state.phase !== "roundEnd") return;
+  if (state.winners.length === 0 || state.winnersPaid) return;
+
+  const winnerIds = new Set(state.winners.map((w) => w.playerId));
+  const paidOut = state.winners.reduce((sum, w) => sum + w.amount, 0);
+  const wagered = state.players.reduce((sum, p) => sum + p.totalBet, 0);
+  const losses = state.players.filter(
+    (p) => p.totalBet > 0 && !p.folded && !winnerIds.has(p.playerId)
+  ).length;
+
+  for (const w of state.winners) {
+    const wPlayer = room.players.find((p) => p.id === w.playerId);
+    if (wPlayer) wPlayer.chips += w.amount;
+  }
+  state.winnersPaid = true;
+
+  try {
+    await recordServerStats({
+      handsPlayed: 1,
+      playerWins: winnerIds.size,
+      playerLosses: losses,
+      totalWagered: wagered,
+      totalPaidOut: paidOut,
+    });
+  } catch (err) {
+    console.error("[server-stats] poker", err);
   }
 }
 
@@ -266,22 +336,9 @@ export async function applyGameAction(
 
   room.gameState = engine.applyAction(room.gameState, playerId, action);
 
-  if (room.gameType === "blackjack") syncBlackjackPayouts(room);
+  if (room.gameType === "blackjack") await syncBlackjackPayouts(room);
 
-  if (room.gameType === "poker") {
-    const pState = room.gameState as PokerState;
-    if (
-      (pState.phase === "showdown" || pState.phase === "roundEnd") &&
-      pState.winners.length > 0 &&
-      !pState.winnersPaid
-    ) {
-      for (const w of pState.winners) {
-        const wPlayer = room.players.find((p) => p.id === w.playerId);
-        if (wPlayer) wPlayer.chips += w.amount;
-      }
-      pState.winnersPaid = true;
-    }
-  }
+  if (room.gameType === "poker") await syncPokerPayouts(room);
 
   await saveRoom(room);
   return { room };

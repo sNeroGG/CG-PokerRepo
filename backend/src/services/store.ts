@@ -236,3 +236,47 @@ export async function getRoomIdByCode(code: string): Promise<string | null> {
 
   return data?.id ?? null;
 }
+
+/** Salas sin actividad durante maxIdleMs se eliminan (jugadores incluidos por CASCADE). */
+export const ROOM_IDLE_TTL_MS = 10 * 60 * 1000;
+
+export async function deleteStaleRooms(
+  maxIdleMs: number = ROOM_IDLE_TTL_MS
+): Promise<{ deleted: number; codes: string[] }> {
+  const cutoff = new Date(Date.now() - maxIdleMs).toISOString();
+  const supabase = createSupabaseAdmin();
+
+  if (supabase) {
+    const { data: stale, error: selectError } = await supabase
+      .from("rooms")
+      .select("id, code")
+      .lt("updated_at", cutoff);
+
+    if (selectError) throw selectError;
+    if (!stale?.length) return { deleted: 0, codes: [] };
+
+    const ids = stale.map((row) => row.id as string);
+    const { error: deleteError } = await supabase.from("rooms").delete().in("id", ids);
+    if (deleteError) throw deleteError;
+
+    for (const row of stale) {
+      const code = (row.code as string).toUpperCase();
+      memoryRoomIds.delete(code);
+      globalMemory().delete(code);
+    }
+
+    return { deleted: stale.length, codes: stale.map((row) => row.code as string) };
+  }
+
+  const codes: string[] = [];
+  const now = Date.now();
+  for (const [code, room] of globalMemory()) {
+    if (now - room.updatedAt > maxIdleMs) {
+      globalMemory().delete(code);
+      memoryRoomIds.delete(code);
+      codes.push(code);
+    }
+  }
+
+  return { deleted: codes.length, codes };
+}

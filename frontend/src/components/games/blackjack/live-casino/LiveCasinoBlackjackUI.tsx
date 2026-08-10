@@ -247,6 +247,9 @@ function DealerHandOnFelt({
   dealPlan,
   visibleGlobal,
   dealComplete,
+  revealStage,
+  revealVisible,
+  revealTotal,
 }: {
   cards: Card[];
   dealerMessage: string;
@@ -259,13 +262,25 @@ function DealerHandOnFelt({
   dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
   visibleGlobal: number;
   dealComplete: boolean;
+  revealStage?: "idle" | "pause" | "flip" | "draw" | "done";
+  revealVisible?: number;
+  revealTotal?: number;
 }) {
+  const revealLabel =
+    revealStage === "flip"
+      ? "Volteando carta oculta..."
+      : revealStage === "draw" && revealTotal
+        ? `Sacando carta ${revealVisible ?? 0}/${revealTotal}`
+        : revealStage === "pause"
+          ? "Revelando mano..."
+          : "Sacando cartas...";
+
   return (
     <div className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}>
       <div className="live-dealer-badge live-dealer-badge--felt">
         <span>Crupier CPU</span>
         <small>
-          {isAnimating ? "Sacando cartas..." : dealerMessage}
+          {isAnimating ? revealLabel : dealerMessage}
           {cards.length > 0 && dealComplete && (
             <> · {partial ? `Visible: ${total}` : `Total: ${total}`}</>
           )}
@@ -274,10 +289,10 @@ function DealerHandOnFelt({
       {(isAnimating || (progressiveDealActive && !dealComplete)) && (
         <div className="live-dealer-draw-indicator" aria-live="polite">
           <span className="live-dealer-draw-dot" />
-          Repartiendo carta por carta...
+          {isAnimating ? revealLabel : "Repartiendo carta por carta..."}
         </div>
       )}
-      <div className="live-felt-card-spread">
+      <div className="live-felt-card-spread live-felt-card-spread--dealer">
         {progressiveDealActive && !isAnimating ? (
           <DealtCardSpread
             cards={cards}
@@ -295,6 +310,7 @@ function DealerHandOnFelt({
             if (animatingCardIndex === i) {
               motion = flipHole && i === 1 ? "flip" : "draw";
             }
+            const dealingNow = animatingCardIndex === i;
             return (
               <TableCard
                 key={`d-${card.rank}-${card.suit}-${i}-${card.hidden}`}
@@ -304,6 +320,7 @@ function DealerHandOnFelt({
                 variant="dealer"
                 animate={motion !== "none"}
                 motion={motion}
+                className={dealingNow ? "live-table-card--dealing-now" : ""}
               />
             );
           })
@@ -506,11 +523,17 @@ function TableBackground({
             <span className="brand-table-logo-zone__name">{BRAND_NAME}</span>
           </div>
 
+          <div className="live-felt-table-brand" aria-hidden>
+            CHOLOS GROUP
+          </div>
+
           {(isDealing || state.phase === "dealing" || dealerReveal.isAnimating) && (
             <div className="live-dealing-flash" aria-hidden>
               <span>
                 {dealerReveal.isAnimating
-                  ? "Crupier"
+                  ? dealerReveal.stage === "flip"
+                    ? "Crupier · Volteando"
+                    : `Crupier · ${dealerReveal.visibleCount}/${dealerReveal.totalCount}`
                   : isDealing && state.dealCardCount
                     ? `Repartiendo ${visibleGlobal}/${state.dealCardCount}`
                     : "Repartiendo"}
@@ -535,6 +558,9 @@ function TableBackground({
               dealPlan={dealPlan}
               visibleGlobal={visibleGlobal}
               dealComplete={dealComplete || isRoundEnd}
+              revealStage={dealerReveal.stage}
+              revealVisible={dealerReveal.visibleCount}
+              revealTotal={dealerReveal.totalCount}
             />
           )}
 

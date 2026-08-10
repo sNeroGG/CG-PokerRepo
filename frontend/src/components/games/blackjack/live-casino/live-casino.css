@@ -63,12 +63,12 @@
 @keyframes cardDrawFromDealer {
   0% {
     opacity: 0;
-    transform: perspective(900px) rotateX(40deg) rotateZ(-8deg) translateY(-120px) translateX(20px) scale(0.35);
-    filter: blur(6px);
+    transform: perspective(900px) rotateX(52deg) rotateZ(-12deg) translateY(-160px) translateX(-8px) scale(0.3);
+    filter: blur(8px);
   }
-  55% {
+  50% {
     opacity: 1;
-    transform: perspective(900px) rotateX(10deg) rotateZ(4deg) translateY(8px) scale(1.06);
+    transform: perspective(900px) rotateX(12deg) rotateZ(6deg) translateY(10px) scale(1.08);
     filter: blur(0);
   }
   100% {
@@ -79,13 +79,16 @@
 
 @keyframes cardFlipReveal {
   0% {
-    transform: perspective(800px) rotateY(180deg) rotateX(8deg) scale(0.92);
+    transform: perspective(800px) rotateY(180deg) rotateX(10deg) scale(0.88);
+    filter: brightness(0.85);
   }
-  45% {
-    transform: perspective(800px) rotateY(90deg) rotateX(6deg) scale(1.02);
+  40% {
+    transform: perspective(800px) rotateY(92deg) rotateX(8deg) scale(1.04);
+    filter: brightness(1.05);
   }
   100% {
     transform: perspective(800px) rotateY(0deg) rotateX(5deg) rotateZ(var(--card-tilt, -2deg)) scale(1);
+    filter: brightness(1);
   }
 }
 
@@ -265,6 +268,22 @@
 
 .live-table-felt::before {
   display: none;
+}
+
+.live-felt-table-brand {
+  position: absolute;
+  bottom: 34%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(0.7rem, 2.4vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.1);
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .live-table-brand {
@@ -462,18 +481,24 @@
 }
 
 .live-table-card--draw .live-table-card-inner {
-  animation: cardDrawFromDealer 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cardDrawFromDealer 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .live-table-card--flip .live-table-card-inner {
-  animation: cardFlipReveal 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  animation: cardFlipReveal 0.85s cubic-bezier(0.34, 1.2, 0.64, 1) both;
   transform-style: preserve-3d;
 }
 
+.live-felt-card-spread--dealer {
+  min-height: 72px;
+  perspective: 900px;
+}
+
 .live-felt-zone--dealer-active {
-  outline: 1px solid rgba(212, 175, 55, 0.2);
-  outline-offset: 4px;
-  border-radius: 8px;
+  outline: 1px solid rgba(212, 175, 55, 0.35);
+  outline-offset: 6px;
+  border-radius: 10px;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.12);
 }
 
 .live-dealer-draw-indicator {
@@ -977,6 +1002,11 @@
 .live-tablet-panel--betting .live-betting-section {
   display: block;
   width: 100%;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
 .live-bet-panel {
@@ -1043,6 +1073,7 @@
   grid-template-columns: 1.4fr 1fr auto auto;
   gap: 0.4rem;
   align-items: stretch;
+  justify-content: center;
 }
 
 .live-bet-panel__actions .live-btn {

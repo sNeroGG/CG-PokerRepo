@@ -283,6 +283,10 @@ export function PokerTable({
                   <span className="poker-phase-badge">{PHASE[state.phase] ?? state.phase}</span>
                 </div>
 
+                <div className="live-felt-table-brand" aria-hidden>
+                  CHOLOS GROUP
+                </div>
+
                 <div className="live-felt-zone live-felt-zone--dealer">
                   <div className="live-felt-card-spread">
                     {Array.from({ length: 5 }).map((_, i) => {
