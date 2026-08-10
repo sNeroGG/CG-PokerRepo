@@ -1,3 +1,5 @@
+import type { Card } from "@cg/backend/types";
+
 /** Intervalo entre cada carta repartida (ms) — visible en todos los clientes */
 export const CARD_DEAL_INTERVAL_MS = 520;
 
