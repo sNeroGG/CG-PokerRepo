@@ -277,7 +277,7 @@ export function PokerTable({
                   objectFit="contain"
                 />
                 <div className="brand-table-logo-zone">
-                  <BrandLogo size="sm" />
+                  <BrandLogo size="md" />
                   <span className="brand-table-logo-zone__name">{BRAND_NAME}</span>
                   <span className="poker-pot-badge">Bote {formatCurrency(state.pot)}</span>
                   <span className="poker-phase-badge">{PHASE[state.phase] ?? state.phase}</span>

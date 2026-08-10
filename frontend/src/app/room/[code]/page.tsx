@@ -95,7 +95,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     return (
       <main className="auth-page flex min-h-screen flex-col items-center justify-center gap-4">
         <div className="auth-logo-ring animate-pulse">
-          <BrandLogo size="md" />
+          <BrandLogo size="lg" />
         </div>
         <p className="text-sm tracking-widest text-white/60 uppercase">Cargando sala...</p>
       </main>

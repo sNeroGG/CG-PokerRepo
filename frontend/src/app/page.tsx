@@ -70,7 +70,7 @@ export default function HomePage() {
         {/* Logo & título */}
         <div className="text-center">
           <div className="auth-logo-ring">
-            <BrandLogo size="md" />
+            <BrandLogo size="lg" />
           </div>
           <div className="auth-suits mb-4">
             <span className="auth-suit-white">♠</span>

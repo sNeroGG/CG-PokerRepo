@@ -6,11 +6,11 @@ import { BRAND_ASSETS, BRAND_NAME } from "@/lib/brand";
 
 type BrandLogoProps = {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   showPlaceholder?: boolean;
 };
 
-const SIZE = { sm: 36, md: 48, lg: 72 };
+const SIZE = { xs: 28, sm: 40, md: 56, lg: 80 };
 
 export function BrandLogo({ className = "", size = "md", showPlaceholder = true }: BrandLogoProps) {
   const [failed, setFailed] = useState(false);
@@ -18,14 +18,20 @@ export function BrandLogo({ className = "", size = "md", showPlaceholder = true 
 
   if (failed && showPlaceholder) {
     return (
-      <div className={`brand-slot brand-slot--logo ${className}`} style={{ width: px, height: px }}>
+      <div
+        className={`brand-slot brand-slot--logo ${className}`}
+        style={{ width: px, height: px }}
+      >
         <span>LOGO</span>
       </div>
     );
   }
 
   return (
-    <div className={`brand-logo-wrap ${className}`} style={{ width: px, height: px }}>
+    <div
+      className={`brand-logo-wrap brand-logo-wrap--round ${className}`}
+      style={{ width: px, height: px }}
+    >
       <Image
         src={BRAND_ASSETS.logo}
         alt={BRAND_NAME}

@@ -3,7 +3,7 @@
 import type { Card } from "@cg/backend/types";
 import { SUIT_SYMBOL } from "@/lib/game-logic/deck";
 import { isRedSuit } from "@/lib/game-logic/card-utils";
-import { BRAND_NAME_SHORT } from "@/lib/brand";
+import { CardBackBrandLogo } from "@/components/brand/CardBackBrandLogo";
 
 export function TableCard({
   card,
@@ -45,7 +45,7 @@ export function TableCard({
     >
       <div className="live-table-card-inner">
         {isHidden ? (
-          <span className="live-table-card-logo">{BRAND_NAME_SHORT}</span>
+          <CardBackBrandLogo className="live-table-card-back-logo" />
         ) : (
           <>
             <span className="live-table-card-rank">{card.rank}</span>

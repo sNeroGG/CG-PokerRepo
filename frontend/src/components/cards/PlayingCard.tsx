@@ -1,7 +1,7 @@
 "use client";
 
 import type { Card as CardType, Rank, Suit } from "@cg/backend/types";
-import { BRAND_NAME_SHORT } from "@/lib/brand";
+import { CardBackBrandLogo } from "@/components/brand/CardBackBrandLogo";
 import { SUIT_SYMBOL } from "@/lib/game-logic/deck";
 import { isRedSuit } from "@/lib/game-logic/card-utils";
 import type { CardSize } from "@/lib/game-logic/animations";
@@ -52,7 +52,7 @@ export function CardBack({
     >
       <div className="card-back-inner">
         <div className="card-back-pattern" />
-        <span className="card-back-logo">{BRAND_NAME_SHORT}</span>
+        <CardBackBrandLogo />
       </div>
     </div>
   );

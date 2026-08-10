@@ -145,7 +145,7 @@ function PlayerSidebar({
   return (
     <aside className="live-player-sidebar live-player-sidebar--compact">
       <div className="live-sidebar-brand">
-        <BrandLogo size="sm" />
+        <BrandLogo size="md" />
       </div>
       <div className="live-sidebar-header">
         <span className="live-sidebar-name">{playerName}</span>
@@ -519,7 +519,7 @@ function TableBackground({
             objectFit="contain"
           />
           <div className="brand-table-logo-zone">
-            <BrandLogo size="sm" />
+            <BrandLogo size="md" />
             <span className="brand-table-logo-zone__name">{BRAND_NAME}</span>
           </div>
 
@@ -825,7 +825,7 @@ function BrandHeaderBar({
   return (
     <header className="brand-header-bar">
       <div className="brand-header-bar__left">
-        <BrandLogo size="sm" />
+        <BrandLogo size="md" />
         <div>
           <p className="brand-header-bar__title">
             <BrandName variant="header" />
