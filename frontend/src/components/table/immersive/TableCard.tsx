@@ -12,6 +12,7 @@ export function TableCard({
   animate = true,
   variant = "default",
   motion = "deal",
+  className = "",
 }: {
   card: Card;
   index?: number;
@@ -19,6 +20,7 @@ export function TableCard({
   animate?: boolean;
   variant?: "default" | "victory" | "dealer";
   motion?: "deal" | "flip" | "draw" | "none";
+  className?: string;
 }) {
   const isHidden = card.hidden;
   const color = isHidden ? "" : isRedSuit(card.suit) ? "red" : "black";
@@ -34,10 +36,10 @@ export function TableCard({
 
   return (
     <div
-      className={`live-table-card live-table-card--${size} live-table-card--${variant} ${motionClass} ${isHidden ? "live-table-card--back" : `live-table-card--${color}`}`}
+      className={`live-table-card live-table-card--${size} live-table-card--${variant} ${motionClass} ${isHidden ? "live-table-card--back" : `live-table-card--${color}`} ${className}`.trim()}
       style={{
         animationDelay:
-          motion === "deal" && animate ? `${index * 0.18}s` : undefined,
+          motion === "deal" && animate && index > 0 ? `${index * 0.18}s` : undefined,
         zIndex: index,
       }}
     >

@@ -37,11 +37,12 @@ export function DealtCardSpread({
         <TableCard
           key={`${keyPrefix}-${slot}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
           card={card}
-          index={i}
+          index={0}
           size={size}
           variant={variant}
           motion={motionIndex === i ? "deal" : "none"}
           animate={motionIndex === i}
+          className={motionIndex === i ? "live-table-card--dealing-now" : undefined}
         />
       ))}
     </>

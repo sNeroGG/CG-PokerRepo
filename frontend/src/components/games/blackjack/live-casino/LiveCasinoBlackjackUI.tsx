@@ -20,7 +20,7 @@ import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
 import { useBetAnimations } from "@/hooks/useBetAnimations";
 import type { BetAnimState } from "@/hooks/useBetAnimations";
 import { DealtCardSpread } from "@/components/table/immersive/DealtCardSpread";
-import { useDealPlanContext } from "@/hooks/useProgressiveDeal";
+import { useDealPlanContext, reorderHandPlayerIds } from "@/hooks/useProgressiveDeal";
 import {
   buildBlackjackDealPlan,
   DEALER_SLOT,
@@ -465,11 +465,14 @@ function TableBackground({
     dealerReveal.displayedHand.some((c) => c.hidden);
 
   const activePlayers = orderPlayersFirstPerson(room.players, playerId);
-  const orderedIds = activePlayers.map((p) => p.id);
+  const dealOrderIds = reorderHandPlayerIds(
+    state.players.map((p) => p.playerId),
+    playerId
+  );
 
   const dealPlan = useMemo(
-    () => buildBlackjackDealPlan(state, orderedIds),
-    [state, orderedIds]
+    () => buildBlackjackDealPlan(state, dealOrderIds),
+    [state, dealOrderIds]
   );
 
   const { visibleGlobal, complete: dealComplete, isDealing } = useDealPlanContext(
@@ -505,7 +508,13 @@ function TableBackground({
 
           {(isDealing || state.phase === "dealing" || dealerReveal.isAnimating) && (
             <div className="live-dealing-flash" aria-hidden>
-              <span>{dealerReveal.isAnimating ? "Crupier" : "Repartiendo"}</span>
+              <span>
+                {dealerReveal.isAnimating
+                  ? "Crupier"
+                  : isDealing && state.dealCardCount
+                    ? `Repartiendo ${visibleGlobal}/${state.dealCardCount}`
+                    : "Repartiendo"}
+              </span>
             </div>
           )}
 
@@ -684,13 +693,19 @@ function ControlTablet({
             <div className="live-bet-status-row">
               <BetChipPreview amount={displayBet} />
               <div className="live-current-bet">
-                Apuesta: <em>{formatCurrency(displayBet)}</em>
+                Saldo <em>{formatCurrency(chips)}</em>
+                {" · "}
+                Apuesta <em>{formatCurrency(displayBet)}</em>
               </div>
             </div>
           )}
 
           {phase === "betting" && canBet && !betPlaced && (
-            <div className="live-action-buttons">
+            <div className="live-action-buttons live-action-buttons--betting">
+              <div className="live-bet-wallet live-bet-wallet--inline">
+                <span className="live-bet-wallet__label">Disponible</span>
+                <strong className="live-bet-wallet__amount">{formatCurrency(chips)}</strong>
+              </div>
               <button type="button" className="live-btn live-btn-primary" disabled={loading || displayBet < minBet || displayBet > chips} onClick={onBet}>
                 Apostar {formatCurrency(displayBet)}
               </button>
@@ -942,8 +957,12 @@ export function LiveCasinoBlackjackUI({
   ]);
 
   const overviewDealPlan = useMemo(
-    () => buildBlackjackDealPlan(state, orderPlayersFirstPerson(room.players, playerId).map((p) => p.id)),
-    [state, room.players, playerId]
+    () =>
+      buildBlackjackDealPlan(
+        state,
+        reorderHandPlayerIds(state.players.map((p) => p.playerId), playerId)
+      ),
+    [state, playerId]
   );
 
   const overviewDeal = useDealPlanContext(

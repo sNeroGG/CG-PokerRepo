@@ -46,12 +46,12 @@
 @keyframes cardDealIn {
   0% {
     opacity: 0;
-    transform: perspective(800px) rotateX(55deg) rotateZ(-12deg) translateY(-100px) scale(0.35);
-    filter: blur(5px);
+    transform: perspective(900px) rotateX(62deg) rotateZ(-14deg) translateY(-140px) translateX(40px) scale(0.28);
+    filter: blur(8px);
   }
-  55% {
+  45% {
     opacity: 1;
-    transform: perspective(800px) rotateX(10deg) rotateZ(2deg) translateY(8px) scale(1.05);
+    transform: perspective(900px) rotateX(14deg) rotateZ(4deg) translateY(12px) scale(1.06);
     filter: blur(0);
   }
   100% {
@@ -450,7 +450,15 @@
 }
 
 .live-table-card--deal .live-table-card-inner {
-  animation: cardDealIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cardDealIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.live-table-card--dealing-now {
+  z-index: 20 !important;
+}
+
+.live-table-card--dealing-now .live-table-card-inner {
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35);
 }
 
 .live-table-card--draw .live-table-card-inner {
@@ -1227,6 +1235,48 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.live-bet-wallet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.55rem;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  min-width: 88px;
+}
+
+.live-bet-wallet--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+}
+
+.live-bet-wallet__label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.live-bet-wallet__amount {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--brand-gold, #d4af37);
+  letter-spacing: 0.02em;
+}
+
+.live-action-buttons--betting {
+  align-items: center;
+}
+
+.live-action-buttons--betting .live-bet-wallet--inline {
+  margin-right: 0.25rem;
 }
 
 .live-digital-chips {

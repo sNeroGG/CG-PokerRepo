@@ -12,7 +12,7 @@ import { HandsOverviewPanel, type HandOverviewEntry } from "@/components/table/i
 import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
 import { useBetAnimations } from "@/hooks/useBetAnimations";
 import type { BetAnimState } from "@/hooks/useBetAnimations";
-import { useDealPlanContext } from "@/hooks/useProgressiveDeal";
+import { useDealPlanContext, reorderHandPlayerIds } from "@/hooks/useProgressiveDeal";
 import {
   buildPokerDealPlan,
   COMMUNITY_SLOT,
@@ -168,10 +168,14 @@ export function PokerTable({
     playerId
   );
   const orderedIds = orderedPlayers.map((p) => p.id);
+  const dealOrderIds = reorderHandPlayerIds(
+    state.players.map((p) => p.playerId),
+    playerId
+  );
 
   const dealPlan = useMemo(
-    () => buildPokerDealPlan(state, orderedIds),
-    [state, orderedIds]
+    () => buildPokerDealPlan(state, dealOrderIds),
+    [state, dealOrderIds]
   );
 
   const { visibleGlobal, complete: dealComplete, isDealing } = useDealPlanContext(
@@ -203,6 +207,8 @@ export function PokerTable({
       setLoading(false);
     }
   }
+
+  const myChips = room.players.find((p) => p.id === playerId)?.chips ?? 0;
 
   const statusMessage = isMyTurn
     ? "Tu turno"
@@ -286,11 +292,16 @@ export function PokerTable({
                           <TableCard
                             key={`community-${i}-${card.rank}-${card.suit}`}
                             card={card}
-                            index={i}
+                            index={0}
                             size="md"
                             variant="dealer"
                             motion={communityVisible.motionIndex === i ? "deal" : "none"}
                             animate={communityVisible.motionIndex === i}
+                            className={
+                              communityVisible.motionIndex === i
+                                ? "live-table-card--dealing-now"
+                                : undefined
+                            }
                           />
                         );
                       }
@@ -301,7 +312,11 @@ export function PokerTable({
 
                 {isDealing && (
                   <div className="live-dealing-flash" aria-hidden>
-                    <span>Repartiendo</span>
+                    <span>
+                      {state.dealCardCount
+                        ? `Repartiendo ${visibleGlobal}/${state.dealCardCount}`
+                        : "Repartiendo"}
+                    </span>
                   </div>
                 )}
 
@@ -357,7 +372,13 @@ export function PokerTable({
         })}
 
         <div className="poker-table-controls">
-          <StatusBanner message={statusMessage} type={isMyTurn ? "turn" : "info"} />
+          <div className="poker-controls-top">
+            <StatusBanner message={statusMessage} type={isMyTurn ? "turn" : "info"} />
+            <div className="live-bet-wallet live-bet-wallet--inline poker-wallet">
+              <span className="live-bet-wallet__label">Tu saldo</span>
+              <strong className="live-bet-wallet__amount">${myChips.toLocaleString("en-US")}</strong>
+            </div>
+          </div>
           {error && <StatusBanner message={error} type="error" />}
 
           <ActionBar title={isMyTurn ? "Tu turno" : undefined}>

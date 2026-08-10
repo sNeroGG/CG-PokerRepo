@@ -1,7 +1,8 @@
 import type { Card } from "@cg/backend/types";
 
-/** Intervalo entre cada carta repartida (ms) — visible en todos los clientes */
-export const CARD_DEAL_INTERVAL_MS = 520;
+/** Intervalo entre cada carta (ms) — debe ser >= duración de animación */
+export const CARD_DEAL_INTERVAL_MS = 850;
+export const CARD_DEAL_ANIMATION_MS = 800;
 
 export interface DealEvent {
   slot: string;
@@ -91,9 +92,17 @@ export function buildBlackjackDealPlan(
 ): DealEvent[] | null {
   if (!state.dealStartedAt || !state.dealCardCount) return null;
 
-  const initialCount = orderedPlayerIds.length * 2 + 2;
+  const handIds = state.players.map((p) => p.playerId);
+  const idsForPlan =
+    handIds.length > 0
+      ? handIds.filter((id) => orderedPlayerIds.includes(id)).length === handIds.length
+        ? orderedPlayerIds.filter((id) => handIds.includes(id))
+        : handIds
+      : orderedPlayerIds;
+
+  const initialCount = idsForPlan.length * 2 + 2;
   if (state.dealCardCount === initialCount) {
-    return buildBlackjackInitialPlan(orderedPlayerIds);
+    return buildBlackjackInitialPlan(idsForPlan);
   }
 
   if (state.dealSlots?.length) {
@@ -123,8 +132,16 @@ export function buildPokerDealPlan(
 ): DealEvent[] | null {
   if (!state.dealStartedAt || !state.dealCardCount) return null;
 
-  if (state.phase === "preflop" && state.dealCardCount === orderedPlayerIds.length * 2) {
-    return buildPokerHolePlan(orderedPlayerIds);
+  const handIds = state.players.map((p) => p.playerId);
+  const idsForPlan =
+    handIds.length > 0
+      ? handIds.filter((id) => orderedPlayerIds.includes(id)).length === handIds.length
+        ? orderedPlayerIds.filter((id) => handIds.includes(id))
+        : handIds
+      : orderedPlayerIds;
+
+  if (state.phase === "preflop" && state.dealCardCount === idsForPlan.length * 2) {
+    return buildPokerHolePlan(idsForPlan);
   }
 
   if (state.dealSlots?.includes(COMMUNITY_SLOT)) {

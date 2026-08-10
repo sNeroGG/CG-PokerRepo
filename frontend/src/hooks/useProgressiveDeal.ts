@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CARD_DEAL_INTERVAL_MS,
   type DealEvent,
@@ -8,21 +8,45 @@ import {
 
 export { CARD_DEAL_INTERVAL_MS };
 
+/** Reordena IDs de mano con el viewer primero (posición 0). */
+export function reorderHandPlayerIds(playerIds: string[], viewerId: string): string[] {
+  const myIdx = playerIds.indexOf(viewerId);
+  if (myIdx <= 0) return playerIds;
+  return [...playerIds.slice(myIdx), ...playerIds.slice(0, myIdx)];
+}
+
 export function useProgressiveDeal(
   dealStartedAt?: number,
   dealCardCount?: number
 ) {
   const [tick, setTick] = useState(() => Date.now());
+  const lastBatchRef = useRef("");
+  const [localStart, setLocalStart] = useState<number | undefined>();
+
+  const batchKey = `${dealStartedAt ?? ""}:${dealCardCount ?? ""}`;
 
   useEffect(() => {
-    if (!dealStartedAt || !dealCardCount) return;
+    if (!dealStartedAt || !dealCardCount) {
+      lastBatchRef.current = "";
+      setLocalStart(undefined);
+      return;
+    }
+
+    if (batchKey !== lastBatchRef.current) {
+      lastBatchRef.current = batchKey;
+      setLocalStart(Date.now());
+    }
+  }, [batchKey, dealStartedAt, dealCardCount]);
+
+  useEffect(() => {
+    if (!localStart || !dealCardCount) return;
     setTick(Date.now());
-    const id = setInterval(() => setTick(Date.now()), 45);
+    const id = setInterval(() => setTick(Date.now()), 40);
     return () => clearInterval(id);
-  }, [dealStartedAt, dealCardCount]);
+  }, [localStart, dealCardCount]);
 
   return useMemo(() => {
-    if (!dealStartedAt || !dealCardCount) {
+    if (!dealCardCount || !localStart) {
       return {
         visibleGlobal: dealCardCount ?? Number.MAX_SAFE_INTEGER,
         complete: true,
@@ -30,7 +54,7 @@ export function useProgressiveDeal(
       };
     }
 
-    const elapsed = Math.max(0, tick - dealStartedAt);
+    const elapsed = Math.max(0, tick - localStart);
     const visibleGlobal = Math.min(
       dealCardCount,
       Math.floor(elapsed / CARD_DEAL_INTERVAL_MS) + 1
@@ -42,7 +66,7 @@ export function useProgressiveDeal(
       complete,
       isDealing: !complete,
     };
-  }, [dealStartedAt, dealCardCount, tick]);
+  }, [localStart, dealCardCount, tick]);
 }
 
 export function useDealPlanContext(
