@@ -627,6 +627,7 @@ function ControlTablet({
   showSplit,
   showSurrender,
   dealerAnimating,
+  isCardDealing = false,
 }: {
   state: BlackjackState;
   displayBet: number;
@@ -657,12 +658,15 @@ function ControlTablet({
   showSplit: boolean;
   showSurrender: boolean;
   dealerAnimating: boolean;
+  isCardDealing?: boolean;
 }) {
   const phase = state.phase;
   const isCompact = phase === "playerTurn" || phase === "dealerTurn" || phase === "roundEnd" || dealerAnimating;
 
   const statusLine =
-    dealerAnimating
+    isCardDealing
+      ? "Repartiendo carta..."
+      : dealerAnimating
       ? "Crupier revelando..."
       : phase === "betting" && canBet
         ? `Apostar · ${formatTime(seconds)}`
@@ -689,35 +693,64 @@ function ControlTablet({
         <p className="live-turn-status">{statusLine}</p>
 
         <div className="live-betting-section">
-          {!isCompact && phase === "betting" && canBet && (
-            <div className="live-bet-status-row">
-              <BetChipPreview amount={displayBet} />
-              <div className="live-current-bet">
-                Saldo <em>{formatCurrency(chips)}</em>
-                {" · "}
-                Apuesta <em>{formatCurrency(displayBet)}</em>
-              </div>
-            </div>
-          )}
-
           {phase === "betting" && canBet && !betPlaced && (
-            <div className="live-action-buttons live-action-buttons--betting">
-              <div className="live-bet-wallet live-bet-wallet--inline">
-                <span className="live-bet-wallet__label">Disponible</span>
-                <strong className="live-bet-wallet__amount">{formatCurrency(chips)}</strong>
+            <div className="live-bet-panel">
+              <div className="live-bet-panel__stats">
+                <div className="live-bet-stat">
+                  <span className="live-bet-stat__label">Saldo</span>
+                  <strong className="live-bet-stat__value">{formatCurrency(chips)}</strong>
+                </div>
+                <div className="live-bet-stat live-bet-stat--accent">
+                  <span className="live-bet-stat__label">Apuesta actual</span>
+                  <strong className="live-bet-stat__value">{formatCurrency(displayBet)}</strong>
+                </div>
+                {seconds > 0 && (
+                  <div className="live-bet-stat live-bet-stat--timer">
+                    <span className="live-bet-stat__label">Tiempo</span>
+                    <strong className="live-bet-stat__value">{formatTime(seconds)}</strong>
+                  </div>
+                )}
               </div>
-              <button type="button" className="live-btn live-btn-primary" disabled={loading || displayBet < minBet || displayBet > chips} onClick={onBet}>
-                Apostar {formatCurrency(displayBet)}
-              </button>
-              <button type="button" className="live-btn live-btn-increase" disabled={loading || displayBet + step > chips} onClick={onIncrease}>
-                +{formatCurrency(step)}
-              </button>
-              <button type="button" className="live-btn live-btn-muted" disabled={loading || displayBet <= minBet} onClick={onDecrease}>
-                −
-              </button>
-              <button type="button" className="live-btn live-btn-danger" disabled={loading} onClick={onClear}>
-                Borrar
-              </button>
+
+              <div className="live-bet-panel__preview">
+                <BetChipPreview amount={displayBet} />
+              </div>
+
+              <div className="live-bet-panel__actions">
+                <button
+                  type="button"
+                  className="live-btn live-btn-primary live-btn--apostar"
+                  disabled={loading || displayBet < minBet || displayBet > chips}
+                  onClick={onBet}
+                >
+                  Apostar
+                </button>
+                <button
+                  type="button"
+                  className="live-btn live-btn-increase"
+                  disabled={loading || displayBet + step > chips}
+                  onClick={onIncrease}
+                >
+                  +{formatCurrency(step)}
+                </button>
+                <button
+                  type="button"
+                  className="live-btn live-btn-muted"
+                  disabled={loading || displayBet <= minBet}
+                  onClick={onDecrease}
+                  aria-label="Reducir apuesta"
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  className="live-btn live-btn-danger"
+                  disabled={loading}
+                  onClick={onClear}
+                >
+                  Borrar
+                </button>
+              </div>
             </div>
           )}
 
@@ -725,7 +758,7 @@ function ControlTablet({
             <p className="live-waiting-msg">Esperando a {currentTurnName}...</p>
           )}
 
-          {isMyTurn && (
+          {isMyTurn && !isCardDealing && (
             <div className="live-action-buttons">
               <button type="button" className="live-btn live-btn-hit" disabled={loading} onClick={onHit}>Pedir</button>
               <button type="button" className="live-btn live-btn-stand" disabled={loading} onClick={onStand}>Plantarse</button>
@@ -1066,6 +1099,7 @@ export function LiveCasinoBlackjackUI({
         showSplit={showSplit}
         showSurrender={showSurrender}
         dealerAnimating={dealerReveal.isAnimating}
+        isCardDealing={overviewDeal.isDealing}
       />
     </div>
     </GameLandscapeGate>

@@ -475,12 +475,13 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
       }));
 
       let newState = { ...state, deck: remaining, players };
+      newState = stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
 
       if (newStatus === "busted") {
         newState = advanceTurn(newState);
         if (newState.phase === "dealerTurn") return dealerPlay(newState);
       }
-      return stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
+      return newState;
     }
 
     // ── Plantarse (Stand) ──
@@ -510,8 +511,9 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
       }));
 
       let newState = advanceTurn({ ...state, deck: remaining, players });
+      newState = stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
       if (newState.phase === "dealerTurn") return dealerPlay(newState);
-      return stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
+      return newState;
     }
 
     // ── Dividir (Split) ──

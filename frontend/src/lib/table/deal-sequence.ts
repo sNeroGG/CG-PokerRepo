@@ -157,7 +157,9 @@ export function visibleCountForSlot(
   plan: DealEvent[],
   visibleGlobal: number
 ): number {
-  return plan.filter((e) => e.slot === slot && e.globalIndex < visibleGlobal).length;
+  const revealed = plan.filter((e) => e.slot === slot && e.globalIndex < visibleGlobal);
+  if (revealed.length === 0) return 0;
+  return Math.max(...revealed.map((e) => e.cardIdx)) + 1;
 }
 
 export function animatingCardIndex(
