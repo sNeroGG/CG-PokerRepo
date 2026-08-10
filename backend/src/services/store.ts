@@ -147,6 +147,8 @@ async function syncRoomPlayers(
 }
 
 export async function getRoom(code: string): Promise<Room | null> {
+  void maybeCleanupStaleRooms();
+
   const normalized = code.toUpperCase();
   const supabase = createSupabaseAdmin();
 
@@ -239,6 +241,21 @@ export async function getRoomIdByCode(code: string): Promise<string | null> {
 
 /** Salas sin actividad durante maxIdleMs se eliminan (jugadores incluidos por CASCADE). */
 export const ROOM_IDLE_TTL_MS = 10 * 60 * 1000;
+
+const CLEANUP_THROTTLE_MS = 60_000;
+let lastCleanupAt = 0;
+
+/** Limpieza oportunista (Hobby no permite crons frecuentes en Vercel). */
+async function maybeCleanupStaleRooms(): Promise<void> {
+  const now = Date.now();
+  if (now - lastCleanupAt < CLEANUP_THROTTLE_MS) return;
+  lastCleanupAt = now;
+  try {
+    await deleteStaleRooms();
+  } catch (err) {
+    console.error("[room-cleanup]", err);
+  }
+}
 
 export async function deleteStaleRooms(
   maxIdleMs: number = ROOM_IDLE_TTL_MS
