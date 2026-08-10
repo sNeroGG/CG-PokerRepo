@@ -71,6 +71,12 @@ export interface BaseGameState {
   phase: string;
   message: string;
   dealerMessage: string;
+  /** Timestamp — sincroniza reparto carta por carta en todos los clientes */
+  dealStartedAt?: number;
+  /** Cuántas cartas se reparten en este batch (una animación por carta) */
+  dealCardCount?: number;
+  /** Orden de slots repartidos en este batch (ej. p:uuid:0) */
+  dealSlots?: string[];
 }
 
 // ─── Blackjack ───────────────────────────────────────────────

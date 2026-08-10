@@ -86,6 +86,8 @@ function dealHoleCards(state: PokerState, roomPlayers: Player[]): PokerState {
     winners: [],
     message: "Pre-flop — tu turno",
     dealerMessage: "CPU repartió cartas y ciegas.",
+    dealStartedAt: Date.now(),
+    dealCardCount: players.length * 2,
   };
 }
 
@@ -134,6 +136,9 @@ function advancePhase(state: PokerState, roomPlayers: Player[]): PokerState {
 
   const firstActive = resetBets.findIndex((p) => !p.folded && !p.allIn);
 
+  const prevCommunityLen = state.communityCards.length;
+  const newCardsDealt = community.length - prevCommunityLen;
+
   return {
     ...state,
     deck,
@@ -144,6 +149,9 @@ function advancePhase(state: PokerState, roomPlayers: Player[]): PokerState {
     currentPlayerIndex: firstActive >= 0 ? firstActive : 0,
     message,
     dealerMessage: `CPU reparte cartas comunitarias (${phase}).`,
+    dealStartedAt: Date.now(),
+    dealCardCount: newCardsDealt,
+    dealSlots: newCardsDealt > 0 ? ["community"] : undefined,
   };
 }
 

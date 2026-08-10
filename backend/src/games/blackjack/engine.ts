@@ -20,6 +20,18 @@ import type { GameEngine } from "../engine";
 const MIN_BET = 10;
 const NUM_DECKS = 6;
 
+function stampDeal<S extends { dealStartedAt?: number; dealCardCount?: number; dealSlots?: string[] }>(
+  state: S,
+  count: number,
+  slots?: string[]
+): S {
+  return { ...state, dealStartedAt: Date.now(), dealCardCount: count, dealSlots: slots };
+}
+
+function playerDealSlot(playerId: string, handIndex = 0): string {
+  return `p:${playerId}:${handIndex}`;
+}
+
 function emptyHand(bet = 0): BlackjackHand {
   return { cards: [], bet, status: "active" };
 }
@@ -85,6 +97,8 @@ function dealInitialCards(state: BlackjackState): BlackjackState {
     players: playerStates,
     phase: "dealing",
     dealerMessage: "Cartas repartidas — verificando naturals...",
+    dealStartedAt: Date.now(),
+    dealCardCount: playerStates.length * 2 + 2,
   });
 }
 
@@ -466,7 +480,7 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
         newState = advanceTurn(newState);
         if (newState.phase === "dealerTurn") return dealerPlay(newState);
       }
-      return newState;
+      return stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
     }
 
     // ── Plantarse (Stand) ──
@@ -497,7 +511,7 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
 
       let newState = advanceTurn({ ...state, deck: remaining, players });
       if (newState.phase === "dealerTurn") return dealerPlay(newState);
-      return newState;
+      return stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
     }
 
     // ── Dividir (Split) ──
@@ -545,7 +559,10 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
         newState = advanceTurn(newState);
         if (newState.phase === "dealerTurn") return dealerPlay(newState);
       }
-      return newState;
+      return stampDeal(newState, 2, [
+        playerDealSlot(playerId, 0),
+        playerDealSlot(playerId, 1),
+      ]);
     }
 
     // ── Rendirse (Surrender) ──

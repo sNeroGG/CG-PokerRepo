@@ -17,8 +17,14 @@ import { TableCard } from "@/components/table/immersive/TableCard";
 import { ImmersiveTableScene } from "@/components/table/immersive/ImmersiveTableScene";
 import { HandsOverviewPanel, type HandOverviewEntry } from "@/components/table/immersive/HandsOverviewPanel";
 import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
-import { useBetAnimations } from "@/hooks/useBetAnimations";
-import type { BetAnimState } from "@/hooks/useBetAnimations";
+import { DealtCardSpread } from "@/components/table/immersive/DealtCardSpread";
+import { useDealPlanContext } from "@/hooks/useProgressiveDeal";
+import {
+  buildBlackjackDealPlan,
+  DEALER_SLOT,
+  playerSlot,
+  resolveDealPlan,
+} from "@/lib/table/deal-sequence";
 import "@/components/table/immersive/immersive-table.css";
 import "@/components/ui/casino-chip.css";
 import "./live-casino.css";
@@ -171,23 +177,37 @@ function PlayerSidebar({
 function PlayerHandOnFelt({
   name,
   cards,
+  slot,
   position,
   isMe,
   isTurn,
   phase,
-  cardOffset = 0,
+  dealPlan,
+  visibleGlobal,
+  dealComplete,
 }: {
   name: string;
   cards: Card[];
+  slot: string;
   position: number;
   isMe: boolean;
   isTurn: boolean;
   phase: string;
-  cardOffset?: number;
+  dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
+  visibleGlobal: number;
+  dealComplete: boolean;
 }) {
   if (cards.length === 0 || phase === "betting") return null;
 
-  const visibleTotal = cards.some((c) => !c.hidden) ? handTotal(cards) : null;
+  const { visibleCards } = resolveDealPlan(
+    dealComplete ? null : dealPlan,
+    cards,
+    slot,
+    visibleGlobal,
+    dealComplete
+  );
+  const visibleTotal =
+    visibleCards.some((c) => !c.hidden) ? handTotal(visibleCards) : null;
 
   return (
     <div
@@ -195,17 +215,17 @@ function PlayerHandOnFelt({
     >
       <span className="live-seat-spot__name">{isMe ? "Tú" : name}</span>
       <div className="live-seat-spot__cards">
-        {cards.map((card, i) => (
-          <TableCard
-            key={`${name}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
-            card={card}
-            index={cardOffset + i}
-            size={isMe ? "md" : "sm"}
-            motion="deal"
-          />
-        ))}
+        <DealtCardSpread
+          cards={cards}
+          slot={slot}
+          plan={dealComplete ? null : dealPlan}
+          visibleGlobal={visibleGlobal}
+          complete={dealComplete}
+          size={isMe ? "md" : "sm"}
+          keyPrefix={`seat-${slot}`}
+        />
       </div>
-      {visibleTotal !== null && (
+      {visibleTotal !== null && visibleCards.length === cards.length && (
         <span className="live-seat-spot__total">{visibleTotal}</span>
       )}
     </div>
@@ -221,6 +241,10 @@ function DealerHandOnFelt({
   isAnimating,
   animatingCardIndex,
   flipHole,
+  useProgressiveDeal: progressiveDealActive,
+  dealPlan,
+  visibleGlobal,
+  dealComplete,
 }: {
   cards: Card[];
   dealerMessage: string;
@@ -229,6 +253,10 @@ function DealerHandOnFelt({
   isAnimating: boolean;
   animatingCardIndex: number | null;
   flipHole: boolean;
+  useProgressiveDeal: boolean;
+  dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
+  visibleGlobal: number;
+  dealComplete: boolean;
 }) {
   return (
     <div className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}>
@@ -236,35 +264,48 @@ function DealerHandOnFelt({
         <span>Crupier CPU</span>
         <small>
           {isAnimating ? "Sacando cartas..." : dealerMessage}
-          {cards.length > 0 && (
+          {cards.length > 0 && dealComplete && (
             <> · {partial ? `Visible: ${total}` : `Total: ${total}`}</>
           )}
         </small>
       </div>
-      {isAnimating && (
+      {(isAnimating || (progressiveDealActive && !dealComplete)) && (
         <div className="live-dealer-draw-indicator" aria-live="polite">
           <span className="live-dealer-draw-dot" />
           Repartiendo carta por carta...
         </div>
       )}
       <div className="live-felt-card-spread">
-        {cards.map((card, i) => {
-          let motion: "deal" | "flip" | "draw" | "none" = "none";
-          if (animatingCardIndex === i) {
-            motion = flipHole && i === 1 ? "flip" : "draw";
-          }
-          return (
-            <TableCard
-              key={`d-${card.rank}-${card.suit}-${i}-${card.hidden}`}
-              card={card}
-              index={i}
-              size="md"
-              variant="dealer"
-              animate={false}
-              motion={motion}
-            />
-          );
-        })}
+        {progressiveDealActive && !isAnimating ? (
+          <DealtCardSpread
+            cards={cards}
+            slot={DEALER_SLOT}
+            plan={dealComplete ? null : dealPlan}
+            visibleGlobal={visibleGlobal}
+            complete={dealComplete}
+            size="md"
+            variant="dealer"
+            keyPrefix="dealer"
+          />
+        ) : (
+          cards.map((card, i) => {
+            let motion: "deal" | "flip" | "draw" | "none" = "none";
+            if (animatingCardIndex === i) {
+              motion = flipHole && i === 1 ? "flip" : "draw";
+            }
+            return (
+              <TableCard
+                key={`d-${card.rank}-${card.suit}-${i}-${card.hidden}`}
+                card={card}
+                index={i}
+                size="md"
+                variant="dealer"
+                animate={motion !== "none"}
+                motion={motion}
+              />
+            );
+          })
+        )}
       </div>
     </div>
   );
@@ -422,10 +463,25 @@ function TableBackground({
     dealerReveal.displayedHand.some((c) => c.hidden);
 
   const activePlayers = orderPlayersFirstPerson(room.players, playerId);
+  const orderedIds = activePlayers.map((p) => p.id);
+
+  const dealPlan = useMemo(
+    () => buildBlackjackDealPlan(state, orderedIds),
+    [state, orderedIds]
+  );
+
+  const { visibleGlobal, complete: dealComplete, isDealing } = useDealPlanContext(
+    state.dealStartedAt,
+    state.dealCardCount,
+    dealPlan
+  );
+
+  const progressiveDealActive =
+    !isRoundEnd && !!dealPlan && !dealerReveal.isAnimating;
 
   return (
     <ImmersiveTableScene>
-    <div className={`live-table-scene ${dealingBurst ? "live-table-scene--dealing" : ""}`}>
+    <div className={`live-table-scene ${isDealing || dealingBurst ? "live-table-scene--dealing" : ""}`}>
       <div className="live-table-wrapper">
         <div className="live-table-rail" />
         <div className="live-table-felt">
@@ -445,7 +501,7 @@ function TableBackground({
             <span className="brand-table-logo-zone__name">{BRAND_NAME}</span>
           </div>
 
-          {(state.phase === "dealing" || dealerReveal.isAnimating) && (
+          {(isDealing || state.phase === "dealing" || dealerReveal.isAnimating) && (
             <div className="live-dealing-flash" aria-hidden>
               <span>{dealerReveal.isAnimating ? "Crupier" : "Repartiendo"}</span>
             </div>
@@ -464,6 +520,10 @@ function TableBackground({
               isAnimating={dealerReveal.isAnimating}
               animatingCardIndex={dealerReveal.animatingCardIndex}
               flipHole={dealerReveal.flipHole}
+              useProgressiveDeal={progressiveDealActive}
+              dealPlan={dealPlan}
+              visibleGlobal={visibleGlobal}
+              dealComplete={dealComplete || isRoundEnd}
             />
           )}
 
@@ -475,22 +535,25 @@ function TableBackground({
 
           {activePlayers.map((p, index) => {
             const ps = state.players.find((s) => s.playerId === p.id);
-            const placedBet = ps?.hands.reduce((sum, hand) => sum + hand.bet, 0) ?? 0;
             const isMe = p.id === playerId;
             const isTurn = currentTurnId === p.id;
             const primaryHand = ps?.hands[ps.currentHandIndex ?? 0] ?? ps?.hands[0];
             const cards = primaryHand?.cards ?? [];
+            const slot = playerSlot(p.id, ps?.currentHandIndex ?? 0);
 
             return (
               <PlayerHandOnFelt
                 key={`hand-${p.id}`}
                 name={p.name}
                 cards={cards}
+                slot={slot}
                 position={index}
                 isMe={isMe}
                 isTurn={isTurn}
                 phase={state.phase}
-                cardOffset={index * 2}
+                dealPlan={dealPlan}
+                visibleGlobal={visibleGlobal}
+                dealComplete={dealComplete}
               />
             );
           })}
@@ -842,6 +905,7 @@ export function LiveCasinoBlackjackUI({
         id: p.id,
         label: p.id === playerId ? "Mis cartas" : p.name,
         cards: hand.cards,
+        slot: playerSlot(p.id, ps?.currentHandIndex ?? 0),
         isMe: p.id === playerId,
         isActive: currentTurnId === p.id,
       });
@@ -853,6 +917,7 @@ export function LiveCasinoBlackjackUI({
         id: "dealer",
         label: "Crupier",
         cards: dealerCards,
+        slot: DEALER_SLOT,
         isDealer: true,
         total: isRoundEnd
           ? dealerReveal.displayedTotal
@@ -866,11 +931,24 @@ export function LiveCasinoBlackjackUI({
     playerId,
     state.players,
     state.dealerHand,
+    state.dealStartedAt,
+    state.dealCardCount,
     isRoundEnd,
     dealerReveal.displayedHand,
     dealerReveal.displayedTotal,
     currentTurnId,
   ]);
+
+  const overviewDealPlan = useMemo(
+    () => buildBlackjackDealPlan(state, orderPlayersFirstPerson(room.players, playerId).map((p) => p.id)),
+    [state, room.players, playerId]
+  );
+
+  const overviewDeal = useDealPlanContext(
+    state.dealStartedAt,
+    state.dealCardCount,
+    overviewDealPlan
+  );
 
   return (
     <GameLandscapeGate>
@@ -917,7 +995,12 @@ export function LiveCasinoBlackjackUI({
         phase={state.phase}
       />
 
-      <HandsOverviewPanel entries={handsOverviewEntries} />
+      <HandsOverviewPanel
+        entries={handsOverviewEntries}
+        dealPlan={isRoundEnd ? null : overviewDealPlan}
+        visibleGlobal={overviewDeal.visibleGlobal}
+        dealComplete={overviewDeal.complete || isRoundEnd}
+      />
 
       {showResultOverlay && myResult && <RoundResultOverlay result={myResult} />}
 

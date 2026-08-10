@@ -46,12 +46,12 @@
 @keyframes cardDealIn {
   0% {
     opacity: 0;
-    transform: perspective(800px) rotateX(55deg) rotateZ(-12deg) translateY(-80px) scale(0.4);
-    filter: blur(4px);
+    transform: perspective(800px) rotateX(55deg) rotateZ(-12deg) translateY(-100px) scale(0.35);
+    filter: blur(5px);
   }
-  60% {
+  55% {
     opacity: 1;
-    transform: perspective(800px) rotateX(8deg) rotateZ(2deg) translateY(6px) scale(1.04);
+    transform: perspective(800px) rotateX(10deg) rotateZ(2deg) translateY(8px) scale(1.05);
     filter: blur(0);
   }
   100% {
@@ -450,7 +450,7 @@
 }
 
 .live-table-card--deal .live-table-card-inner {
-  animation: cardDealIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: cardDealIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .live-table-card--draw .live-table-card-inner {

@@ -3,19 +3,32 @@
 import type { Card } from "@cg/backend/types";
 import { handTotal } from "@/lib/game-logic/deck";
 import { TableCard } from "./TableCard";
+import { DealtCardSpread } from "./DealtCardSpread";
+import type { DealEvent } from "@/lib/table/deal-sequence";
 import "./immersive-table.css";
 
 export interface HandOverviewEntry {
   id: string;
   label: string;
   cards: Card[];
+  slot?: string;
   total?: number | null;
   isMe?: boolean;
   isDealer?: boolean;
   isActive?: boolean;
 }
 
-export function HandsOverviewPanel({ entries }: { entries: HandOverviewEntry[] }) {
+export function HandsOverviewPanel({
+  entries,
+  dealPlan = null,
+  visibleGlobal = Number.MAX_SAFE_INTEGER,
+  dealComplete = true,
+}: {
+  entries: HandOverviewEntry[];
+  dealPlan?: DealEvent[] | null;
+  visibleGlobal?: number;
+  dealComplete?: boolean;
+}) {
   const visible = entries.filter((e) => e.cards.length > 0);
   if (visible.length === 0) return null;
 
@@ -33,17 +46,30 @@ export function HandsOverviewPanel({ entries }: { entries: HandOverviewEntry[] }
           >
             <span className="hands-overview-panel__label">{entry.label}</span>
             <div className="hands-overview-panel__cards">
-              {entry.cards.map((card, i) => (
-                <TableCard
-                  key={`${entry.id}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
-                  card={card}
-                  index={i}
+              {entry.slot && dealPlan && !dealComplete ? (
+                <DealtCardSpread
+                  cards={entry.cards}
+                  slot={entry.slot}
+                  plan={dealPlan}
+                  visibleGlobal={visibleGlobal}
+                  complete={dealComplete}
                   size="sm"
                   variant={entry.isDealer ? "dealer" : "default"}
-                  motion="none"
-                  animate={false}
+                  keyPrefix={entry.id}
                 />
-              ))}
+              ) : (
+                entry.cards.map((card, i) => (
+                  <TableCard
+                    key={`${entry.id}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
+                    card={card}
+                    index={i}
+                    size="sm"
+                    variant={entry.isDealer ? "dealer" : "default"}
+                    motion="none"
+                    animate={false}
+                  />
+                ))
+              )}
             </div>
             {total !== null && entry.cards.some((c) => !c.hidden) && (
               <span className="hands-overview-panel__total">{total}</span>

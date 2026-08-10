@@ -6,12 +6,20 @@ import { CardSlot } from "@/components/cards/PlayingCard";
 import { ActionBar, GameButton, StatusBanner } from "@/components/ui/GameButton";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
 import { CasinoChipStack } from "@/components/ui/CasinoChip";
-import { TableCard } from "@/components/table/immersive/TableCard";
+import { DealtCardSpread } from "@/components/table/immersive/DealtCardSpread";
 import { ImmersiveTableScene } from "@/components/table/immersive/ImmersiveTableScene";
 import { HandsOverviewPanel, type HandOverviewEntry } from "@/components/table/immersive/HandsOverviewPanel";
 import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
 import { useBetAnimations } from "@/hooks/useBetAnimations";
 import type { BetAnimState } from "@/hooks/useBetAnimations";
+import { useDealPlanContext } from "@/hooks/useProgressiveDeal";
+import {
+  buildPokerDealPlan,
+  COMMUNITY_SLOT,
+  playerSlot,
+  resolveDealPlan,
+} from "@/lib/table/deal-sequence";
+import { TableCard } from "@/components/table/immersive/TableCard";
 import { BRAND_ASSETS, BRAND_NAME } from "@/lib/brand";
 import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -75,17 +83,25 @@ function PokerBetSpot({
 function PokerSeatOnFelt({
   name,
   cards,
+  slot,
   position,
   isMe,
   isTurn,
   folded,
+  dealPlan,
+  visibleGlobal,
+  dealComplete,
 }: {
   name: string;
   cards: PokerState["players"][0]["holeCards"];
+  slot: string;
   position: number;
   isMe: boolean;
   isTurn: boolean;
   folded: boolean;
+  dealPlan: ReturnType<typeof buildPokerDealPlan>;
+  visibleGlobal: number;
+  dealComplete: boolean;
 }) {
   if (folded || cards.length === 0) return null;
 
@@ -95,9 +111,15 @@ function PokerSeatOnFelt({
     >
       <span className="live-seat-spot__name">{isMe ? "Tú" : name}</span>
       <div className="live-seat-spot__cards">
-        {cards.map((card, i) => (
-          <TableCard key={`${name}-${i}`} card={card} index={position * 2 + i} size={isMe ? "md" : "sm"} motion="deal" />
-        ))}
+        <DealtCardSpread
+          cards={cards}
+          slot={slot}
+          plan={dealComplete ? null : dealPlan}
+          visibleGlobal={visibleGlobal}
+          complete={dealComplete}
+          size={isMe ? "md" : "sm"}
+          keyPrefix={`poker-${slot}`}
+        />
       </div>
     </div>
   );
@@ -145,6 +167,26 @@ export function PokerTable({
     room.players.filter((p) => state.players.some((ps) => ps.playerId === p.id)),
     playerId
   );
+  const orderedIds = orderedPlayers.map((p) => p.id);
+
+  const dealPlan = useMemo(
+    () => buildPokerDealPlan(state, orderedIds),
+    [state, orderedIds]
+  );
+
+  const { visibleGlobal, complete: dealComplete, isDealing } = useDealPlanContext(
+    state.dealStartedAt,
+    state.dealCardCount,
+    dealPlan
+  );
+
+  const communityVisible = resolveDealPlan(
+    dealComplete ? null : dealPlan,
+    state.communityCards,
+    COMMUNITY_SLOT,
+    visibleGlobal,
+    dealComplete
+  );
 
   async function act(action: Record<string, unknown>) {
     setLoading(true);
@@ -183,6 +225,7 @@ export function PokerTable({
         id: p.id,
         label: p.id === playerId ? "Mis cartas" : p.name,
         cards: ps.holeCards,
+        slot: playerSlot(p.id, 0),
         isMe: p.id === playerId,
         isActive: currentTurnId === p.id,
       });
@@ -193,6 +236,7 @@ export function PokerTable({
         id: "community",
         label: "Mesa",
         cards: state.communityCards,
+        slot: COMMUNITY_SLOT,
         isDealer: true,
       });
     }
@@ -203,10 +247,15 @@ export function PokerTable({
   return (
     <GameLandscapeGate>
       <div className="live-casino-root poker-table-root landscape-play-root">
-        <HandsOverviewPanel entries={handsOverviewEntries} />
+        <HandsOverviewPanel
+          entries={handsOverviewEntries}
+          dealPlan={dealPlan}
+          visibleGlobal={visibleGlobal}
+          dealComplete={dealComplete}
+        />
 
         <ImmersiveTableScene>
-          <div className="live-table-scene">
+          <div className={`live-table-scene ${isDealing ? "live-table-scene--dealing" : ""}`}>
             <div className="live-table-wrapper">
               <div className="live-table-rail" />
               <div className="live-table-felt">
@@ -231,15 +280,30 @@ export function PokerTable({
                 <div className="live-felt-zone live-felt-zone--dealer">
                   <div className="live-felt-card-spread">
                     {Array.from({ length: 5 }).map((_, i) => {
-                      const card = state.communityCards[i];
-                      return card ? (
-                        <TableCard key={i} card={card} index={i} size="md" variant="dealer" motion="deal" />
-                      ) : (
-                        <CardSlot key={i} size="md" />
-                      );
+                      const card = communityVisible.visibleCards[i];
+                      if (card) {
+                        return (
+                          <TableCard
+                            key={`community-${i}-${card.rank}-${card.suit}`}
+                            card={card}
+                            index={i}
+                            size="md"
+                            variant="dealer"
+                            motion={communityVisible.motionIndex === i ? "deal" : "none"}
+                            animate={communityVisible.motionIndex === i}
+                          />
+                        );
+                      }
+                      return <CardSlot key={`slot-${i}`} size="md" />;
                     })}
                   </div>
                 </div>
+
+                {isDealing && (
+                  <div className="live-dealing-flash" aria-hidden>
+                    <span>Repartiendo</span>
+                  </div>
+                )}
 
                 {orderedPlayers.map((p, index) => {
                   const ps = state.players.find((s) => s.playerId === p.id);
@@ -249,10 +313,14 @@ export function PokerTable({
                       key={`seat-${p.id}`}
                       name={p.name}
                       cards={ps.holeCards}
+                      slot={playerSlot(p.id, 0)}
                       position={index}
                       isMe={p.id === playerId}
                       isTurn={currentTurnId === p.id}
                       folded={ps.folded}
+                      dealPlan={dealPlan}
+                      visibleGlobal={visibleGlobal}
+                      dealComplete={dealComplete}
                     />
                   );
                 })}
