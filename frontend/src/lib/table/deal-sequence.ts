@@ -155,11 +155,15 @@ export function buildPokerDealPlan(
 export function visibleCountForSlot(
   slot: string,
   plan: DealEvent[],
-  visibleGlobal: number
+  visibleGlobal: number,
+  totalCards: number
 ): number {
-  const revealed = plan.filter((e) => e.slot === slot && e.globalIndex < visibleGlobal);
-  if (revealed.length === 0) return 0;
-  return Math.max(...revealed.map((e) => e.cardIdx)) + 1;
+  const slotEvents = plan.filter((e) => e.slot === slot);
+  if (slotEvents.length === 0) return totalCards;
+
+  const revealedCount = slotEvents.filter((e) => e.globalIndex < visibleGlobal).length;
+  const baseCount = totalCards - slotEvents.length;
+  return Math.min(totalCards, Math.max(0, baseCount + revealedCount));
 }
 
 export function animatingCardIndex(
@@ -182,7 +186,7 @@ export function resolveDealPlan(
     return { visibleCards: cards, motionIndex: null };
   }
 
-  const count = visibleCountForSlot(slot, plan, visibleGlobal);
+  const count = visibleCountForSlot(slot, plan, visibleGlobal, cards.length);
   const motionIndex = animatingCardIndex(slot, plan, visibleGlobal);
 
   return {

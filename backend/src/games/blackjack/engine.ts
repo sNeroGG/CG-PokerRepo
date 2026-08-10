@@ -510,8 +510,12 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
         status: newStatus,
       }));
 
-      let newState = advanceTurn({ ...state, deck: remaining, players });
-      newState = stampDeal(newState, 1, [playerDealSlot(playerId, handIdx)]);
+      let newState = stampDeal(
+        { ...state, deck: remaining, players },
+        1,
+        [playerDealSlot(playerId, handIdx)]
+      );
+      newState = advanceTurn(newState);
       if (newState.phase === "dealerTurn") return dealerPlay(newState);
       return newState;
     }

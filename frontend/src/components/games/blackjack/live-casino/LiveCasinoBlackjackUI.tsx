@@ -20,7 +20,7 @@ import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
 import { useBetAnimations } from "@/hooks/useBetAnimations";
 import type { BetAnimState } from "@/hooks/useBetAnimations";
 import { DealtCardSpread } from "@/components/table/immersive/DealtCardSpread";
-import { useDealPlanContext, reorderHandPlayerIds } from "@/hooks/useProgressiveDeal";
+import { useProgressiveDeal, reorderHandPlayerIds } from "@/hooks/useProgressiveDeal";
 import {
   buildBlackjackDealPlan,
   DEALER_SLOT,
@@ -290,7 +290,7 @@ function DealerHandOnFelt({
             const dealingNow = animatingCardIndex === i;
             return (
               <TableCard
-                key={`d-${card.rank}-${card.suit}-${i}-${card.hidden}`}
+                key={`d-${i}-${card.rank}-${card.suit}-${dealingNow ? motion : "set"}`}
                 card={card}
                 index={i}
                 size="md"
@@ -427,6 +427,10 @@ function TableBackground({
   room,
   playerId,
   currentTurnId,
+  dealPlan,
+  visibleGlobal,
+  dealComplete,
+  isDealing,
 }: {
   state: BlackjackState;
   isRoundEnd: boolean;
@@ -435,6 +439,10 @@ function TableBackground({
   room: Room;
   playerId: string;
   currentTurnId: string | null;
+  dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
+  visibleGlobal: number;
+  dealComplete: boolean;
+  isDealing: boolean;
 }) {
   const prevCardCount = useRef(0);
   const [dealingBurst, setDealingBurst] = useState(false);
@@ -453,24 +461,9 @@ function TableBackground({
   }, [state.dealerHand.length, state.players]);
 
   const activePlayers = orderPlayersFirstPerson(room.players, playerId);
-  const dealOrderIds = reorderHandPlayerIds(
-    state.players.map((p) => p.playerId),
-    playerId
-  );
-
-  const dealPlan = useMemo(
-    () => buildBlackjackDealPlan(state, dealOrderIds),
-    [state, dealOrderIds]
-  );
-
-  const { visibleGlobal, complete: dealComplete, isDealing } = useDealPlanContext(
-    state.dealStartedAt,
-    state.dealCardCount,
-    dealPlan
-  );
 
   const progressiveDealActive =
-    !isRoundEnd && !!dealPlan && !dealerReveal.isAnimating;
+    !!dealPlan && !dealComplete && !dealerReveal.isAnimating;
 
   return (
     <ImmersiveTableScene>
@@ -524,7 +517,7 @@ function TableBackground({
               useProgressiveDeal={progressiveDealActive}
               dealPlan={dealPlan}
               visibleGlobal={visibleGlobal}
-              dealComplete={dealComplete || isRoundEnd}
+              dealComplete={dealComplete}
               revealStage={dealerReveal.stage}
               revealVisible={dealerReveal.visibleCount}
               revealTotal={dealerReveal.totalCount}
@@ -871,7 +864,23 @@ export function LiveCasinoBlackjackUI({
 
   const shuffling = state.phase === "dealing";
   const isRoundEnd = state.phase === "roundEnd";
-  const dealerReveal = useDealerRevealAnimation(state);
+
+  const dealOrderIds = useMemo(
+    () => reorderHandPlayerIds(state.players.map((p) => p.playerId), playerId),
+    [state.players, playerId]
+  );
+  const dealPlan = useMemo(
+    () => buildBlackjackDealPlan(state, dealOrderIds),
+    [state, dealOrderIds]
+  );
+  const { visibleGlobal, complete: dealComplete, isDealing } = useProgressiveDeal(
+    state.dealStartedAt,
+    state.dealCardCount
+  );
+
+  const dealerReveal = useDealerRevealAnimation(state, {
+    enabled: !state.dealCardCount || dealComplete,
+  });
 
   const handStatus = visibleHandStatus(activeHand?.status, state.phase, dealerReveal.complete);
 
@@ -982,21 +991,6 @@ export function LiveCasinoBlackjackUI({
     currentTurnId,
   ]);
 
-  const overviewDealPlan = useMemo(
-    () =>
-      buildBlackjackDealPlan(
-        state,
-        reorderHandPlayerIds(state.players.map((p) => p.playerId), playerId)
-      ),
-    [state, playerId]
-  );
-
-  const overviewDeal = useDealPlanContext(
-    state.dealStartedAt,
-    state.dealCardCount,
-    overviewDealPlan
-  );
-
   return (
     <GameLandscapeGate>
       <div className="live-casino-root landscape-play-root">
@@ -1044,9 +1038,9 @@ export function LiveCasinoBlackjackUI({
 
       <HandsOverviewPanel
         entries={handsOverviewEntries}
-        dealPlan={isRoundEnd ? null : overviewDealPlan}
-        visibleGlobal={overviewDeal.visibleGlobal}
-        dealComplete={overviewDeal.complete || isRoundEnd}
+        dealPlan={dealerReveal.isAnimating ? null : dealPlan}
+        visibleGlobal={visibleGlobal}
+        dealComplete={dealComplete}
       />
 
       {showResultOverlay && myResult && <RoundResultOverlay result={myResult} />}
@@ -1059,6 +1053,10 @@ export function LiveCasinoBlackjackUI({
         room={room}
         playerId={playerId}
         currentTurnId={currentTurnId}
+        dealPlan={dealPlan}
+        visibleGlobal={visibleGlobal}
+        dealComplete={dealComplete}
+        isDealing={isDealing}
       />
 
       <ControlTablet
@@ -1091,7 +1089,7 @@ export function LiveCasinoBlackjackUI({
         showSplit={showSplit}
         showSurrender={showSurrender}
         dealerAnimating={dealerReveal.isAnimating}
-        isCardDealing={overviewDeal.isDealing}
+        isCardDealing={isDealing}
       />
     </div>
     </GameLandscapeGate>

@@ -33,18 +33,21 @@ export function DealtCardSpread({
 
   return (
     <>
-      {visibleCards.map((card, i) => (
-        <TableCard
-          key={`${keyPrefix}-${slot}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
-          card={card}
-          index={0}
-          size={size}
-          variant={variant}
-          motion={motionIndex === i ? "deal" : "none"}
-          animate={motionIndex === i}
-          className={motionIndex === i ? "live-table-card--dealing-now" : undefined}
-        />
-      ))}
+      {visibleCards.map((card, i) => {
+        const isAnimatingNow = motionIndex === i;
+        return (
+          <TableCard
+            key={`${keyPrefix}-${slot}-${i}-${card.rank}-${card.suit}-${isAnimatingNow ? "deal" : "set"}`}
+            card={card}
+            index={i}
+            size={size}
+            variant={variant}
+            motion={isAnimatingNow ? "draw" : "none"}
+            animate={isAnimatingNow}
+            className={isAnimatingNow ? "live-table-card--dealing-now" : undefined}
+          />
+        );
+      })}
     </>
   );
 }
