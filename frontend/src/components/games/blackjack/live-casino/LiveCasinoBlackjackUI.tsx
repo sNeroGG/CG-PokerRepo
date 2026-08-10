@@ -58,14 +58,6 @@ function visibleHandStatus(
   return STATUS[status];
 }
 
-function neutralDealerMessage(
-  dealerMessage: string,
-  isRoundEnd: boolean,
-  reveal: ReturnType<typeof useDealerRevealAnimation>
-): string {
-  if (!isRoundEnd || reveal.complete) return dealerMessage;
-  return reveal.isAnimating ? "Sacando cartas..." : "Revelando carta oculta...";
-}
 const RESULT_META: Record<
   string,
   { label: string; icon: string; tone: "win" | "lose" | "neutral" | "gold" }
@@ -237,9 +229,6 @@ function PlayerHandOnFelt({
 /* ── Victory cards on felt ── */
 function DealerHandOnFelt({
   cards,
-  dealerMessage,
-  total,
-  partial,
   isAnimating,
   animatingCardIndex,
   flipHole,
@@ -252,9 +241,6 @@ function DealerHandOnFelt({
   revealTotal,
 }: {
   cards: Card[];
-  dealerMessage: string;
-  total: number;
-  partial: boolean;
   isAnimating: boolean;
   animatingCardIndex: number | null;
   flipHole: boolean;
@@ -277,15 +263,6 @@ function DealerHandOnFelt({
 
   return (
     <div className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}>
-      <div className="live-dealer-badge live-dealer-badge--felt">
-        <span>Crupier CPU</span>
-        <small>
-          {isAnimating ? revealLabel : dealerMessage}
-          {cards.length > 0 && dealComplete && (
-            <> · {partial ? `Visible: ${total}` : `Total: ${total}`}</>
-          )}
-        </small>
-      </div>
       {(isAnimating || (progressiveDealActive && !dealComplete)) && (
         <div className="live-dealer-draw-indicator" aria-live="polite">
           <span className="live-dealer-draw-dot" />
@@ -444,7 +421,6 @@ function TableBetSpot({
 
 function TableBackground({
   state,
-  dealerMessage,
   isRoundEnd,
   dealerReveal,
   betAnimations,
@@ -453,7 +429,6 @@ function TableBackground({
   currentTurnId,
 }: {
   state: BlackjackState;
-  dealerMessage: string;
   isRoundEnd: boolean;
   dealerReveal: ReturnType<typeof useDealerRevealAnimation>;
   betAnimations: Record<string, BetAnimState | undefined>;
@@ -476,10 +451,6 @@ function TableBackground({
     }
     prevCardCount.current = count;
   }, [state.dealerHand.length, state.players]);
-
-  const dealerPartial =
-    dealerReveal.isAnimating ||
-    dealerReveal.displayedHand.some((c) => c.hidden);
 
   const activePlayers = orderPlayersFirstPerson(room.players, playerId);
   const dealOrderIds = reorderHandPlayerIds(
@@ -504,6 +475,9 @@ function TableBackground({
   return (
     <ImmersiveTableScene>
     <div className={`live-table-scene ${isDealing || dealingBurst ? "live-table-scene--dealing" : ""}`}>
+      <div className="live-dealer-badge live-dealer-badge--above-table" aria-hidden={false}>
+        <span>Cholos Boss</span>
+      </div>
       <div className="live-table-wrapper">
         <div className="live-table-rail" />
         <div className="live-table-felt">
@@ -544,13 +518,6 @@ function TableBackground({
           {(state.dealerHand.length > 0 || state.phase === "betting") && (
             <DealerHandOnFelt
               cards={isRoundEnd ? dealerReveal.displayedHand : state.dealerHand}
-              dealerMessage={neutralDealerMessage(dealerMessage, isRoundEnd, dealerReveal)}
-              total={isRoundEnd ? dealerReveal.displayedTotal : (visibleDealerTotal(state.dealerHand)?.value ?? 0)}
-              partial={
-                isRoundEnd
-                  ? dealerPartial
-                  : (visibleDealerTotal(state.dealerHand)?.partial ?? false)
-              }
               isAnimating={dealerReveal.isAnimating}
               animatingCardIndex={dealerReveal.animatingCardIndex}
               flipHole={dealerReveal.flipHole}
@@ -1086,7 +1053,6 @@ export function LiveCasinoBlackjackUI({
 
       <TableBackground
         state={state}
-        dealerMessage={state.dealerMessage}
         isRoundEnd={isRoundEnd}
         dealerReveal={dealerReveal}
         betAnimations={betAnimations}

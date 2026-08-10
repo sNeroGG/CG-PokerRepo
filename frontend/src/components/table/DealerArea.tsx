@@ -21,7 +21,7 @@ export function DealerArea({
       <div className="dealer-badge">
         <div className="dealer-avatar">🎰</div>
         <div>
-          <p className="dealer-title">Crupier CPU</p>
+          <p className="dealer-title">Cholos Boss</p>
           <p className="dealer-sub">{message ?? "Listo para repartir"}</p>
         </div>
       </div>

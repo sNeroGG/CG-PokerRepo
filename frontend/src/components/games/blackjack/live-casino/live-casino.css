@@ -602,6 +602,20 @@
   margin-bottom: 0.15rem;
 }
 
+.live-dealer-badge--above-table {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.live-dealer-badge--above-table span {
+  color: var(--brand-gold, #d4af37);
+}
+
 .live-dealing-flash {
   position: absolute;
   inset: 0;
