@@ -17,6 +17,8 @@ import { TableCard } from "@/components/table/immersive/TableCard";
 import { ImmersiveTableScene } from "@/components/table/immersive/ImmersiveTableScene";
 import { HandsOverviewPanel, type HandOverviewEntry } from "@/components/table/immersive/HandsOverviewPanel";
 import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
+import { useBetAnimations } from "@/hooks/useBetAnimations";
+import type { BetAnimState } from "@/hooks/useBetAnimations";
 import { DealtCardSpread } from "@/components/table/immersive/DealtCardSpread";
 import { useDealPlanContext } from "@/hooks/useProgressiveDeal";
 import {
