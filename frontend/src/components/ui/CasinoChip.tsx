@@ -20,7 +20,7 @@ export interface CasinoChipProps {
   stackOffset?: number;
   className?: string;
   style?: CSSProperties;
-  animate?: "fly-to-table" | "land" | "none";
+  animate?: "fly-to-table" | "land" | "add-chip" | "none";
   animationDelay?: number;
 }
 
@@ -42,9 +42,11 @@ export function CasinoChip({
   const animClass =
     animate === "fly-to-table"
       ? "casino-chip--fly-to-table"
-      : animate === "land"
-        ? "casino-chip--landed"
-        : "";
+      : animate === "add-chip"
+        ? "casino-chip--add-chip"
+        : animate === "land"
+          ? "casino-chip--landed"
+          : "";
 
   const mergedStyle: CSSProperties = {
     ...style,
@@ -71,6 +73,7 @@ export function CasinoChip({
 
 export function CasinoChipStack({
   amount,
+  previousAmount = 0,
   size = "sm",
   maxChips = 6,
   className = "",
@@ -78,17 +81,57 @@ export function CasinoChipStack({
   baseDelay = 0,
 }: {
   amount: number;
+  previousAmount?: number;
   size?: CasinoChipSize;
   maxChips?: number;
   className?: string;
-  animate?: "fly-to-table" | "land" | "none";
+  animate?: "fly-to-table" | "add-chips" | "land" | "none";
   baseDelay?: number;
 }) {
+  const stackHeight = 5;
+  const prev = Math.min(previousAmount, amount);
+
+  if (animate === "add-chips" && prev > 0 && amount > prev) {
+    const baseChips = decomposeIntoChips(prev, maxChips);
+    const deltaChips = decomposeIntoChips(amount - prev, Math.max(2, maxChips - baseChips.length));
+    const baseOffset = baseChips.length * stackHeight;
+
+    return (
+      <div className={`chip-stack chip-stack--${size} ${className}`.trim()}>
+        {baseChips.map((chip, i) => (
+          <CasinoChip
+            key={`base-${chip.color}-${chip.value}-${i}`}
+            value={chip.value}
+            color={chip.color}
+            label={chip.label}
+            size={size}
+            stacked
+            stackOffset={i * stackHeight}
+            animate="land"
+          />
+        ))}
+        {deltaChips.map((chip, i) => (
+          <CasinoChip
+            key={`delta-${chip.color}-${chip.value}-${i}`}
+            value={chip.value}
+            color={chip.color}
+            label={chip.label}
+            size={size}
+            stacked
+            stackOffset={baseOffset + i * stackHeight}
+            animate="add-chip"
+            animationDelay={baseDelay + i * 90}
+          />
+        ))}
+      </div>
+    );
+  }
+
   const chips = decomposeIntoChips(amount, maxChips);
 
   if (chips.length === 0) return null;
 
-  const stackHeight = 5;
+  const flyAnimate = animate === "fly-to-table" ? "fly-to-table" : animate === "land" ? "land" : "none";
 
   return (
     <div className={`chip-stack chip-stack--${size} ${className}`.trim()}>
@@ -101,7 +144,7 @@ export function CasinoChipStack({
           size={size}
           stacked
           stackOffset={i * stackHeight}
-          animate={animate}
+          animate={flyAnimate}
           animationDelay={baseDelay + i * 90}
         />
       ))}

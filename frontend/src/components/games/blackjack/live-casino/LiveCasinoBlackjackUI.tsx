@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlackjackState, Card, Room } from "@cg/backend/types";
-import { canSplitCards, handTotal, SUIT_SYMBOL, visibleDealerTotal } from "@/lib/game-logic/deck";
-import { isRedSuit } from "@/lib/game-logic/card-utils";
+import { canSplitCards, handTotal, visibleDealerTotal } from "@/lib/game-logic/deck";
 import { api } from "@/lib/client";
-import { BRAND_ASSETS, BRAND_NAME, BRAND_NAME_SHORT } from "@/lib/brand";
+import { BRAND_ASSETS, BRAND_NAME } from "@/lib/brand";
 import { BrandName } from "@/components/brand/BrandName";
 import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -14,6 +13,13 @@ import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
 import { groupChipStacks } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
+import { TableCard } from "@/components/table/immersive/TableCard";
+import { ImmersiveTableScene } from "@/components/table/immersive/ImmersiveTableScene";
+import { HandsOverviewPanel, type HandOverviewEntry } from "@/components/table/immersive/HandsOverviewPanel";
+import { orderPlayersFirstPerson } from "@/lib/table/seat-order";
+import { useBetAnimations } from "@/hooks/useBetAnimations";
+import type { BetAnimState } from "@/hooks/useBetAnimations";
+import "@/components/table/immersive/immersive-table.css";
 import "@/components/ui/casino-chip.css";
 import "./live-casino.css";
 
@@ -114,130 +120,31 @@ interface HandResult {
   payout: string;
 }
 
-/* ── Table Card — frontal con ligera diagonal ── */
-function TableCard({
-  card,
-  index = 0,
-  size = "md",
-  animate = true,
-  variant = "default",
-  motion = "deal",
-}: {
-  card: Card;
-  index?: number;
-  size?: "sm" | "md" | "lg";
-  animate?: boolean;
-  variant?: "default" | "victory" | "dealer";
-  motion?: "deal" | "flip" | "draw" | "none";
-}) {
-  const isHidden = card.hidden;
-  const color = isHidden ? "" : isRedSuit(card.suit) ? "red" : "black";
-
-  const motionClass =
-    motion === "flip"
-      ? "live-table-card--flip"
-      : motion === "draw"
-        ? "live-table-card--draw"
-        : animate
-          ? "live-table-card--deal"
-          : "";
-
-  return (
-    <div
-      className={`live-table-card live-table-card--${size} live-table-card--${variant} ${motionClass} ${isHidden ? "live-table-card--back" : `live-table-card--${color}`}`}
-      style={{
-        animationDelay:
-          motion === "deal" && animate ? `${index * 0.18}s` : undefined,
-        zIndex: index,
-      }}
-    >
-      <div className="live-table-card-inner">
-        {isHidden ? (
-          <span className="live-table-card-logo">{BRAND_NAME_SHORT}</span>
-        ) : (
-          <>
-            <span className="live-table-card-rank">{card.rank}</span>
-            <span className="live-table-card-suit">{SUIT_SYMBOL[card.suit]}</span>
-            <span className="live-table-card-rank live-table-card-rank--bl">{card.rank}</span>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ── Player Sidebar — cartas + apuesta al costado ── */
+/* ── Player Sidebar — stats compactos (cartas en mesa) ── */
 function PlayerSidebar({
   playerName,
   chips,
   displayBet,
-  myCards,
-  handTotalValue,
   handStatus,
-  handIndex,
-  handCount,
   phase,
-  allHands,
 }: {
   playerName: string;
   chips: number;
   displayBet: number;
-  myCards: Card[];
-  handTotalValue: number | null;
   handStatus?: string;
-  handIndex: number;
-  handCount: number;
   phase: string;
-  allHands?: Array<{ cards: Card[]; bet: number; status: string }>;
 }) {
-  const showHands = phase !== "betting" && (allHands?.length ?? 0) > 0;
-
   return (
-    <aside className="live-player-sidebar">
+    <aside className="live-player-sidebar live-player-sidebar--compact">
       <div className="live-sidebar-brand">
         <BrandLogo size="sm" />
       </div>
       <div className="live-sidebar-header">
         <span className="live-sidebar-name">{playerName}</span>
-        <span className="live-sidebar-you">Tu mano</span>
+        <span className="live-sidebar-you">Tu asiento</span>
       </div>
 
-      <div className="live-sidebar-cards">
-        {showHands && allHands ? (
-          allHands.map((hand, hi) => (
-            <div key={hi} className={`live-sidebar-hand ${hi === handIndex ? "is-active" : ""}`}>
-              {handCount > 1 && <span className="live-sidebar-hand-label">Mano {hi + 1}</span>}
-              <div className="live-sidebar-card-row">
-                {hand.cards.map((card, ci) => (
-                  <TableCard key={`sb-${hi}-${ci}`} card={card} index={ci + hi * 2} size="lg" />
-                ))}
-              </div>
-              {hand.cards.some((c) => !c.hidden) && (
-                <span className="live-sidebar-hand-total">{handTotal(hand.cards)}</span>
-              )}
-            </div>
-          ))
-        ) : myCards.length > 0 ? (
-          <div className="live-sidebar-hand is-active">
-            <div className="live-sidebar-card-row">
-              {myCards.map((card, i) => (
-                <TableCard key={`sb-${i}`} card={card} index={i} size="lg" />
-              ))}
-            </div>
-            {handTotalValue !== null && (
-              <span className="live-sidebar-hand-total">{handTotalValue}</span>
-            )}
-          </div>
-        ) : (
-          <div className="live-sidebar-empty">
-            <div className="live-sidebar-empty-card" />
-            <div className="live-sidebar-empty-card" />
-            <span>Esperando cartas...</span>
-          </div>
-        )}
-      </div>
-
-      {handStatus && handStatus !== "En juego" && (
+      {handStatus && handStatus !== "En juego" && phase !== "betting" && (
         <div
           className={`live-sidebar-status live-sidebar-status--${handStatus.replace(/[^a-z]/gi, "").toLowerCase()}${
             handStatus === "Revelando cartas..." ? " live-sidebar-status--revealing" : ""
@@ -256,14 +163,52 @@ function PlayerSidebar({
           <span className="live-sidebar-stat-label">Fichas</span>
           <strong>{formatCurrency(chips)}</strong>
         </div>
-        {handTotalValue !== null && phase !== "betting" && (
-          <div className="live-sidebar-stat live-sidebar-stat--total">
-            <span className="live-sidebar-stat-label">Total</span>
-            <strong>{handTotalValue}</strong>
-          </div>
-        )}
       </div>
     </aside>
+  );
+}
+
+function PlayerHandOnFelt({
+  name,
+  cards,
+  position,
+  isMe,
+  isTurn,
+  phase,
+  cardOffset = 0,
+}: {
+  name: string;
+  cards: Card[];
+  position: number;
+  isMe: boolean;
+  isTurn: boolean;
+  phase: string;
+  cardOffset?: number;
+}) {
+  if (cards.length === 0 || phase === "betting") return null;
+
+  const visibleTotal = cards.some((c) => !c.hidden) ? handTotal(cards) : null;
+
+  return (
+    <div
+      className={`live-seat-spot live-seat-spot--pos-${Math.min(position, 5)} ${isMe ? "live-seat-spot--me" : ""} ${isTurn ? "live-seat-spot--turn" : ""}`}
+    >
+      <span className="live-seat-spot__name">{isMe ? "Tú" : name}</span>
+      <div className="live-seat-spot__cards">
+        {cards.map((card, i) => (
+          <TableCard
+            key={`${name}-${i}-${card.rank}-${card.suit}-${card.hidden}`}
+            card={card}
+            index={cardOffset + i}
+            size={isMe ? "md" : "sm"}
+            motion="deal"
+          />
+        ))}
+      </div>
+      {visibleTotal !== null && (
+        <span className="live-seat-spot__total">{visibleTotal}</span>
+      )}
+    </div>
   );
 }
 
@@ -393,34 +338,43 @@ function BetChipPreview({ amount }: { amount: number }) {
 function TableBetSpot({
   amount,
   label,
-  animating,
+  betAnim,
   position = 0,
   isMe = false,
   compact = false,
 }: {
   amount: number;
   label: string;
-  animating: boolean;
+  betAnim?: BetAnimState;
   position?: number;
   isMe?: boolean;
   compact?: boolean;
 }) {
   if (amount <= 0) return null;
 
+  const chipAnimate =
+    betAnim?.mode === "fly"
+      ? "fly-to-table"
+      : betAnim?.mode === "add"
+        ? "add-chips"
+        : "none";
+
   return (
     <div
       className={`live-table-bet-spot live-table-bet-spot--pos-${Math.min(position, 5)}
         ${isMe ? "live-table-bet-spot--me" : ""}
         ${compact ? "live-table-bet-spot--sm" : ""}
-        ${animating ? "live-table-bet-spot--animating" : ""}`}
+        ${betAnim ? "live-table-bet-spot--animating" : ""}
+        ${betAnim?.mode === "add" ? "live-table-bet-spot--adding" : ""}`}
     >
       <div className="live-table-bet-spot__ring" aria-hidden />
       <span className="live-table-bet-spot__label">{label}</span>
       <CasinoChipStack
         amount={amount}
+        previousAmount={betAnim?.previousAmount ?? 0}
         size={compact ? "sm" : "md"}
         maxChips={compact ? 4 : 6}
-        animate={animating ? "fly-to-table" : "none"}
+        animate={chipAnimate}
         className="live-table-bet-spot__stack"
       />
       <span className="live-table-bet-spot__total">{formatCurrency(amount)}</span>
@@ -433,19 +387,19 @@ function TableBackground({
   dealerMessage,
   isRoundEnd,
   dealerReveal,
-  tableBetAmount,
-  betAnimating,
+  betAnimations,
   room,
   playerId,
+  currentTurnId,
 }: {
   state: BlackjackState;
   dealerMessage: string;
   isRoundEnd: boolean;
   dealerReveal: ReturnType<typeof useDealerRevealAnimation>;
-  tableBetAmount: number;
-  betAnimating: boolean;
+  betAnimations: Record<string, BetAnimState | undefined>;
   room: Room;
   playerId: string;
+  currentTurnId: string | null;
 }) {
   const prevCardCount = useRef(0);
   const [dealingBurst, setDealingBurst] = useState(false);
@@ -467,9 +421,10 @@ function TableBackground({
     dealerReveal.isAnimating ||
     dealerReveal.displayedHand.some((c) => c.hidden);
 
-  const activePlayers = room.players.filter((p) => (p.seatStatus ?? "active") === "active");
+  const activePlayers = orderPlayersFirstPerson(room.players, playerId);
 
   return (
+    <ImmersiveTableScene>
     <div className={`live-table-scene ${dealingBurst ? "live-table-scene--dealing" : ""}`}>
       <div className="live-table-wrapper">
         <div className="live-table-rail" />
@@ -522,19 +477,39 @@ function TableBackground({
             const ps = state.players.find((s) => s.playerId === p.id);
             const placedBet = ps?.hands.reduce((sum, hand) => sum + hand.bet, 0) ?? 0;
             const isMe = p.id === playerId;
-            const amount =
-              isMe && betAnimating && tableBetAmount > 0 ? tableBetAmount : placedBet;
+            const isTurn = currentTurnId === p.id;
+            const primaryHand = ps?.hands[ps.currentHandIndex ?? 0] ?? ps?.hands[0];
+            const cards = primaryHand?.cards ?? [];
 
-            if (amount <= 0 || (state.phase === "betting" && !isRoundEnd && placedBet < state.minBet && !(isMe && betAnimating))) {
+            return (
+              <PlayerHandOnFelt
+                key={`hand-${p.id}`}
+                name={p.name}
+                cards={cards}
+                position={index}
+                isMe={isMe}
+                isTurn={isTurn}
+                phase={state.phase}
+                cardOffset={index * 2}
+              />
+            );
+          })}
+
+          {activePlayers.map((p, index) => {
+            const ps = state.players.find((s) => s.playerId === p.id);
+            const placedBet = ps?.hands.reduce((sum, hand) => sum + hand.bet, 0) ?? 0;
+            const isMe = p.id === playerId;
+
+            if (placedBet <= 0 || (state.phase === "betting" && placedBet < state.minBet)) {
               return null;
             }
 
             return (
               <TableBetSpot
-                key={p.id}
-                amount={amount}
+                key={`bet-${p.id}`}
+                amount={placedBet}
                 label={isMe ? "Tu apuesta" : p.name}
-                animating={isMe && betAnimating}
+                betAnim={betAnimations[p.id]}
                 position={index}
                 isMe={isMe}
                 compact={!isMe}
@@ -544,6 +519,7 @@ function TableBackground({
         </div>
       </div>
     </div>
+    </ImmersiveTableScene>
   );
 }
 
@@ -751,7 +727,6 @@ export function LiveCasinoBlackjackUI({
   const activeHand = myState?.hands[handIdx];
   const myCards = activeHand?.cards ?? [];
   const committedBet = activeHand?.bet ?? 0;
-  const allMyHands = myState?.hands ?? [];
 
   const isMyTurn =
     state.phase === "playerTurn" &&
@@ -775,11 +750,18 @@ export function LiveCasinoBlackjackUI({
   const [error, setError] = useState("");
   const [seconds, setSeconds] = useState(BET_WINDOW_SECONDS);
   const [copied, setCopied] = useState(false);
-  const [betAnimating, setBetAnimating] = useState(false);
-  const prevCommittedBetRef = useRef(0);
 
   const displayBet = state.phase === "betting" && !betPlaced ? pendingBet : committedBet;
-  const handTotalValue = myCards.length > 0 ? handTotal(myCards) : null;
+
+  const seatBets = useMemo(() => {
+    const bets: Record<string, number> = {};
+    for (const ps of state.players) {
+      bets[ps.playerId] = ps.hands.reduce((sum, hand) => sum + hand.bet, 0);
+    }
+    return bets;
+  }, [state.players]);
+
+  const betAnimations = useBetAnimations(seatBets);
 
   const shuffling = state.phase === "dealing";
   const isRoundEnd = state.phase === "roundEnd";
@@ -823,29 +805,6 @@ export function LiveCasinoBlackjackUI({
     return () => clearInterval(id);
   }, [state.phase]);
 
-  useEffect(() => {
-    if (state.phase !== "betting") {
-      prevCommittedBetRef.current = committedBet;
-      setBetAnimating(false);
-      return;
-    }
-
-    if (committedBet >= state.minBet && committedBet > prevCommittedBetRef.current) {
-      setBetAnimating(true);
-      const t = setTimeout(() => setBetAnimating(false), 1100);
-      prevCommittedBetRef.current = committedBet;
-      return () => clearTimeout(t);
-    }
-
-    prevCommittedBetRef.current = committedBet;
-  }, [committedBet, state.phase, state.minBet]);
-
-  const tableBetAmount =
-    committedBet >= state.minBet &&
-    (state.phase !== "betting" || betPlaced || betAnimating)
-      ? committedBet
-      : 0;
-
   const onIncrease = useCallback(() => setPendingBet((b) => Math.min(b + step, chips)), [step, chips]);
   const onDecrease = useCallback(() => setPendingBet((b) => Math.max(state.minBet, b - step)), [step, state.minBet]);
   const onClear = useCallback(() => setPendingBet(state.minBet), [state.minBet]);
@@ -870,6 +829,48 @@ export function LiveCasinoBlackjackUI({
     : undefined;
 
   const showResultOverlay = isRoundEnd && dealerReveal.complete && !!myResult;
+
+  const handsOverviewEntries = useMemo((): HandOverviewEntry[] => {
+    const entries: HandOverviewEntry[] = [];
+
+    for (const p of orderPlayersFirstPerson(room.players, playerId)) {
+      const ps = state.players.find((s) => s.playerId === p.id);
+      const hand = ps?.hands[ps?.currentHandIndex ?? 0] ?? ps?.hands[0];
+      if (!hand?.cards.length) continue;
+
+      entries.push({
+        id: p.id,
+        label: p.id === playerId ? "Mis cartas" : p.name,
+        cards: hand.cards,
+        isMe: p.id === playerId,
+        isActive: currentTurnId === p.id,
+      });
+    }
+
+    const dealerCards = isRoundEnd ? dealerReveal.displayedHand : state.dealerHand;
+    if (dealerCards.length > 0) {
+      entries.push({
+        id: "dealer",
+        label: "Crupier",
+        cards: dealerCards,
+        isDealer: true,
+        total: isRoundEnd
+          ? dealerReveal.displayedTotal
+          : (visibleDealerTotal(state.dealerHand)?.value ?? null),
+      });
+    }
+
+    return entries;
+  }, [
+    room.players,
+    playerId,
+    state.players,
+    state.dealerHand,
+    isRoundEnd,
+    dealerReveal.displayedHand,
+    dealerReveal.displayedTotal,
+    currentTurnId,
+  ]);
 
   return (
     <GameLandscapeGate>
@@ -912,14 +913,11 @@ export function LiveCasinoBlackjackUI({
         playerName={myPlayer?.name ?? "Jugador"}
         chips={chips}
         displayBet={displayBet}
-        myCards={myCards}
-        handTotalValue={handTotalValue}
         handStatus={handStatus}
-        handIndex={handIdx}
-        handCount={myState?.hands.length ?? 1}
         phase={state.phase}
-        allHands={allMyHands.map((h) => ({ cards: h.cards, bet: h.bet, status: h.status }))}
       />
+
+      <HandsOverviewPanel entries={handsOverviewEntries} />
 
       {showResultOverlay && myResult && <RoundResultOverlay result={myResult} />}
 
@@ -928,10 +926,10 @@ export function LiveCasinoBlackjackUI({
         dealerMessage={state.dealerMessage}
         isRoundEnd={isRoundEnd}
         dealerReveal={dealerReveal}
-        tableBetAmount={tableBetAmount}
-        betAnimating={betAnimating}
+        betAnimations={betAnimations}
         room={room}
         playerId={playerId}
+        currentTurnId={currentTurnId}
       />
 
       <ControlTablet

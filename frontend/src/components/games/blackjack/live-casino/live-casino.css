@@ -142,6 +142,19 @@
   display: none;
 }
 
+.live-player-sidebar--compact {
+  max-width: 140px;
+  padding: 0.5rem 0.65rem;
+}
+
+.live-player-sidebar--compact .live-sidebar-stats {
+  margin-top: 0.5rem;
+}
+
+.live-player-sidebar--compact .live-sidebar-header {
+  margin-bottom: 0.35rem;
+}
+
 .live-players-panel {
   position: absolute;
   top: 4.5rem;
@@ -209,17 +222,18 @@
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
-  perspective: 1400px;
-  padding: 3.5rem 1rem 11rem;
+  perspective: 1600px;
+  padding: 2rem 1rem 10rem;
 }
 
 .live-table-wrapper {
   position: relative;
-  width: min(92vw, 1100px);
-  transform: rotateX(28deg) scale(0.95);
+  width: min(94vw, 1100px);
+  transform: rotateX(22deg) scale(0.92);
   transform-style: preserve-3d;
+  transform-origin: center bottom;
 }
 
 .live-table-rail {
