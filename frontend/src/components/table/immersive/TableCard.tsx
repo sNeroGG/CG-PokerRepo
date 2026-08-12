@@ -4,6 +4,30 @@ import type { Card } from "@cg/backend/types";
 import { SUIT_SYMBOL } from "@/lib/game-logic/deck";
 import { isRedSuit } from "@/lib/game-logic/card-utils";
 import { CardBackBrandLogo } from "@/components/brand/CardBackBrandLogo";
+import {
+  cardFaceFillDataUri,
+  DEFAULT_CARD_FACE_STYLE,
+  getStoredCardFaceStyle,
+  type CardFaceStyleId,
+} from "@/lib/card-face-style";
+import { useSyncExternalStore } from "react";
+
+function subscribeCardFaceStyle(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === "cg-card-face-style") onStoreChange();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener("cg-card-face-style-change", onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener("cg-card-face-style-change", onStoreChange);
+  };
+}
+
+function readCardFaceStyle(): CardFaceStyleId {
+  return typeof window === "undefined" ? DEFAULT_CARD_FACE_STYLE : getStoredCardFaceStyle();
+}
 
 export function TableCard({
   card,
@@ -24,6 +48,7 @@ export function TableCard({
 }) {
   const isHidden = card.hidden;
   const color = isHidden ? "" : isRedSuit(card.suit) ? "red" : "black";
+  const faceStyle = useSyncExternalStore(subscribeCardFaceStyle, readCardFaceStyle, () => DEFAULT_CARD_FACE_STYLE);
 
   const motionClass =
     motion === "flip"
@@ -44,6 +69,15 @@ export function TableCard({
       }}
     >
       <div className="live-table-card-inner">
+        {!isHidden && (
+          <img
+            className="live-table-card-face-bg"
+            src={cardFaceFillDataUri(faceStyle)}
+            alt=""
+            aria-hidden
+            draggable={false}
+          />
+        )}
         {isHidden ? (
           <CardBackBrandLogo className="live-table-card-back-logo" />
         ) : (

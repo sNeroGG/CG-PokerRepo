@@ -1,0 +1,111 @@
+.card-style-picker {
+  position: relative;
+  z-index: 40;
+}
+
+.card-style-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(12, 12, 12, 0.92);
+  color: #d4af37;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.card-style-picker__trigger:hover {
+  border-color: rgba(212, 175, 55, 0.7);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.card-style-picker__trigger:active {
+  transform: scale(0.96);
+}
+
+.card-style-picker__trigger[aria-expanded="true"] {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.14);
+}
+
+.card-style-picker__icon {
+  width: 22px;
+  height: 22px;
+}
+
+.card-style-picker__menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 220px;
+  padding: 0.45rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.97);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.card-style-picker__title {
+  margin: 0.15rem 0.4rem 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.card-style-picker__option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.card-style-picker__option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.card-style-picker__option--active {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.card-style-picker__swatch {
+  width: 28px;
+  height: 38px;
+  border-radius: 5px;
+  border: 1px solid;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.card-style-picker__option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.card-style-picker__option-text strong {
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.card-style-picker__option-text span {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.45);
+}

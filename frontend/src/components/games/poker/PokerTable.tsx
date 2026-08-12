@@ -63,7 +63,7 @@ function PokerBetSpot({
 
   return (
     <div
-      className={`live-table-bet-spot live-table-bet-spot--pos-${Math.min(position, 5)} ${isMe ? "live-table-bet-spot--me" : ""} live-table-bet-spot--sm ${betAnim ? "live-table-bet-spot--animating" : ""} ${betAnim?.mode === "add" ? "live-table-bet-spot--adding" : ""}`}
+      className={`live-table-bet-spot live-table-bet-spot--pos-${Math.min(position, 7)} ${isMe ? "live-table-bet-spot--me" : ""} live-table-bet-spot--sm ${betAnim ? "live-table-bet-spot--animating" : ""} ${betAnim?.mode === "add" ? "live-table-bet-spot--adding" : ""}`}
     >
       <div className="live-table-bet-spot__ring" aria-hidden />
       <span className="live-table-bet-spot__label">{label}</span>
@@ -107,7 +107,7 @@ function PokerSeatOnFelt({
 
   return (
     <div
-      className={`live-seat-spot live-seat-spot--pos-${Math.min(position, 5)} ${isMe ? "live-seat-spot--me" : ""} ${isTurn ? "live-seat-spot--turn" : ""}`}
+      className={`live-seat-spot live-seat-spot--pos-${Math.min(position, 7)} ${isMe ? "live-seat-spot--me" : ""} ${isTurn ? "live-seat-spot--turn" : ""}`}
     >
       <span className="live-seat-spot__name">{isMe ? "Tú" : name}</span>
       <div className="live-seat-spot__cards">

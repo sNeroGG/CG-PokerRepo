@@ -341,7 +341,7 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
   name: "Blackjack",
   description: "21 contra el crupier CPU — reglas de casino estándar",
   minPlayers: 1,
-  maxPlayers: 6,
+  maxPlayers: 8,
   icon: "🃏",
 
   createInitialState(players: Player[]): BlackjackState {
@@ -602,6 +602,7 @@ export const blackjackEngine: GameEngine<BlackjackState> = {
 
     return {
       ...state,
+      deck: [],
       dealerHand: state.dealerHand.map((c, i) => {
         // Hole card = segunda carta (índice 1)
         if (hideHole && i === 1) return { ...c, hidden: true };

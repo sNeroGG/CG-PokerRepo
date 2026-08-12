@@ -4,8 +4,10 @@ import {
   type DatabaseRoom,
 } from "./supabase";
 import type { GameType, Player, Room, RoomStatus } from "../types";
-import { isLobbyState } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hydrateLobbyVotes } from "./public-room";
+
+export { hydrateLobbyVotes };
 
 const memoryRooms = new Map<string, Room>();
 const memoryRoomIds = new Map<string, string>();
@@ -50,15 +52,6 @@ function assembleRoom(row: DatabaseRoom, players: DatabasePlayer[]): Room {
     updatedAt: new Date(row.updated_at).getTime(),
   };
   return hydrateLobbyVotes(room);
-}
-
-export function hydrateLobbyVotes(room: Room): Room {
-  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return room;
-  const votes = room.gameState.lobbyVotes;
-  for (const player of room.players) {
-    if (votes[player.id]) player.gameVote = votes[player.id];
-  }
-  return room;
 }
 
 function isMissingColumnError(message: string): boolean {

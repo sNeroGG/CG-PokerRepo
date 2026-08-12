@@ -104,8 +104,18 @@
   }
 
   html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-5 {
+    left: 6%;
+    bottom: 56%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-6 {
+    left: 94%;
+    bottom: 56%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-7 {
     left: 50%;
-    bottom: 42%;
+    bottom: 62%;
   }
 
   html.mobile-play-mode .mobile-play-root .live-seat-spot__name {
@@ -146,8 +156,18 @@
   }
 
   html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-5 {
+    left: 6%;
+    bottom: 20%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-6 {
+    left: 94%;
+    bottom: 20%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-7 {
     left: 50%;
-    bottom: 5%;
+    bottom: 26%;
   }
 
   html.mobile-play-mode .mobile-play-root .live-table-bet-spot__ring {

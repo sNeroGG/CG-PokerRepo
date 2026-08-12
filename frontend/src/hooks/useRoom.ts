@@ -4,8 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Room } from "@cg/backend/types";
 import { api, getPlayerName } from "@/lib/client";
 import { createSupabaseBrowser, isSupabaseEnabled } from "@/lib/supabase/client";
+import {
+  mergeRoomUpdate,
+  shouldApplyRoomUpdate,
+} from "@/lib/room/merge-room-update";
 
-const POLL_MS = 2000;
+/** Fallback si Broadcast/Realtime fallan. */
+const POLL_MS = 10_000;
+const ROOM_BROADCAST_EVENT = "room_state";
 
 export function useRoom(code: string, playerId: string) {
   const [room, setRoom] = useState<Room | null>(null);
@@ -13,6 +19,12 @@ export function useRoom(code: string, playerId: string) {
   const [error, setError] = useState("");
   const mounted = useRef(true);
   const triedRejoin = useRef(false);
+  const roomRef = useRef<Room | null>(null);
+  const fetchingPrivate = useRef(false);
+
+  useEffect(() => {
+    roomRef.current = room;
+  }, [room]);
 
   const fetchRoom = useCallback(async () => {
     try {
@@ -41,7 +53,11 @@ export function useRoom(code: string, playerId: string) {
         }
       }
 
-      if (mounted.current) {
+      // GET personalizado puede reemplazar el mismo updatedAt del Broadcast compartido
+      if (
+        mounted.current &&
+        (!roomRef.current || data.updatedAt >= roomRef.current.updatedAt)
+      ) {
         setRoom(data);
         setError("");
       }
@@ -54,16 +70,43 @@ export function useRoom(code: string, playerId: string) {
     }
   }, [code, playerId]);
 
+  const applyBroadcast = useCallback(
+    (incoming: Room) => {
+      if (!mounted.current) return;
+      if (!shouldApplyRoomUpdate(roomRef.current, incoming)) return;
+
+      const { room: merged, needsPrivateRefetch } = mergeRoomUpdate(
+        roomRef.current,
+        incoming,
+        playerId
+      );
+      setRoom(merged);
+      setError("");
+
+      if (needsPrivateRefetch && !fetchingPrivate.current) {
+        fetchingPrivate.current = true;
+        void fetchRoom().finally(() => {
+          fetchingPrivate.current = false;
+        });
+      }
+    },
+    [fetchRoom, playerId]
+  );
+
   useEffect(() => {
     mounted.current = true;
-    fetchRoom();
+    void fetchRoom();
 
     const supabase = createSupabaseBrowser();
     let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null = null;
 
     if (supabase && isSupabaseEnabled()) {
       channel = supabase
-        .channel(`room:${code}`)
+        .channel(`room:${code.toUpperCase()}`)
+        .on("broadcast", { event: ROOM_BROADCAST_EVENT }, (msg) => {
+          const payload = msg.payload as { room?: Room } | undefined;
+          if (payload?.room) applyBroadcast(payload.room);
+        })
         .on(
           "postgres_changes",
           {
@@ -72,24 +115,23 @@ export function useRoom(code: string, playerId: string) {
             table: "rooms",
             filter: `code=eq.${code.toUpperCase()}`,
           },
-          () => fetchRoom()
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "room_players" },
-          () => fetchRoom()
+          () => {
+            void fetchRoom();
+          }
         )
         .subscribe();
     }
 
-    const poll = setInterval(fetchRoom, POLL_MS);
+    const poll = setInterval(() => {
+      void fetchRoom();
+    }, POLL_MS);
 
     return () => {
       mounted.current = false;
       clearInterval(poll);
       if (channel && supabase) supabase.removeChannel(channel);
     };
-  }, [code, fetchRoom]);
+  }, [applyBroadcast, code, fetchRoom]);
 
   return { room, loading, error, setRoom, refresh: fetchRoom };
 }

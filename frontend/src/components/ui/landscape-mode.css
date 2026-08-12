@@ -524,8 +524,20 @@
 }
 
 .live-table-bet-spot--pos-5 {
+  left: 8%;
+  bottom: 36%;
+  transform: translateX(-50%);
+}
+
+.live-table-bet-spot--pos-6 {
+  left: 92%;
+  bottom: 36%;
+  transform: translateX(-50%);
+}
+
+.live-table-bet-spot--pos-7 {
   left: 50%;
-  bottom: 8%;
+  bottom: 42%;
   transform: translateX(-50%);
 }
 

@@ -421,10 +421,9 @@
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  /* Fondo crema explícito + anti Force Dark (Android) */
-  background-color: #faf8f5;
-  background-image: linear-gradient(165deg, #ffffff 0%, #faf8f5 55%, #f0ebe3 100%);
-  border: 1px solid #d8d4cc;
+  /* Color real lo controla card-face-themes.css + img SVG (anti Force Dark Android) */
+  background-color: var(--card-face-fill, #faf8f5);
+  border: 1px solid var(--card-face-border, #d8d4cc);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;

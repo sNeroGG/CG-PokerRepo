@@ -1,0 +1,111 @@
+/* Temas de cara de carta (html.card-face-style-*) — default blanco */
+
+html {
+  --card-face-fill: #faf8f5;
+  --card-face-fill-mid: #f5f2ec;
+  --card-face-fill-edge: #ebe6dc;
+  --card-face-border: #d8d4cc;
+  --card-suit-red: #c41e3a;
+  --card-suit-black: #111111;
+}
+
+html.card-face-style-white {
+  --card-face-fill: #faf8f5;
+  --card-face-fill-mid: #f5f2ec;
+  --card-face-fill-edge: #ebe6dc;
+  --card-face-border: #d8d4cc;
+  --card-suit-red: #c41e3a;
+  --card-suit-black: #111111;
+}
+
+html.card-face-style-black {
+  --card-face-fill: #1a1a1a;
+  --card-face-fill-mid: #141414;
+  --card-face-fill-edge: #0e0e0e;
+  --card-face-border: rgba(255, 255, 255, 0.38);
+  --card-suit-red: #ff6b81;
+  --card-suit-black: #f2f2f2;
+}
+
+.live-table-card-inner {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--card-face-fill) !important;
+  background-image: none !important;
+  border-color: var(--card-face-border) !important;
+  color-scheme: only light;
+  forced-color-adjust: none !important;
+  -webkit-forced-color-adjust: none !important;
+}
+
+.live-table-card-face-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: 0;
+  /* Imagen: Android Force Dark no la invierte como background-color */
+  forced-color-adjust: none;
+  -webkit-forced-color-adjust: none;
+}
+
+.live-table-card-inner > :not(.live-table-card-face-bg) {
+  position: relative;
+  z-index: 1;
+}
+
+.live-table-card--red {
+  color: var(--card-suit-red) !important;
+}
+
+.live-table-card--black {
+  color: var(--card-suit-black) !important;
+}
+
+.live-table-card--back .live-table-card-inner {
+  background-color: #141414 !important;
+  background-image: none !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color-scheme: dark;
+}
+
+.live-table-card--back .live-table-card-face-bg {
+  display: none;
+}
+
+.live-mini-card {
+  background-color: var(--card-face-fill) !important;
+  background-image: none !important;
+  border-color: var(--card-face-border) !important;
+  color-scheme: only light;
+  forced-color-adjust: none !important;
+  -webkit-forced-color-adjust: none !important;
+}
+
+.live-mini-card.red {
+  color: var(--card-suit-red) !important;
+}
+
+.live-mini-card.black {
+  color: var(--card-suit-black) !important;
+}
+
+.card-face {
+  background-color: var(--card-face-fill) !important;
+  background-image: none !important;
+  border-color: var(--card-face-border) !important;
+  color-scheme: only light;
+  forced-color-adjust: none !important;
+  -webkit-forced-color-adjust: none !important;
+}
+
+.suit-red {
+  color: var(--card-suit-red) !important;
+}
+
+.suit-black {
+  color: var(--card-suit-black) !important;
+}

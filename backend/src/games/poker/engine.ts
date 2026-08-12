@@ -197,7 +197,7 @@ export const pokerEngine: GameEngine<PokerState> = {
   name: "Texas Hold'em",
   description: "Póker Texas Hold'em multijugador. CPU reparte y gestiona el mazo.",
   minPlayers: 2,
-  maxPlayers: 6,
+  maxPlayers: 8,
   icon: "♠️",
 
   createInitialState(players: Player[]): PokerState {
@@ -344,6 +344,7 @@ export const pokerEngine: GameEngine<PokerState> = {
     const hideHole = !["showdown", "roundEnd"].includes(state.phase);
     return {
       ...state,
+      deck: [],
       players: state.players.map((ps) => ({
         ...ps,
         holeCards: ps.holeCards.map((c) =>

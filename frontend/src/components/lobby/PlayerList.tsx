@@ -6,10 +6,12 @@ export function PlayerList({
   players,
   currentPlayerId,
   variant = "default",
+  showReady = false,
 }: {
   players: Player[];
   currentPlayerId?: string;
   variant?: "default" | "auth";
+  showReady?: boolean;
 }) {
   const rowClass =
     variant === "auth"
@@ -38,9 +40,6 @@ export function PlayerList({
                 {player.seatStatus === "waiting" && (
                   <span className="ml-1.5 text-[10px] text-white/40">(Espera)</span>
                 )}
-                {player.gameVote && (
-                  <span className="ml-1.5 text-[10px]" title="Votó por un juego">😊</span>
-                )}
               </span>
               <div className="flex items-center gap-1.5">
                 <span
@@ -52,7 +51,20 @@ export function PlayerList({
               </div>
             </div>
           </div>
-          <span className="font-semibold text-casino-gold">${player.chips}</span>
+          <div className="flex flex-col items-end gap-1">
+            {showReady && player.isConnected && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  player.isReady
+                    ? "bg-casino-gold/20 text-casino-gold"
+                    : "bg-white/5 text-white/35"
+                }`}
+              >
+                {player.isReady ? "Listo" : "Esperando"}
+              </span>
+            )}
+            <span className="font-semibold text-casino-gold">${player.chips}</span>
+          </div>
         </div>
       ))}
     </div>

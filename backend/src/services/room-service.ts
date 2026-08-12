@@ -1,5 +1,12 @@
 import { getEngine } from "../games/registry";
-import { generateRoomCode, getRoom, saveRoom, hydrateLobbyVotes } from "./store";
+import { generateRoomCode, getRoom, saveRoom } from "./store";
+import {
+  getPublicRoom,
+  hydrateLobbyVotes,
+  MAX_ROOM_PLAYERS,
+  roomStateForBroadcast,
+} from "./public-room";
+import { broadcastRoomPayload } from "./realtime-broadcast";
 import { recordServerStats } from "./server-stats";
 import type {
   BlackjackState,
@@ -11,7 +18,19 @@ import type {
 } from "../types";
 import { isLobbyState } from "../types";
 
+export {
+  getPublicRoom,
+  hydrateLobbyVotes,
+  MAX_ROOM_PLAYERS,
+  roomStateForBroadcast,
+};
+
 const STARTING_CHIPS = 1000;
+
+async function commitRoom(room: Room): Promise<void> {
+  await saveRoom(room);
+  await broadcastRoomPayload(room.code, { room: roomStateForBroadcast(room) });
+}
 
 function promoteWaitingPlayers(room: Room): void {
   for (const p of room.players) {
@@ -30,11 +49,43 @@ function getLobbyVotes(room: Room): Record<string, GameType> {
   return room.gameState.lobbyVotes;
 }
 
+function getLobbyReady(room: Room): Record<string, boolean> {
+  if (room.status !== "lobby" || !isLobbyState(room.gameState)) return {};
+  return room.gameState.readyByPlayer ?? {};
+}
+
+function writeLobbyState(
+  room: Room,
+  patch: { votes?: Record<string, GameType>; ready?: Record<string, boolean> }
+): void {
+  const votes = patch.votes ?? getLobbyVotes(room);
+  const ready = patch.ready ?? getLobbyReady(room);
+  room.gameState = { lobbyVotes: votes, readyByPlayer: ready };
+}
+
 function setLobbyVote(room: Room, playerId: string, gameType: GameType): void {
   const votes = { ...getLobbyVotes(room), [playerId]: gameType };
-  room.gameState = { lobbyVotes: votes };
+  writeLobbyState(room, { votes });
   const player = room.players.find((p) => p.id === playerId);
   if (player) player.gameVote = gameType;
+}
+
+function setLobbyReady(room: Room, playerId: string, ready: boolean): void {
+  const next = { ...getLobbyReady(room), [playerId]: ready };
+  writeLobbyState(room, { ready: next });
+  const player = room.players.find((p) => p.id === playerId);
+  if (player) player.isReady = ready;
+}
+
+function connectedLobbyPlayers(room: Room): Player[] {
+  return room.players.filter((p) => p.isConnected);
+}
+
+function allConnectedReady(room: Room): boolean {
+  const connected = connectedLobbyPlayers(room);
+  if (connected.length === 0) return false;
+  const readyMap = getLobbyReady(room);
+  return connected.every((p) => readyMap[p.id] === true || p.isReady === true);
 }
 
 async function syncBlackjackPayouts(room: Room): Promise<void> {
@@ -152,6 +203,7 @@ export async function createRoom(hostName: string, hostId: string): Promise<Room
     isConnected: true,
     joinedAt: Date.now(),
     seatStatus: "active",
+    isReady: false,
   };
 
   const room: Room = {
@@ -165,7 +217,7 @@ export async function createRoom(hostName: string, hostId: string): Promise<Room
     updatedAt: Date.now(),
   };
 
-  await saveRoom(room);
+  await commitRoom(room);
   return room;
 }
 
@@ -181,11 +233,13 @@ export async function joinRoom(
   if (existing) {
     existing.isConnected = true;
     existing.name = playerName;
-    await saveRoom(room);
+    await commitRoom(room);
     return { room };
   }
 
-  if (room.players.length >= 6) return { error: "Sala llena (máx. 6 jugadores)" };
+  if (room.players.length >= MAX_ROOM_PLAYERS) {
+    return { error: `Sala llena (máx. ${MAX_ROOM_PLAYERS} jugadores)` };
+  }
 
   const joiningMidGame = room.status === "playing";
 
@@ -197,10 +251,15 @@ export async function joinRoom(
     isConnected: true,
     joinedAt: Date.now(),
     seatStatus: joiningMidGame ? "waiting" : "active",
+    isReady: false,
   });
 
-  await saveRoom(room);
-  return { room };
+  if (room.status === "lobby") {
+    setLobbyReady(room, playerId, false);
+  }
+
+  await commitRoom(room);
+  return { room: room.status === "lobby" ? hydrateLobbyVotes(room) : room };
 }
 
 export async function setGameType(
@@ -214,7 +273,7 @@ export async function setGameType(
   if (room.status !== "lobby") return { error: "La partida ya comenzó" };
 
   room.gameType = gameType;
-  await saveRoom(room);
+  await commitRoom(room);
   return { room: hydrateLobbyVotes(room) };
 }
 
@@ -231,7 +290,25 @@ export async function voteGame(
   if (!player) return { error: "Jugador no encontrado" };
 
   setLobbyVote(room, playerId, gameType);
-  await saveRoom(room);
+  await commitRoom(room);
+  return { room: hydrateLobbyVotes(room) };
+}
+
+export async function setPlayerReady(
+  code: string,
+  playerId: string,
+  ready: boolean
+): Promise<{ room: Room } | { error: string }> {
+  const room = await getRoom(code);
+  if (!room) return { error: "Sala no encontrada" };
+  if (room.status !== "lobby") return { error: "La partida ya comenzó" };
+
+  const player = room.players.find((p) => p.id === playerId);
+  if (!player) return { error: "Jugador no encontrado" };
+  if (!player.isConnected) return { error: "Jugador desconectado" };
+
+  setLobbyReady(room, playerId, ready);
+  await commitRoom(room);
   return { room: hydrateLobbyVotes(room) };
 }
 
@@ -245,16 +322,31 @@ export async function startGame(
   if (room.status !== "lobby") return { error: "La partida ya comenzó" };
   if (!room.gameType) return { error: "El host debe seleccionar un juego primero" };
 
+  if (!allConnectedReady(room)) {
+    const pending = connectedLobbyPlayers(room)
+      .filter((p) => !(getLobbyReady(room)[p.id] || p.isReady))
+      .map((p) => p.name);
+    return {
+      error:
+        pending.length > 0
+          ? `Todos deben estar listos. Faltan: ${pending.join(", ")}`
+          : "Todos los jugadores deben estar listos",
+    };
+  }
+
   const seated = getSeatedPlayers(room);
   const engine = getEngine(room.gameType);
 
   if (seated.length < engine.minPlayers) {
     return { error: `Mínimo ${engine.minPlayers} jugador(es) requerido(s)` };
   }
+  if (seated.length > engine.maxPlayers) {
+    return { error: `Máximo ${engine.maxPlayers} jugadores en mesa` };
+  }
 
   room.status = "playing";
   room.gameState = engine.createInitialState(seated);
-  await saveRoom(room);
+  await commitRoom(room);
   return { room };
 }
 
@@ -314,18 +406,24 @@ export async function applyGameAction(
   if (action.type === "newRound" && room.gameType === "blackjack") {
     promoteWaitingPlayers(room);
     const seated = getSeatedPlayers(room);
+    if (seated.length > engine.maxPlayers) {
+      return { error: `Máximo ${engine.maxPlayers} jugadores en mesa` };
+    }
     room.gameState = engine.createInitialState(seated);
-    await saveRoom(room);
+    await commitRoom(room);
     return { room };
   }
 
   if (action.type === "startHand" && room.gameType === "poker") {
     promoteWaitingPlayers(room);
     const seated = getSeatedPlayers(room);
+    if (seated.length > engine.maxPlayers) {
+      return { error: `Máximo ${engine.maxPlayers} jugadores en mesa` };
+    }
     room.gameState = engine.createInitialState(seated);
     room.gameState = engine.applyAction(room.gameState, playerId, action);
     deductPokerBlinds(room);
-    await saveRoom(room);
+    await commitRoom(room);
     return { room };
   }
 
@@ -340,7 +438,7 @@ export async function applyGameAction(
 
   if (room.gameType === "poker") await syncPokerPayouts(room);
 
-  await saveRoom(room);
+  await commitRoom(room);
   return { room };
 }
 
@@ -381,19 +479,3 @@ function deductPokerAction(
   return null;
 }
 
-export function getPublicRoom(room: Room, viewerId?: string): Room {
-  const hydrated = hydrateLobbyVotes(room);
-  if (
-    hydrated.status === "lobby" ||
-    !hydrated.gameType ||
-    !hydrated.gameState ||
-    isLobbyState(hydrated.gameState)
-  ) {
-    return hydrated;
-  }
-  const engine = getEngine(hydrated.gameType);
-  return {
-    ...hydrated,
-    gameState: engine.getPublicState(hydrated.gameState, viewerId),
-  };
-}

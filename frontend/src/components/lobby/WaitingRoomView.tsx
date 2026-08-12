@@ -1,8 +1,9 @@
 "use client";
 
-import type { Player, Room } from "@cg/backend/types";
+import type { Room } from "@cg/backend/types";
 import { PlayerList } from "@/components/lobby/PlayerList";
 import { BrandName } from "@/components/brand/BrandName";
+import { CardStylePicker } from "@/components/lobby/CardStylePicker";
 
 const GAME_LABELS: Record<string, string> = {
   blackjack: "Blackjack",
@@ -24,14 +25,17 @@ export function WaitingRoomView({
     <main className="auth-page mx-auto flex min-h-screen max-w-lg flex-col justify-center p-4">
       <div className="auth-glow" aria-hidden />
       <div className="auth-panel relative z-10 space-y-6 p-6">
-        <div className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
-            <BrandName variant="header" />
-          </p>
-          <h1 className="font-display text-xl font-bold text-white">
-            Sala <span className="auth-title-gold">{room.code}</span>
-          </h1>
-          <p className="mt-2 text-sm text-casino-gold">{gameLabel} en curso</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-center flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
+              <BrandName variant="header" />
+            </p>
+            <h1 className="font-display text-xl font-bold text-white">
+              Sala <span className="auth-title-gold">{room.code}</span>
+            </h1>
+            <p className="mt-2 text-sm text-casino-gold">{gameLabel} en curso</p>
+          </div>
+          <CardStylePicker />
         </div>
 
         <div className="rounded-xl border border-casino-gold/25 bg-casino-gold/5 px-4 py-3 text-center">

@@ -33,15 +33,19 @@ export interface Player {
   seatStatus?: SeatStatus;
   /** Voto de juego en lobby (blackjack | poker) */
   gameVote?: GameType | null;
+  /** Listo para iniciar (solo lobby) */
+  isReady?: boolean;
 }
 
 export type GameType = "blackjack" | "poker";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
-/** Votos de juego en lobby — se guarda en rooms.game_state mientras status === "lobby" */
+/** Estado de lobby — se guarda en rooms.game_state mientras status === "lobby" */
 export interface LobbyState {
   lobbyVotes: Record<string, GameType>;
+  /** playerId → listo para iniciar */
+  readyByPlayer?: Record<string, boolean>;
 }
 
 export function isLobbyState(state: unknown): state is LobbyState {
