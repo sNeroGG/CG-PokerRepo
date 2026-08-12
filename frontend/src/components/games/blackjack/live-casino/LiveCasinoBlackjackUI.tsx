@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import "@/components/brand/brand-slots.css";
 import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
+import { CardStylePicker } from "@/components/lobby/CardStylePicker";
 import { groupChipStacks } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
 import { TableCard } from "@/components/table/immersive/TableCard";
@@ -799,7 +800,8 @@ function BrandHeaderBar({
           <p className="brand-header-bar__code">Sala {roomCode}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="brand-header-bar__actions">
+        <CardStylePicker />
         <button type="button" className="brand-header-btn" onClick={onCopy}>
           {copied ? "✓ Copiado" : `📋 ${roomCode}`}
         </button>

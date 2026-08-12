@@ -64,6 +64,15 @@
       font-size: 0.62rem;
     }
 
+    .live-casino-root.mobile-play-root .brand-header-bar__actions {
+      gap: 0.3rem;
+    }
+
+    .live-casino-root.mobile-play-root .brand-header-bar .card-style-picker__trigger {
+      width: 34px;
+      height: 34px;
+    }
+
     .live-casino-root.mobile-play-root .live-players-panel {
       grid-area: players;
       position: relative;

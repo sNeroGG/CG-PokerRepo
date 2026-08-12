@@ -275,6 +275,18 @@
   filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.25));
 }
 
+.poker-style-picker-slot {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 45;
+}
+
+.poker-table-root.mobile-play-root .poker-style-picker-slot {
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
 .hands-overview-panel {
   position: absolute;
   bottom: 0.5rem;

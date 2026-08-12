@@ -23,6 +23,7 @@ import { TableCard } from "@/components/table/immersive/TableCard";
 import { BRAND_ASSETS, BRAND_NAME } from "@/lib/brand";
 import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { CardStylePicker } from "@/components/lobby/CardStylePicker";
 import { api } from "@/lib/client";
 import "@/components/brand/brand-slots.css";
 import "@/components/table/immersive/immersive-table.css";
@@ -253,6 +254,9 @@ export function PokerTable({
   return (
     <GameLandscapeGate>
       <div className="live-casino-root poker-table-root mobile-play-root">
+        <div className="poker-style-picker-slot" aria-label="Estilo de cartas">
+          <CardStylePicker />
+        </div>
         <HandsOverviewPanel
           entries={handsOverviewEntries}
           dealPlan={dealPlan}

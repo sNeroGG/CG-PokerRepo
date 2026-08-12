@@ -141,6 +141,13 @@
   color: rgba(255, 255, 255, 0.4);
 }
 
+.brand-header-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
 .brand-header-btn {
   border-radius: 8px;
   border: 1px solid rgba(212, 175, 55, 0.4);

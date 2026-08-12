@@ -24,9 +24,9 @@ export function WaitingRoomView({
   return (
     <main className="auth-page mx-auto flex min-h-screen max-w-lg flex-col justify-center p-4">
       <div className="auth-glow" aria-hidden />
-      <div className="auth-panel relative z-10 space-y-6 p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-center flex-1">
+      <div className="auth-panel relative z-10 space-y-6 overflow-visible p-6">
+        <div className="relative z-20 flex items-start justify-between gap-3 overflow-visible">
+          <div className="min-w-0 flex-1 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
               <BrandName variant="header" />
             </p>

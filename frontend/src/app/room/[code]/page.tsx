@@ -140,8 +140,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     <main className="auth-page mx-auto min-h-screen max-w-6xl p-4">
       <div className="auth-glow" aria-hidden />
 
-      <header className="relative z-10 mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <header className="relative z-20 mb-6 flex flex-wrap items-center justify-between gap-3 overflow-visible">
+        <div className="min-w-0">
           <button
             onClick={() => router.push("/")}
             className="text-xs text-white/40 transition-colors hover:text-casino-gold"
@@ -155,7 +155,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             Sala <span className="auth-title-gold">{code}</span>
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="relative z-20 flex shrink-0 items-center gap-2 overflow-visible">
           <CardStylePicker />
           <button
             className="auth-btn-secondary !w-auto px-5 py-2 text-sm"
