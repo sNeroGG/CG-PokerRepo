@@ -44,16 +44,22 @@ const STATUS: Record<string, string> = {
   surrendered: "Rendido",
 };
 
-const REVEAL_GATED_STATUSES = new Set(["won", "lost", "push", "blackjack"]);
+const REVEAL_GATED_STATUSES = new Set([
+  "won",
+  "lost",
+  "push",
+  "blackjack",
+  "busted",
+]);
 
-/** Oculta ganó/perdió hasta que el crupier termine de revelar sus cartas */
+/** Oculta ganó/perdió hasta terminar deal + reveal del crupier */
 function visibleHandStatus(
   status: string | undefined,
   phase: string,
-  revealComplete: boolean
+  animationsComplete: boolean
 ): string | undefined {
   if (!status || status === "active") return undefined;
-  if (phase === "roundEnd" && !revealComplete && REVEAL_GATED_STATUSES.has(status)) {
+  if (phase === "roundEnd" && !animationsComplete && REVEAL_GATED_STATUSES.has(status)) {
     return "Revelando cartas...";
   }
   return STATUS[status];
@@ -761,7 +767,7 @@ function ControlTablet({
             </div>
           )}
 
-          {phase === "roundEnd" && !dealerAnimating && isHost && (
+          {phase === "roundEnd" && !dealerAnimating && !isCardDealing && isHost && (
             <div className="live-action-buttons">
               <button type="button" className="live-btn live-btn-primary" disabled={loading} onClick={onNewRound}>
                 Nueva ronda
@@ -769,7 +775,7 @@ function ControlTablet({
             </div>
           )}
 
-          {phase === "roundEnd" && !dealerAnimating && !isHost && (
+          {phase === "roundEnd" && !dealerAnimating && !isCardDealing && !isHost && (
             <p className="live-waiting-msg">Esperando al host...</p>
           )}
         </div>
@@ -890,7 +896,14 @@ export function LiveCasinoBlackjackUI({
     enabled: !state.dealCardCount || dealComplete,
   });
 
-  const handStatus = visibleHandStatus(activeHand?.status, state.phase, dealerReveal.complete);
+  const roundAnimationsDone =
+    dealComplete && (!isRoundEnd || dealerReveal.complete);
+
+  const handStatus = visibleHandStatus(
+    activeHand?.status,
+    state.phase,
+    roundAnimationsDone
+  );
 
   const showDouble = isMyTurn && myCards.length === 2 && chips >= committedBet;
   const showSplit = isMyTurn && canSplitCards(myCards) && (myState?.hands.length ?? 0) < 2 && !activeHand?.fromSplit && chips >= committedBet;
@@ -951,7 +964,8 @@ export function LiveCasinoBlackjackUI({
       })()
     : undefined;
 
-  const showResultOverlay = isRoundEnd && dealerReveal.complete && !!myResult;
+  const showResultOverlay =
+    isRoundEnd && dealComplete && dealerReveal.complete && !!myResult;
 
   const handsOverviewEntries = useMemo((): HandOverviewEntry[] => {
     const entries: HandOverviewEntry[] = [];

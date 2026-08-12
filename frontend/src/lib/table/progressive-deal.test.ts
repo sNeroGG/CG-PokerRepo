@@ -32,10 +32,40 @@ describe("computeProgressiveDeal", () => {
     assert.equal(a.visibleGlobal, 3);
   });
 
-  it("completa cuando el elapsed cubre todas las cartas", () => {
+  it("hit/double (1 carta) anima antes de completar", () => {
+    const started = 1_000;
+    const atStart = computeProgressiveDeal(started, 1, started);
+    assert.equal(atStart.visibleGlobal, 1);
+    assert.equal(atStart.complete, false);
+    assert.equal(atStart.isDealing, true);
+
+    const mid = computeProgressiveDeal(
+      started,
+      1,
+      started + CARD_DEAL_INTERVAL_MS - 1
+    );
+    assert.equal(mid.complete, false);
+    assert.equal(mid.isDealing, true);
+
+    const done = computeProgressiveDeal(
+      started,
+      1,
+      started + CARD_DEAL_INTERVAL_MS
+    );
+    assert.equal(done.visibleGlobal, 1);
+    assert.equal(done.complete, true);
+    assert.equal(done.isDealing, false);
+  });
+
+  it("completa solo tras el intervalo de la última carta", () => {
     const started = 1_000;
     const count = 4;
-    const doneAt = started + CARD_DEAL_INTERVAL_MS * (count - 1);
+    const lastCardAt = started + CARD_DEAL_INTERVAL_MS * (count - 1);
+    const stillAnimating = computeProgressiveDeal(started, count, lastCardAt);
+    assert.equal(stillAnimating.visibleGlobal, 4);
+    assert.equal(stillAnimating.complete, false);
+
+    const doneAt = started + CARD_DEAL_INTERVAL_MS * count;
     const view = computeProgressiveDeal(started, count, doneAt);
     assert.equal(view.visibleGlobal, 4);
     assert.equal(view.complete, true);

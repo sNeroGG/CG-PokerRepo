@@ -6,7 +6,11 @@ export type ProgressiveDealView = {
   isDealing: boolean;
 };
 
-/** Progreso del deal según reloj de servidor (misma vista en todos los clientes). */
+/**
+ * Progreso del deal según reloj de servidor.
+ * La carta N aparece en (N-1)*INTERVAL; el batch solo termina tras
+ * count*INTERVAL para que la última carta (p. ej. hit/double) anime.
+ */
 export function computeProgressiveDeal(
   dealStartedAt: number | undefined,
   dealCardCount: number | undefined,
@@ -25,7 +29,8 @@ export function computeProgressiveDeal(
     dealCardCount,
     Math.floor(elapsed / CARD_DEAL_INTERVAL_MS) + 1
   );
-  const complete = visibleGlobal >= dealCardCount;
+  // Antes: complete cuando visibleGlobal >= count → hit/double (1 carta) sin animación
+  const complete = elapsed >= dealCardCount * CARD_DEAL_INTERVAL_MS;
 
   return {
     visibleGlobal,

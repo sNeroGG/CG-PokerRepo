@@ -19,6 +19,8 @@ import type { GameEngine } from "../engine";
 
 const MIN_BET = 10;
 const NUM_DECKS = 6;
+/** Debe coincidir con CARD_DEAL_INTERVAL_MS del frontend */
+const DEAL_INTERVAL_MS = 850;
 
 function stampDeal<S extends { dealStartedAt?: number; dealCardCount?: number; dealSlots?: string[] }>(
   state: S,
@@ -26,6 +28,15 @@ function stampDeal<S extends { dealStartedAt?: number; dealCardCount?: number; d
   slots?: string[]
 ): S {
   return { ...state, dealStartedAt: Date.now(), dealCardCount: count, dealSlots: slots };
+}
+
+/** Fin del batch de deal actual (hit/double/reparto) para encadenar reveal del crupier. */
+function dealBatchEndsAt(state: {
+  dealStartedAt?: number;
+  dealCardCount?: number;
+}): number | null {
+  if (!state.dealStartedAt || !state.dealCardCount) return null;
+  return state.dealStartedAt + state.dealCardCount * DEAL_INTERVAL_MS;
 }
 
 function playerDealSlot(playerId: string, handIndex = 0): string {
@@ -315,10 +326,15 @@ function resolveAgainstDealer(state: BlackjackState): BlackjackState {
 }
 
 function finalizeRound(state: BlackjackState): BlackjackState {
+  const now = Date.now();
+  const dealEnd = dealBatchEndsAt(state);
+  // Si hay carta de hit/double en este mismo tick, el reveal empieza después
+  const revealAt = Math.max(state.dealerRevealAt ?? now, dealEnd ?? now, now);
+
   return {
     ...state,
     dealerHand: revealDealer(state.dealerHand),
-    dealerRevealAt: state.dealerRevealAt ?? Date.now(),
+    dealerRevealAt: revealAt,
   };
 }
 

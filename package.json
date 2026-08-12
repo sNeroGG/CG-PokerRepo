@@ -10,6 +10,6 @@
     "dev": "npm run dev --workspace=frontend",
     "build": "npm run build --workspace=frontend",
     "install:all": "npm install",
-    "test": "node --experimental-strip-types --import ./scripts/register-aliases.mjs --test frontend/src/lib/table/progressive-deal.test.ts frontend/src/lib/room/merge-room-update.test.ts frontend/src/components/games/blackjack/live-casino/dealer-reveal.test.ts backend/src/services/room-capacity.test.ts"
+    "test": "node --experimental-strip-types --import ./scripts/register-aliases.mjs --test frontend/src/lib/table/progressive-deal.test.ts frontend/src/lib/room/merge-room-update.test.ts frontend/src/components/games/blackjack/live-casino/dealer-reveal.test.ts backend/src/services/room-capacity.test.ts backend/src/games/blackjack/finalize-round-timing.test.ts"
   }
 }
