@@ -118,21 +118,9 @@
     .live-casino-root.mobile-play-root .live-table-scene {
       position: absolute;
       inset: 0;
-      padding: 0.25rem 0.35rem 0.5rem;
+      padding: 0.1rem 0.2rem 0.2rem;
       align-items: center;
       justify-content: center;
-    }
-
-    .live-casino-root.mobile-play-root .live-table-wrapper {
-      transform: rotateX(10deg) scale(0.86);
-      transform-origin: center center;
-      width: min(100%, 360px);
-      max-width: 100%;
-    }
-
-    .live-casino-root.mobile-play-root .live-table-felt {
-      min-height: clamp(170px, 30vw, 240px);
-      padding: 1rem 1.25rem 1.5rem;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-overlay {
@@ -214,12 +202,8 @@
       display: none;
     }
 
-    /* Safari: pantallas bajas — mesa más compacta, más espacio a controles */
+    /* Safari: pantallas bajas */
     @media (max-height: 740px) {
-      .live-casino-root.mobile-play-root .live-table-wrapper {
-        transform: rotateX(8deg) scale(0.76);
-      }
-
       .live-casino-root.mobile-play-root .live-players-panel {
         padding: 0.25rem 0.45rem;
       }
@@ -541,15 +525,5 @@
   .live-table-bet-spot--sm .live-table-bet-spot__ring {
     width: 52px;
     height: 52px;
-  }
-
-  .live-table-card--sm {
-    width: 38px;
-    height: 54px;
-  }
-
-  .live-table-card--md {
-    width: 52px;
-    height: 74px;
   }
 }

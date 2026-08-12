@@ -1,0 +1,213 @@
+/* ── Mesa en móvil vertical — zonas separadas, sin superposición ── */
+
+@media (max-width: 900px) and (orientation: portrait) {
+  html.mobile-play-mode .mobile-play-root .live-table-scene {
+    padding: 0.1rem 0.2rem 0.2rem;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  html.mobile-play-mode .mobile-play-root .immersive-table-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-wrapper {
+    transform: none;
+    transform-origin: center center;
+    width: min(100%, 420px);
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-rail {
+    inset: -10px -14px;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-felt {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    padding: 0.85rem 0.75rem 1rem;
+    border-radius: 50% / 48%;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+
+  /* Logo duplicado del header — ocultar en felt */
+  html.mobile-play-mode .mobile-play-root .brand-table-logo-zone {
+    display: none;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-felt-table-brand {
+    bottom: 50%;
+    font-size: 0.5rem;
+    letter-spacing: 0.3em;
+    color: rgba(212, 175, 55, 0.07);
+  }
+
+  /* ── Crupier: franja superior ── */
+  html.mobile-play-mode .mobile-play-root .live-felt-zone--dealer {
+    top: 4%;
+    width: 92%;
+    z-index: 5;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-felt-zone--dealer .live-felt-card-spread {
+    gap: 0.3rem;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-dealer-draw-indicator {
+    font-size: 0.42rem;
+  }
+
+  /* ── Jugador (asiento 0 / yo): franja media-baja ── */
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-0 {
+    bottom: 34%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 7;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--me.live-seat-spot--pos-0 {
+    bottom: 34%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-1 {
+    left: 16%;
+    bottom: 38%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-2 {
+    left: 84%;
+    bottom: 38%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-3 {
+    left: 10%;
+    bottom: 48%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-4 {
+    left: 90%;
+    bottom: 48%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-5 {
+    left: 50%;
+    bottom: 42%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot__name {
+    font-size: 0.38rem;
+    max-width: 64px;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-seat-spot__cards {
+    gap: 0.15rem;
+  }
+
+  /* ── Fichas de apuesta: franja inferior (debajo de cartas) ── */
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-0 {
+    left: 50%;
+    bottom: 7%;
+    transform: translateX(-50%);
+    z-index: 6;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-1 {
+    left: 18%;
+    bottom: 10%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-2 {
+    left: 82%;
+    bottom: 10%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-3 {
+    left: 8%;
+    bottom: 14%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-4 {
+    left: 92%;
+    bottom: 14%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-5 {
+    left: 50%;
+    bottom: 5%;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot__ring {
+    width: 58px;
+    height: 58px;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot__stack {
+    min-height: 40px;
+    transform: scale(0.88);
+    transform-origin: center bottom;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot__label {
+    font-size: 0.38rem;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-bet-spot__total {
+    font-size: 0.48rem;
+  }
+
+  /* Cartas más compactas en mesa vertical */
+  html.mobile-play-mode .mobile-play-root .live-table-card--sm {
+    width: 36px;
+    height: 50px;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-card--md {
+    width: 48px;
+    height: 68px;
+    font-size: 0.62rem;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-table-card--md .live-table-card-suit {
+    font-size: 1.1rem;
+  }
+
+  html.mobile-play-mode .mobile-play-root .live-dealer-badge--above-table {
+    top: 0.15rem;
+    z-index: 20;
+  }
+
+  /* Pantallas bajas (iPhone SE, Safari con barra) */
+  @media (max-height: 740px) {
+    html.mobile-play-mode .mobile-play-root .live-seat-spot--me.live-seat-spot--pos-0,
+    html.mobile-play-mode .mobile-play-root .live-seat-spot--pos-0 {
+      bottom: 36%;
+    }
+
+    html.mobile-play-mode .mobile-play-root .live-table-bet-spot--pos-0 {
+      bottom: 5%;
+    }
+
+    html.mobile-play-mode .mobile-play-root .live-felt-zone--dealer {
+      top: 3%;
+    }
+
+    html.mobile-play-mode .mobile-play-root .live-table-card--md {
+      width: 44px;
+      height: 62px;
+    }
+  }
+}
