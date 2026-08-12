@@ -345,7 +345,7 @@
     font-size: 0.9em;
   }
 
-  .live-casino-root .live-table-wrapper {
+  html.mobile-play-mode .live-casino-root .live-table-wrapper {
     transform: rotateX(18deg) scale(0.78) !important;
   }
 }

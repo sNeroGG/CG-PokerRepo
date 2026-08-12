@@ -128,36 +128,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (playing) {
     return (
-      <main className={isBlackjack ? "min-h-screen" : "auth-page mx-auto min-h-screen max-w-6xl p-4"}>
-        {!isBlackjack && (
-          <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <button
-                onClick={() => router.push("/")}
-                className="text-xs text-white/40 hover:text-casino-gold"
-              >
-                ← Inicio
-              </button>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/35">
-                <BrandName variant="header" />
-              </p>
-              <h1 className="font-display text-2xl font-bold text-white">
-                Sala <span className="auth-title-gold">{code}</span>
-              </h1>
-            </div>
-            <button
-              className="auth-btn-secondary !w-auto px-5 py-2 text-sm"
-              onClick={() => {
-                navigator.clipboard.writeText(code);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-            >
-              {copied ? "✓ Copiado" : `📋 ${code}`}
-            </button>
-          </header>
-        )}
-
+      <main className="game-shell min-h-0 overflow-hidden">
         {isBlackjack ? (
           <BlackjackTable room={room} playerId={playerId} onUpdate={setRoom} isHost={isHost} />
         ) : (

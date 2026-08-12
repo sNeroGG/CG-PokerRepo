@@ -993,7 +993,7 @@ export function LiveCasinoBlackjackUI({
 
   return (
     <GameLandscapeGate>
-      <div className="live-casino-root landscape-play-root">
+      <div className="live-casino-root mobile-play-root">
       <BrandHeaderBar
         roomCode={room.code}
         copied={copied}

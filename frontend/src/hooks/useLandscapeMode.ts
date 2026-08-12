@@ -19,9 +19,9 @@ export function useLandscapeMode() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("landscape-play-mode", enabled);
+    document.documentElement.classList.toggle("mobile-play-mode", enabled);
     sessionStorage.setItem(STORAGE_KEY, enabled ? "1" : "0");
-    return () => document.documentElement.classList.remove("landscape-play-mode");
+    return () => document.documentElement.classList.remove("mobile-play-mode");
   }, [enabled]);
 
   const toggle = useCallback(async () => {

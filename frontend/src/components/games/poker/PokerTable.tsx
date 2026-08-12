@@ -252,7 +252,7 @@ export function PokerTable({
 
   return (
     <GameLandscapeGate>
-      <div className="live-casino-root poker-table-root landscape-play-root">
+      <div className="live-casino-root poker-table-root mobile-play-root">
         <HandsOverviewPanel
           entries={handsOverviewEntries}
           dealPlan={dealPlan}

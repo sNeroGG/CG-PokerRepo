@@ -1583,25 +1583,25 @@
   background: rgba(120, 0, 50, 0.5);
 }
 
-/* Responsive */
+/* Responsive — desktop/tablet sin shell móvil */
 @media (max-width: 768px) {
-  .live-casino-root {
+  .live-casino-root:not(.mobile-play-root) {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .live-table-scene {
+  .live-casino-root:not(.mobile-play-root) .live-table-scene {
     padding: 2rem 0.25rem 7.5rem;
   }
 
-  .live-table-wrapper {
+  .live-casino-root:not(.mobile-play-root) .live-table-wrapper {
     transform: rotateX(16deg) scale(0.78);
   }
 
-  .brand-header-bar {
+  .live-casino-root:not(.mobile-play-root) .brand-header-bar {
     padding: 0.5rem 0.75rem;
   }
 
-  .live-player-sidebar {
+  .live-casino-root:not(.mobile-play-root) .live-player-sidebar {
     left: 0.25rem;
     width: min(130px, 32vw);
     padding: 0.5rem 0.4rem;
@@ -1610,12 +1610,12 @@
     transform: none;
   }
 
-  .live-sidebar-card-row .live-table-card--lg {
+  .live-casino-root:not(.mobile-play-root) .live-sidebar-card-row .live-table-card--lg {
     width: 46px;
     height: 66px;
   }
 
-  .live-players-panel {
+  .live-casino-root:not(.mobile-play-root) .live-players-panel {
     top: 3.25rem;
     right: 0.25rem;
     min-width: 110px;
@@ -1624,39 +1624,39 @@
     padding: 0.4rem;
   }
 
-  .live-tablet-overlay {
+  .live-casino-root:not(.mobile-play-root) .live-tablet-overlay {
     padding: 0 0.5rem 0.75rem;
     bottom: 0;
   }
 
-  .live-tablet-panel {
+  .live-casino-root:not(.mobile-play-root) .live-tablet-panel {
     grid-template-columns: 1fr;
     padding: 0.75rem 1rem;
     border-radius: 1rem 1rem 0 0;
   }
 
-  .live-tablet-panel--compact {
+  .live-casino-root:not(.mobile-play-root) .live-tablet-panel--compact {
     padding: 0.65rem 0.85rem;
   }
 
-  .live-action-buttons {
+  .live-casino-root:not(.mobile-play-root) .live-action-buttons {
     justify-content: center;
     gap: 0.4rem;
   }
 
-  .live-btn {
+  .live-casino-root:not(.mobile-play-root) .live-btn {
     min-width: 0;
     flex: 1 1 auto;
     padding: 0.65rem 0.5rem;
     font-size: 0.75rem;
   }
 
-  .live-bet-status-row {
+  .live-casino-root:not(.mobile-play-root) .live-bet-status-row {
     flex-direction: column;
     align-items: center;
   }
 
-  .live-turn-status {
+  .live-casino-root:not(.mobile-play-root) .live-turn-status {
     font-size: 0.8rem;
   }
 }
