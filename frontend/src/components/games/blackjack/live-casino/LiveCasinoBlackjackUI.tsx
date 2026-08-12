@@ -745,7 +745,13 @@ function ControlTablet({
           )}
 
           {isMyTurn && !isCardDealing && (
-            <div className="live-action-buttons">
+            <div
+              className={`live-action-buttons live-action-buttons--turn${
+                [showDouble, showSplit, showSurrender].filter(Boolean).length >= 2
+                  ? " live-action-buttons--multi"
+                  : ""
+              }`}
+            >
               <button type="button" className="live-btn live-btn-hit" disabled={loading} onClick={onHit}>Pedir</button>
               <button type="button" className="live-btn live-btn-stand" disabled={loading} onClick={onStand}>Plantarse</button>
               {showDouble && <button type="button" className="live-btn live-btn-double" disabled={loading} onClick={onDouble}>Doblar</button>}

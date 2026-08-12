@@ -1016,6 +1016,15 @@
   justify-content: center;
 }
 
+.live-action-buttons--turn {
+  width: 100%;
+}
+
+.live-action-buttons--multi .live-btn-danger {
+  /* Rendirse / acciones extra visibles en grid 2×2 */
+  order: 4;
+}
+
 .live-tablet-panel--betting {
   grid-template-columns: 1fr;
   grid-template-rows: auto auto;

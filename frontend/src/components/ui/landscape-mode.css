@@ -8,17 +8,23 @@
     padding: 0;
     width: 100%;
     height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 
   .game-shell {
     height: 100dvh;
+    height: -webkit-fill-available;
     max-height: 100dvh;
+    max-height: -webkit-fill-available;
     overflow: hidden;
   }
 
   .mobile-play-root {
     height: 100dvh;
+    height: -webkit-fill-available;
     max-height: 100dvh;
+    max-height: -webkit-fill-available;
     overflow: hidden;
   }
 
@@ -118,30 +124,41 @@
     }
 
     .live-casino-root.mobile-play-root .live-table-wrapper {
-      transform: rotateX(10deg) scale(0.92);
+      transform: rotateX(10deg) scale(0.86);
       transform-origin: center center;
-      width: min(100%, 400px);
+      width: min(100%, 360px);
       max-width: 100%;
     }
 
     .live-casino-root.mobile-play-root .live-table-felt {
-      min-height: clamp(220px, 38vw, 300px);
-      padding: 1.25rem 1.5rem 1.75rem;
+      min-height: clamp(170px, 30vw, 240px);
+      padding: 1rem 1.25rem 1.5rem;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-overlay {
       grid-area: controls;
       position: relative;
       inset: auto;
-      padding: 0.35rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+      z-index: 50;
+      flex-shrink: 0;
+      padding: 0.35rem 0.5rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
+      max-height: min(46vh, 320px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-panel {
       width: 100%;
       max-width: none;
       margin: 0;
-      padding: 0.55rem 0.65rem 0.65rem;
+      padding: 0.5rem 0.6rem 0.55rem;
       border-radius: 0.85rem 0.85rem 0 0;
+    }
+
+    .live-casino-root.mobile-play-root .live-turn-status {
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
     }
 
     .live-casino-root.mobile-play-root .live-bet-panel__stats {
@@ -152,20 +169,34 @@
       grid-template-columns: 1fr 1fr;
     }
 
+    .live-casino-root.mobile-play-root .live-bet-panel__actions .live-btn-danger {
+      grid-column: 1 / -1;
+    }
+
     .live-casino-root.mobile-play-root .live-btn--apostar {
       grid-column: 1 / -1;
     }
 
     .live-casino-root.mobile-play-root .live-action-buttons {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.35rem;
       width: 100%;
     }
 
-    .live-casino-root.mobile-play-root .live-btn {
-      padding: 0.55rem 0.4rem;
-      font-size: 0.72rem;
+    .live-casino-root.mobile-play-root .live-action-buttons--multi {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .live-casino-root.mobile-play-root .live-action-buttons .live-btn {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.5rem 0.35rem;
+      font-size: 0.68rem;
+    }
+
+    .live-casino-root.mobile-play-root .live-btn-danger {
+      grid-column: span 1;
     }
 
     .live-casino-root.mobile-play-root .live-dealer-badge--above-table {
@@ -174,17 +205,28 @@
       padding: 0.3rem 0.55rem;
     }
 
+    /* En móvil vertical las cartas ya están en la mesa — evita duplicar */
     .live-casino-root.mobile-play-root .hands-overview-panel {
-      top: 0.35rem;
-      left: 0.35rem;
-      bottom: auto;
-      max-width: 48vw;
-      max-height: 24vh;
-      padding: 0.35rem;
+      display: none;
     }
 
     .live-casino-root.mobile-play-root .immersive-chair-pov {
       display: none;
+    }
+
+    /* Safari: pantallas bajas — mesa más compacta, más espacio a controles */
+    @media (max-height: 740px) {
+      .live-casino-root.mobile-play-root .live-table-wrapper {
+        transform: rotateX(8deg) scale(0.76);
+      }
+
+      .live-casino-root.mobile-play-root .live-players-panel {
+        padding: 0.25rem 0.45rem;
+      }
+
+      .live-casino-root.mobile-play-root .brand-header-bar {
+        padding: 0.3rem 0.55rem;
+      }
     }
 
     /* Poker — portrait */
