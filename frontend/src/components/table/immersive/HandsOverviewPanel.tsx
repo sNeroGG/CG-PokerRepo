@@ -23,11 +23,13 @@ export function HandsOverviewPanel({
   dealPlan = null,
   visibleGlobal = Number.MAX_SAFE_INTEGER,
   dealComplete = true,
+  dealBatchKey = "",
 }: {
   entries: HandOverviewEntry[];
   dealPlan?: DealEvent[] | null;
   visibleGlobal?: number;
   dealComplete?: boolean;
+  dealBatchKey?: string;
 }) {
   const visible = entries.filter((e) => e.cards.length > 0);
   if (visible.length === 0) return null;
@@ -56,6 +58,7 @@ export function HandsOverviewPanel({
                   size="sm"
                   variant={entry.isDealer ? "dealer" : "default"}
                   keyPrefix={entry.id}
+                  dealBatchKey={dealBatchKey}
                 />
               ) : (
                 entry.cards.map((card, i) => (

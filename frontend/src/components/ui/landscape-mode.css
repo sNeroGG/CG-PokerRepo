@@ -224,6 +224,15 @@
       display: none;
     }
 
+    .live-casino-root.mobile-play-root .live-hand-totals {
+      display: block;
+    }
+
+    .live-casino-root.mobile-play-root .live-btn {
+      min-height: 44px;
+      padding: 0.7rem 0.9rem;
+    }
+
     .live-casino-root.mobile-play-root .immersive-chair-pov {
       display: none;
     }
@@ -415,6 +424,16 @@
       max-height: none;
       overflow: visible;
       box-sizing: border-box;
+    }
+
+    .live-casino-root.mobile-play-root .live-hand-totals {
+      display: block;
+      flex: 1 1 100%;
+      margin-bottom: 0.25rem;
+    }
+
+    .live-casino-root.mobile-play-root .live-btn {
+      min-height: 40px;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-panel {

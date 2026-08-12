@@ -5,7 +5,10 @@ import {
   CARD_DEAL_INTERVAL_MS,
   type DealEvent,
 } from "@/lib/table/deal-sequence";
-import { computeProgressiveDeal } from "@/lib/table/progressive-deal";
+import {
+  computeProgressiveDeal,
+  resolvePresentationStart,
+} from "@/lib/table/progressive-deal";
 
 export { CARD_DEAL_INTERVAL_MS };
 
@@ -20,18 +23,36 @@ export function useProgressiveDeal(
   dealStartedAt?: number,
   dealCardCount?: number
 ) {
+  const batchKey = `${dealStartedAt ?? ""}:${dealCardCount ?? ""}`;
   const [tick, setTick] = useState(() => Date.now());
+  const [trackedBatch, setTrackedBatch] = useState(batchKey);
+  const [presentationStart, setPresentationStart] = useState<number | undefined>(() => {
+    if (!dealStartedAt || !dealCardCount) return undefined;
+    return resolvePresentationStart(dealStartedAt, dealCardCount, Date.now());
+  });
+
+  // Sincroniza el ancla en el mismo render (evita 1 frame “complete” sin animación)
+  if (batchKey !== trackedBatch) {
+    setTrackedBatch(batchKey);
+    if (!dealStartedAt || !dealCardCount) {
+      setPresentationStart(undefined);
+    } else {
+      setPresentationStart(
+        resolvePresentationStart(dealStartedAt, dealCardCount, Date.now())
+      );
+    }
+  }
 
   useEffect(() => {
-    if (!dealStartedAt || !dealCardCount) return;
+    if (!presentationStart || !dealCardCount) return;
     setTick(Date.now());
     const id = setInterval(() => setTick(Date.now()), 40);
     return () => clearInterval(id);
-  }, [dealStartedAt, dealCardCount]);
+  }, [presentationStart, dealCardCount, batchKey]);
 
   return useMemo(
-    () => computeProgressiveDeal(dealStartedAt, dealCardCount, tick),
-    [dealStartedAt, dealCardCount, tick]
+    () => computeProgressiveDeal(presentationStart, dealCardCount, tick),
+    [presentationStart, dealCardCount, tick]
   );
 }
 

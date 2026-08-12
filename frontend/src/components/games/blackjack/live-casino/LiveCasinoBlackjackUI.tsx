@@ -10,6 +10,8 @@ import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import "@/components/brand/brand-slots.css";
 import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
+import { LiveActionButton } from "./LiveActionButton";
+import { HandTotalsTable, type HandTotalRow } from "./HandTotalsTable";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
 import { CardStylePicker } from "@/components/lobby/CardStylePicker";
 import { groupChipStacks } from "@/lib/game-logic/chips";
@@ -186,6 +188,7 @@ function PlayerHandOnFelt({
   dealPlan,
   visibleGlobal,
   dealComplete,
+  dealBatchKey,
 }: {
   name: string;
   cards: Card[];
@@ -197,6 +200,7 @@ function PlayerHandOnFelt({
   dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
   visibleGlobal: number;
   dealComplete: boolean;
+  dealBatchKey: string;
 }) {
   if (cards.length === 0 || phase === "betting") return null;
 
@@ -224,6 +228,7 @@ function PlayerHandOnFelt({
           complete={dealComplete}
           size={isMe ? "md" : "sm"}
           keyPrefix={`seat-${slot}`}
+          dealBatchKey={dealBatchKey}
         />
       </div>
       {visibleTotal !== null && visibleCards.length === cards.length && (
@@ -287,6 +292,7 @@ function DealerHandOnFelt({
             size="md"
             variant="dealer"
             keyPrefix="dealer"
+            dealBatchKey={`dealer-${visibleGlobal}`}
           />
         ) : (
           cards.map((card, i) => {
@@ -558,6 +564,7 @@ function TableBackground({
                 dealPlan={dealPlan}
                 visibleGlobal={visibleGlobal}
                 dealComplete={dealComplete}
+                dealBatchKey={String(state.dealStartedAt ?? "none")}
               />
             );
           })}
@@ -621,6 +628,7 @@ function ControlTablet({
   showSurrender,
   dealerAnimating,
   isCardDealing = false,
+  handTotals = [],
 }: {
   state: BlackjackState;
   displayBet: number;
@@ -652,6 +660,7 @@ function ControlTablet({
   showSurrender: boolean;
   dealerAnimating: boolean;
   isCardDealing?: boolean;
+  handTotals?: HandTotalRow[];
 }) {
   const phase = state.phase;
   const isCompact = phase === "playerTurn" || phase === "dealerTurn" || phase === "roundEnd" || dealerAnimating;
@@ -685,6 +694,8 @@ function ControlTablet({
 
         <p className="live-turn-status">{statusLine}</p>
 
+        {phase !== "betting" && <HandTotalsTable rows={handTotals} />}
+
         <div className="live-betting-section">
           {phase === "betting" && canBet && !betPlaced && (
             <div className="live-bet-panel">
@@ -710,39 +721,35 @@ function ControlTablet({
               </div>
 
               <div className="live-bet-panel__actions">
-                <button
-                  type="button"
-                  className="live-btn live-btn-primary live-btn--apostar"
+                <LiveActionButton
+                  className="live-btn-primary live-btn--apostar"
                   disabled={loading || displayBet < minBet || displayBet > chips}
                   onClick={onBet}
                 >
                   Apostar
-                </button>
-                <button
-                  type="button"
-                  className="live-btn live-btn-increase"
+                </LiveActionButton>
+                <LiveActionButton
+                  className="live-btn-increase"
                   disabled={loading || displayBet + step > chips}
                   onClick={onIncrease}
                 >
                   +{formatCurrency(step)}
-                </button>
-                <button
-                  type="button"
-                  className="live-btn live-btn-muted"
+                </LiveActionButton>
+                <LiveActionButton
+                  className="live-btn-muted"
                   disabled={loading || displayBet <= minBet}
                   onClick={onDecrease}
                   aria-label="Reducir apuesta"
                 >
                   −
-                </button>
-                <button
-                  type="button"
-                  className="live-btn live-btn-danger"
+                </LiveActionButton>
+                <LiveActionButton
+                  className="live-btn-danger"
                   disabled={loading}
                   onClick={onClear}
                 >
                   Borrar
-                </button>
+                </LiveActionButton>
               </div>
             </div>
           )}
@@ -759,19 +766,35 @@ function ControlTablet({
                   : ""
               }`}
             >
-              <button type="button" className="live-btn live-btn-hit" disabled={loading} onClick={onHit}>Pedir</button>
-              <button type="button" className="live-btn live-btn-stand" disabled={loading} onClick={onStand}>Plantarse</button>
-              {showDouble && <button type="button" className="live-btn live-btn-double" disabled={loading} onClick={onDouble}>Doblar</button>}
-              {showSplit && <button type="button" className="live-btn live-btn-split" disabled={loading} onClick={onSplit}>Dividir</button>}
-              {showSurrender && <button type="button" className="live-btn live-btn-danger" disabled={loading} onClick={onSurrender}>Rendirse</button>}
+              <LiveActionButton className="live-btn-hit" disabled={loading} onClick={onHit}>
+                Pedir
+              </LiveActionButton>
+              <LiveActionButton className="live-btn-stand" disabled={loading} onClick={onStand}>
+                Plantarse
+              </LiveActionButton>
+              {showDouble && (
+                <LiveActionButton className="live-btn-double" disabled={loading} onClick={onDouble}>
+                  Doblar
+                </LiveActionButton>
+              )}
+              {showSplit && (
+                <LiveActionButton className="live-btn-split" disabled={loading} onClick={onSplit}>
+                  Dividir
+                </LiveActionButton>
+              )}
+              {showSurrender && (
+                <LiveActionButton className="live-btn-danger" disabled={loading} onClick={onSurrender}>
+                  Rendirse
+                </LiveActionButton>
+              )}
             </div>
           )}
 
           {phase === "roundEnd" && !dealerAnimating && !isCardDealing && isHost && (
             <div className="live-action-buttons">
-              <button type="button" className="live-btn live-btn-primary" disabled={loading} onClick={onNewRound}>
+              <LiveActionButton className="live-btn-primary" disabled={loading} onClick={onNewRound}>
                 Nueva ronda
-              </button>
+              </LiveActionButton>
             </div>
           )}
 
@@ -967,6 +990,60 @@ export function LiveCasinoBlackjackUI({
   const showResultOverlay =
     isRoundEnd && dealComplete && dealerReveal.complete && !!myResult;
 
+  const handTotals = useMemo((): HandTotalRow[] => {
+    const rows: HandTotalRow[] = [];
+
+    const dealerCards = isRoundEnd ? dealerReveal.displayedHand : state.dealerHand;
+    if (dealerCards.length > 0) {
+      const dealerPartial = !isRoundEnd ? visibleDealerTotal(state.dealerHand) : null;
+      rows.push({
+        id: "dealer",
+        label: "Crupier",
+        cards: dealerCards,
+        total: isRoundEnd
+          ? dealerReveal.displayedTotal
+          : dealerPartial?.value ?? null,
+        status: isRoundEnd
+          ? dealerReveal.complete
+            ? "Listo"
+            : "Revelando"
+          : dealerPartial?.partial
+            ? "Parcial"
+            : "—",
+        isDealer: true,
+      });
+    }
+
+    for (const p of orderPlayersFirstPerson(room.players, playerId)) {
+      const ps = state.players.find((s) => s.playerId === p.id);
+      const hand = ps?.hands[ps?.currentHandIndex ?? 0] ?? ps?.hands[0];
+      if (!hand?.cards.length) continue;
+      rows.push({
+        id: p.id,
+        label: p.id === playerId ? "Tú" : p.name,
+        cards: hand.cards,
+        total: hand.cards.some((c) => !c.hidden) ? handTotal(hand.cards) : null,
+        status: visibleHandStatus(hand.status, state.phase, roundAnimationsDone) ?? "—",
+        isMe: p.id === playerId,
+        isActive: currentTurnId === p.id,
+      });
+    }
+
+    return rows;
+  }, [
+    room.players,
+    playerId,
+    state.players,
+    state.dealerHand,
+    state.phase,
+    isRoundEnd,
+    dealerReveal.displayedHand,
+    dealerReveal.displayedTotal,
+    dealerReveal.complete,
+    currentTurnId,
+    roundAnimationsDone,
+  ]);
+
   const handsOverviewEntries = useMemo((): HandOverviewEntry[] => {
     const entries: HandOverviewEntry[] = [];
 
@@ -1063,6 +1140,7 @@ export function LiveCasinoBlackjackUI({
         dealPlan={dealerReveal.isAnimating ? null : dealPlan}
         visibleGlobal={visibleGlobal}
         dealComplete={dealComplete}
+        dealBatchKey={String(state.dealStartedAt ?? "none")}
       />
 
       {showResultOverlay && myResult && <RoundResultOverlay result={myResult} />}
@@ -1112,6 +1190,7 @@ export function LiveCasinoBlackjackUI({
         showSurrender={showSurrender}
         dealerAnimating={dealerReveal.isAnimating}
         isCardDealing={isDealing}
+        handTotals={handTotals}
       />
     </div>
     </GameLandscapeGate>

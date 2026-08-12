@@ -506,11 +506,13 @@
 .live-table-card--draw .live-table-card-inner {
   animation: cardDrawFromDealer 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center top;
+  will-change: transform, opacity, filter;
 }
 
 .live-table-card--deal .live-table-card-inner {
   animation: cardDrawFromDealer 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center top;
+  will-change: transform, opacity, filter;
 }
 
 .live-table-card--flip .live-table-card-inner {
@@ -1288,11 +1290,23 @@
   color: #fff;
 }
 
-.live-btn-hit:hover,
-.live-btn-stand:hover,
-.live-btn-double:hover,
-.live-btn-split:hover {
+.live-btn-hit:hover:not(:disabled),
+.live-btn-stand:hover:not(:disabled),
+.live-btn-double:hover:not(:disabled),
+.live-btn-split:hover:not(:disabled) {
   filter: brightness(1.08);
+}
+
+.live-btn-hit:active:not(:disabled),
+.live-btn-stand:active:not(:disabled),
+.live-btn-double:active:not(:disabled),
+.live-btn-split:active:not(:disabled),
+.live-btn-hit.live-btn--pressed:not(:disabled),
+.live-btn-stand.live-btn--pressed:not(:disabled),
+.live-btn-double.live-btn--pressed:not(:disabled),
+.live-btn-split.live-btn--pressed:not(:disabled) {
+  filter: brightness(0.88);
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.35);
 }
 
 .live-shuffle-label {
@@ -1550,20 +1564,63 @@
 }
 
 .live-btn {
-  padding: 0.6rem 1.1rem;
+  position: relative;
+  padding: 0.65rem 1.15rem;
   border-radius: 10px;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    transform 0.12s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.12s ease,
+    filter 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
   border: none;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  overflow: hidden;
 }
 
-.live-btn:active {
-  transform: scale(0.96);
+.live-btn__label {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+}
+
+.live-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.live-btn:active:not(:disabled),
+.live-btn.live-btn--pressed:not(:disabled) {
+  transform: scale(0.9) translateY(2px);
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.4);
+  filter: brightness(0.9);
+}
+
+.live-btn.live-btn--pressed:not(:disabled):: {
+  animation: liveBtnPressPulse 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes liveBtnPressPulse {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.88) translateY(3px);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .live-btn-primary {
@@ -1573,9 +1630,14 @@
   box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
 }
 
-.live-btn-primary:hover {
+.live-btn-primary:hover:not(:disabled) {
   filter: brightness(1.1);
   box-shadow: 0 6px 24px rgba(212, 175, 55, 0.45);
+}
+
+.live-btn-primary:active:not(:disabled),
+.live-btn-primary.live-btn--pressed:not(:disabled) {
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .live-btn-increase {
@@ -1585,8 +1647,13 @@
   animation: neonBorder 1.5s ease-in-out infinite;
 }
 
-.live-btn-increase:hover {
+.live-btn-increase:hover:not(:disabled) {
   background: rgba(212, 175, 55, 0.15);
+}
+
+.live-btn-increase:active:not(:disabled),
+.live-btn-increase.live-btn--pressed:not(:disabled) {
+  animation: none;
 }
 
 .live-btn-muted {
@@ -1595,7 +1662,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.live-btn-muted:hover {
+.live-btn-muted:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
@@ -1606,8 +1673,91 @@
   border: 1px solid rgba(255, 80, 120, 0.25);
 }
 
-.live-btn-danger:hover {
+.live-btn-danger:hover:not(:disabled) {
   background: rgba(120, 0, 50, 0.5);
+}
+
+/* Tabla de totales — visible en móvil */
+.live-hand-totals {
+  display: none;
+  width: 100%;
+  margin: 0 0 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: rgba(8, 8, 10, 0.92);
+  overflow: hidden;
+}
+
+.live-hand-totals__head,
+.live-hand-totals__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 0.7fr 1fr;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.38rem 0.55rem;
+}
+
+.live-hand-totals__head {
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.live-hand-totals__row {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.live-hand-totals__row:last-child {
+  border-bottom: none;
+}
+
+.live-hand-totals__name {
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-hand-totals__total {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-gold, #d4af37);
+  text-align: center;
+}
+
+.live-hand-totals__status {
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-hand-totals__row--me {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.live-hand-totals__row--me .live-hand-totals__name {
+  color: #f0d060;
+}
+
+.live-hand-totals__row--dealer .live-hand-totals__name {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.live-hand-totals__row--active {
+  box-shadow: inset 2px 0 0 rgba(57, 255, 136, 0.7);
+}
+
+.live-hand-totals__row--active .live-hand-totals__status {
+  color: rgba(57, 255, 136, 0.9);
 }
 
 /* Responsive — desktop/tablet sin shell móvil */

@@ -524,7 +524,17 @@
 
   .game-btn {
     @apply flex min-w-[100px] flex-col items-center gap-0.5 rounded-xl px-4 py-2.5
-      font-semibold shadow-md transition-all active:scale-95;
+      font-semibold shadow-md;
+    transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s ease, filter 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  .game-btn:active:not(:disabled):not(.game-btn-disabled) {
+    transform: scale(0.9) translateY(2px);
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.35);
+    filter: brightness(0.92);
   }
 
   .game-btn-disabled {
