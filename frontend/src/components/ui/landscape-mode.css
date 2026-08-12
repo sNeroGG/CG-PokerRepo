@@ -1,4 +1,5 @@
 /* ── Juego móvil: vertical y horizontal ── */
+/* --app-height: visualViewport (useGameLandscape) — homogéneo iOS/Android */
 
 @media (max-width: 900px) {
   html.mobile-play-mode,
@@ -9,23 +10,21 @@
     width: 100%;
     height: 100%;
     min-height: 100dvh;
-    min-height: -webkit-fill-available;
+    min-height: 100svh;
+    min-height: var(--app-height, 100svh);
   }
 
-  .game-shell {
-    height: 100dvh;
-    height: -webkit-fill-available;
-    max-height: 100dvh;
-    max-height: -webkit-fill-available;
-    overflow: hidden;
-  }
-
+  .game-shell,
   .mobile-play-root {
+    /* Preferir viewport visible real; evita recorte bajo la barra Android */
     height: 100dvh;
-    height: -webkit-fill-available;
+    height: 100svh;
+    height: var(--app-height, 100svh);
     max-height: 100dvh;
-    max-height: -webkit-fill-available;
+    max-height: 100svh;
+    max-height: var(--app-height, 100svh);
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   /* ── Portrait (vertical) ── */
@@ -129,19 +128,37 @@
       inset: auto;
       z-index: 50;
       flex-shrink: 0;
-      padding: 0.35rem 0.5rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
-      max-height: min(46vh, 320px);
-      overflow-y: auto;
+      align-self: end;
+      /* safe-area iOS + margen mínimo Android (nav/gestos a menudo reportan 0) */
+      padding: 0.3rem 0.5rem max(0.85rem, calc(0.45rem + env(safe-area-inset-bottom, 0px)));
+      max-height: none;
+      overflow: visible;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      box-sizing: border-box;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-panel {
       width: 100%;
       max-width: none;
       margin: 0;
-      padding: 0.5rem 0.6rem 0.55rem;
+      padding: 0.45rem 0.6rem 0.5rem;
       border-radius: 0.85rem 0.85rem 0 0;
+      box-sizing: border-box;
+    }
+
+    .live-casino-root.mobile-play-root .live-tablet-panel--betting,
+    .live-casino-root.mobile-play-root .live-tablet-panel--compact,
+    .live-casino-root.mobile-play-root .live-tablet-panel--round-end {
+      width: 100%;
+      max-width: none;
+    }
+
+    /* Panel de apuestas alto: scroll interno sin perder el bloque en viewport */
+    .live-casino-root.mobile-play-root .live-tablet-panel--betting {
+      max-height: min(42svh, 280px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .live-casino-root.mobile-play-root .live-turn-status {
@@ -253,9 +270,13 @@
       grid-area: controls;
       position: relative;
       inset: auto;
-      padding: 0.35rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+      flex-shrink: 0;
+      align-self: end;
+      padding: 0.35rem 0.5rem max(0.7rem, calc(0.4rem + env(safe-area-inset-bottom, 0px)));
       background: rgba(6, 4, 10, 0.98);
       border-top: 1px solid rgba(212, 175, 55, 0.12);
+      box-sizing: border-box;
+      overflow: visible;
     }
 
     .poker-table-root.mobile-play-root .poker-controls-top {
@@ -380,7 +401,11 @@
       grid-area: controls;
       position: relative;
       inset: auto;
-      padding: 0.25rem 0.5rem 0.35rem;
+      flex-shrink: 0;
+      padding: 0.25rem 0.5rem max(0.55rem, calc(0.3rem + env(safe-area-inset-bottom, 0px)));
+      max-height: none;
+      overflow: visible;
+      box-sizing: border-box;
     }
 
     .live-casino-root.mobile-play-root .live-tablet-panel {

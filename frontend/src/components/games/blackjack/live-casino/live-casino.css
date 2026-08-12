@@ -137,8 +137,16 @@
 .live-casino-root {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   background: #0a0a0a;
+}
+
+/* En móvil el shell fija la altura; 100vh empujaba el panel bajo la barra Android */
+.live-casino-root.mobile-play-root {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
 }
 
 .live-casino-ambient {
@@ -413,13 +421,18 @@
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  background: #faf8f5;
+  /* Fondo crema explícito + anti Force Dark (Android) */
+  background-color: #faf8f5;
+  background-image: linear-gradient(165deg, #ffffff 0%, #faf8f5 55%, #f0ebe3 100%);
   border: 1px solid #d8d4cc;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   padding: 6px 5px;
   font-weight: 800;
+  color-scheme: only light;
+  forced-color-adjust: none;
+  -webkit-forced-color-adjust: none;
   transform: perspective(800px) rotateX(5deg) rotateZ(var(--card-tilt));
   transform-style: preserve-3d;
   transition: transform 0.2s ease;
@@ -442,10 +455,12 @@
 .live-table-card--black { color: #111; }
 
 .live-table-card--back .live-table-card-inner {
-  background: #141414;
+  background-color: #141414;
+  background-image: none;
   border-color: rgba(255, 255, 255, 0.12);
   align-items: center;
   justify-content: center;
+  color-scheme: dark;
 }
 
 .live-table-card-logo,
@@ -1469,7 +1484,8 @@
   width: 42px;
   height: 58px;
   border-radius: 5px;
-  background: linear-gradient(145deg, #fff, #e8e4dc);
+  background-color: #faf8f5;
+  background-image: linear-gradient(145deg, #fff, #e8e4dc);
   border: 1px solid #ccc;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
   display: flex;
@@ -1477,6 +1493,9 @@
   padding: 3px;
   font-size: 0.6rem;
   font-weight: 700;
+  color-scheme: only light;
+  forced-color-adjust: none;
+  -webkit-forced-color-adjust: none;
 }
 
 .live-mini-card.red { color: #c41e3a; }

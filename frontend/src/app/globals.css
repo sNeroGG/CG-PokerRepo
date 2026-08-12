@@ -3,8 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Evita Force Dark de Android Chrome (invertía cartas claras a negro) */
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-black text-white antialiased;
+    color-scheme: dark;
     background-color: #000;
     background-image:
       radial-gradient(ellipse 100% 50% at 50% -10%, rgba(212, 175, 55, 0.08) 0%, transparent 55%),
@@ -49,6 +55,10 @@
   .card-face {
     @apply bg-gradient-to-br from-white to-gray-100;
     border: 1px solid #d4d0c8;
+    background-color: #faf8f5;
+    color-scheme: only light;
+    forced-color-adjust: none;
+    -webkit-forced-color-adjust: none;
   }
 
   .card-corner {

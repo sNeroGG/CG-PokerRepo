@@ -369,7 +369,14 @@
 .poker-table-root {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
+}
+
+.poker-table-root.mobile-play-root {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
 }
 
 .poker-table-controls {
