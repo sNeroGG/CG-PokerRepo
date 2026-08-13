@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { BlackjackState, Card } from "@cg/backend/types";
 import { handTotal } from "@/lib/game-logic/deck";
 import {
@@ -33,9 +33,11 @@ export function useDealerRevealAnimation(
   const revealAt = state.dealerRevealAt;
 
   const animationKey = needsAnimation ? `${revealAt ?? "local"}:${signature}` : "";
-  const localClockRef = useRef({ key: "", startedAt: 0 });
-  if (animationKey && localClockRef.current.key !== animationKey) {
-    localClockRef.current = { key: animationKey, startedAt: Date.now() };
+  const [localClock, setLocalClock] = useState({ key: "", startedAt: 0 });
+  let activeClock = localClock;
+  if (animationKey && localClock.key !== animationKey) {
+    activeClock = { key: animationKey, startedAt: Date.now() };
+    setLocalClock(activeClock);
   }
   const [tick, setTick] = useState(0);
 
@@ -44,10 +46,10 @@ export function useDealerRevealAnimation(
       return;
     }
 
-    setTick(localClockRef.current.startedAt);
+    setTick(activeClock.startedAt);
     const id = setInterval(() => setTick(Date.now()), 40);
     return () => clearInterval(id);
-  }, [animationKey, needsAnimation]);
+  }, [activeClock.startedAt, animationKey, needsAnimation]);
 
   if (!needsAnimation) {
     const waitingHand = waitingForCurrentDeal
@@ -70,7 +72,7 @@ export function useDealerRevealAnimation(
     };
   }
 
-  const anchor = localClockRef.current.startedAt || Date.now();
+  const anchor = activeClock.startedAt || Date.now();
   const elapsed = Math.max(0, (tick || anchor) - anchor);
   const { phase, complete, flipHole, animatingCardIndex, stage, visibleCount } =
     computeRevealState(elapsed, handLen);
