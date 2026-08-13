@@ -58,6 +58,21 @@ test("ocho jugadores comparten una sala responsive y una mano sincronizada", asy
     const identities = await Promise.all(
       pages.map((page) => page.evaluate(() => localStorage.getItem("cg-player-id")))
     );
+    const activeResponse = await contexts[0].request.get(`/api/rooms/${code}`);
+    const activePayload = await activeResponse.json();
+    const activeState = activePayload.room.gameState;
+    const activePlayerId = activeState.players[activeState.currentPlayerIndex].playerId;
+    const activeIndex = identities.indexOf(activePlayerId);
+    expect(activeIndex).toBeGreaterThanOrEqual(0);
+    await pages[activeIndex].setViewportSize({ width: 390, height: 844 });
+    await pages[activeIndex].reload();
+    await expect(pages[activeIndex].locator(".poker-betting-panel")).toBeVisible();
+    await assertNoOverflow(pages[activeIndex]);
+    await pages[activeIndex].screenshot({
+      path: "test-results/poker-betting-panel-mobile.png",
+      fullPage: true,
+    });
+
     for (let index = 0; index < contexts.length; index += 1) {
       const response = await contexts[index].request.get(`/api/rooms/${code}`);
       const payload = await response.json();
@@ -113,5 +128,39 @@ test("ocho jugadores comparten una sala responsive y una mano sincronizada", asy
     }
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test("el panel de apuestas de blackjack es claro y cabe en móvil", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  try {
+    await enterName(page, "Jugador Blackjack");
+    await page.getByRole("button", { name: "Crear sala" }).click();
+    await expect(page).toHaveURL(/\/room\/[A-Z0-9]{6}$/);
+    const code = page.url().split("/").pop()!;
+
+    const selected = await context.request.post(`/api/rooms/${code}/game-type`, {
+      data: { gameType: "blackjack" },
+    });
+    expect(selected.ok()).toBeTruthy();
+    const ready = await context.request.post(`/api/rooms/${code}/ready`, {
+      data: { ready: true },
+    });
+    expect(ready.ok()).toBeTruthy();
+    const started = await context.request.post(`/api/rooms/${code}/start`, { data: {} });
+    expect(started.ok()).toBeTruthy();
+
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Elige tu apuesta" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Confirmar/ })).toBeVisible();
+    await expect(page.locator(".live-bet-presets button")).toHaveCount(4);
+    await assertNoOverflow(page);
+    await page.screenshot({
+      path: "test-results/blackjack-betting-panel-mobile.png",
+      fullPage: true,
+    });
+  } finally {
+    await context.close();
   }
 });

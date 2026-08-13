@@ -171,6 +171,29 @@ export function PokerTable({
   const secondsLeft = state.turnDeadlineAt
     ? Math.max(0, Math.ceil((state.turnDeadlineAt - now) / 1000))
     : null;
+  const raisePresets = useMemo(() => {
+    const candidates = [
+      { label: "Mínima", amount: raiseMin },
+      {
+        label: "½ bote",
+        amount: state.currentBet + Math.round(state.pot * 0.5 / state.bigBlind) * state.bigBlind,
+      },
+      {
+        label: "Bote",
+        amount: state.currentBet + Math.round(state.pot / state.bigBlind) * state.bigBlind,
+      },
+      { label: "Máxima", amount: raiseMax },
+    ];
+    return candidates
+      .map((preset) => ({
+        ...preset,
+        amount: Math.min(raiseMax, Math.max(raiseMin, preset.amount)),
+      }))
+      .filter(
+        (preset, index, presets) =>
+          presets.findIndex((candidate) => candidate.amount === preset.amount) === index
+      );
+  }, [raiseMax, raiseMin, state.bigBlind, state.currentBet, state.pot]);
 
   useEffect(() => {
     setRaiseAmount(Math.min(Math.max(raiseMin, state.bigBlind), Math.max(raiseMin, raiseMax)));
@@ -466,7 +489,7 @@ export function PokerTable({
           </div>
           {error && <StatusBanner message={error} type="error" />}
 
-          <ActionBar title={isMyTurn ? "Tu turno" : undefined}>
+          <ActionBar title={isMyTurn ? "Elige tu jugada" : undefined}>
             {canStart && (
               <GameButton
                 variant="primary"
@@ -476,61 +499,117 @@ export function PokerTable({
               />
             )}
             {isMyTurn && (
-              <>
-                <GameButton variant="fold" label="Retirarse" disabled={loading} onClick={() => act({ type: "fold" })} />
-                {toCall === 0 ? (
-                  <GameButton variant="check" label="Pasar" disabled={loading} onClick={() => act({ type: "check" })} />
-                ) : (
-                  <GameButton variant="call" label={`Igualar $${toCall}`} disabled={loading} onClick={() => act({ type: "call" })} />
-                )}
+              <div className="poker-betting-panel">
+                <div className="poker-betting-panel__summary">
+                  <div>
+                    <span>Situación</span>
+                    <strong>
+                      {toCall === 0
+                        ? "Puedes pasar sin añadir fichas"
+                        : `Necesitas ${formatCurrency(toCall)} para continuar`}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Stack disponible</span>
+                    <strong>{formatCurrency(myChips)}</strong>
+                  </div>
+                </div>
+
+                <div className="poker-decision-grid">
+                  <GameButton
+                    variant="fold"
+                    label="Retirarse"
+                    sublabel="Abandonar la mano"
+                    disabled={loading}
+                    onClick={() => act({ type: "fold" })}
+                  />
+                  {toCall === 0 ? (
+                    <GameButton
+                      variant="check"
+                      label="Pasar"
+                      sublabel="Continuar sin apostar"
+                      disabled={loading}
+                      onClick={() => act({ type: "check" })}
+                    />
+                  ) : (
+                    <GameButton
+                      variant="call"
+                      label={`Igualar ${formatCurrency(toCall)}`}
+                      sublabel="Cubrir la apuesta actual"
+                      disabled={loading}
+                      onClick={() => act({ type: "call" })}
+                    />
+                  )}
+                </div>
+
                 {raiseMax >= raiseMin && (
                   <div className="poker-raise-control">
-                    <div className="poker-raise-presets">
-                      {[0.5, 1].map((multiplier) => {
-                        const amount = Math.min(
-                          raiseMax,
-                          Math.max(raiseMin, state.currentBet + Math.round(state.pot * multiplier))
-                        );
-                        return (
-                          <button
-                            type="button"
-                            key={multiplier}
-                            disabled={loading}
-                            onClick={() => setRaiseAmount(amount)}
-                          >
-                            {multiplier === 0.5 ? "½ bote" : "Bote"}
-                          </button>
-                        );
-                      })}
+                    <div className="poker-raise-header">
+                      <div>
+                        <span>Subir apuesta</span>
+                        <strong>{formatCurrency(raiseAmount)}</strong>
+                      </div>
+                      <small>
+                        Rango {formatCurrency(raiseMin)}–{formatCurrency(raiseMax)}
+                      </small>
                     </div>
-                    <input
-                      aria-label="Cantidad de subida"
-                      type="range"
-                      min={raiseMin}
-                      max={raiseMax}
-                      step={state.bigBlind}
-                      value={Math.min(Math.max(raiseAmount, raiseMin), raiseMax)}
-                      onChange={(event) => setRaiseAmount(Number(event.target.value))}
-                    />
-                    <input
-                      aria-label="Cantidad exacta de subida"
-                      type="number"
-                      min={raiseMin}
-                      max={raiseMax}
-                      value={raiseAmount}
-                      onChange={(event) => setRaiseAmount(Number(event.target.value))}
-                      className="input-field poker-raise-input"
-                    />
-                    <GameButton
-                      variant="raise"
-                      label={`Subir ${formatCurrency(raiseAmount)}`}
-                      disabled={loading || raiseAmount < raiseMin || raiseAmount > raiseMax}
-                      onClick={() => act({ type: "raise", amount: raiseAmount })}
-                    />
+                    <div className="poker-raise-presets" aria-label="Subidas rápidas">
+                      {raisePresets.map((preset) => (
+                        <button
+                          type="button"
+                          key={preset.label}
+                          className={raiseAmount === preset.amount ? "is-selected" : ""}
+                          aria-pressed={raiseAmount === preset.amount}
+                          disabled={loading}
+                          onClick={() => setRaiseAmount(preset.amount)}
+                        >
+                          <span>{preset.label}</span>
+                          <strong>{formatCurrency(preset.amount)}</strong>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="poker-raise-slider">
+                      <span>{formatCurrency(raiseMin)}</span>
+                      <input
+                        aria-label="Cantidad de subida"
+                        type="range"
+                        min={raiseMin}
+                        max={raiseMax}
+                        step={state.bigBlind}
+                        value={Math.min(Math.max(raiseAmount, raiseMin), raiseMax)}
+                        onChange={(event) => setRaiseAmount(Number(event.target.value))}
+                      />
+                      <span>{formatCurrency(raiseMax)}</span>
+                    </div>
+                    <div className="poker-raise-submit">
+                      <input
+                        aria-label="Cantidad exacta de subida"
+                        type="number"
+                        min={raiseMin}
+                        max={raiseMax}
+                        value={raiseAmount}
+                        onChange={(event) => setRaiseAmount(Number(event.target.value))}
+                        className="input-field poker-raise-input"
+                      />
+                      <GameButton
+                        variant="raise"
+                        label={`Confirmar subida`}
+                        sublabel={formatCurrency(raiseAmount)}
+                        disabled={loading || raiseAmount < raiseMin || raiseAmount > raiseMax}
+                        onClick={() => act({ type: "raise", amount: raiseAmount })}
+                      />
+                    </div>
                   </div>
                 )}
-                <GameButton variant="allin" label="All-In" disabled={loading} onClick={() => act({ type: "all-in" })} />
-              </>
+                <GameButton
+                  variant="allin"
+                  label="All-In"
+                  sublabel={`Arriesgar ${formatCurrency(myChips)}`}
+                  className="poker-allin-button"
+                  disabled={loading}
+                  onClick={() => act({ type: "all-in" })}
+                />
+              </div>
             )}
             {isWaitingTurn && (
               <p className="w-full text-center text-sm text-white/50">

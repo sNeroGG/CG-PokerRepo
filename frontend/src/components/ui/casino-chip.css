@@ -2,6 +2,9 @@
 
 .casino-chip {
   --chip-size: 44px;
+  --chip-main: #c62828;
+  --chip-dark: #7f111a;
+  --chip-highlight: #ef5350;
   position: relative;
   width: var(--chip-size);
   height: var(--chip-size);
@@ -23,22 +26,70 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background:
+    radial-gradient(circle at 36% 28%, var(--chip-highlight) 0%, transparent 34%),
+    radial-gradient(circle at center, var(--chip-main) 0 62%, var(--chip-dark) 64% 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 -2px 5px rgba(0, 0, 0, 0.42) inset,
+    0 4px 8px rgba(0, 0, 0, 0.48);
 }
 
 .casino-chip__body::before {
   content: "";
   position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  border: 2px dashed rgba(255, 255, 255, 0.35);
+  inset: 1px;
+  border-radius: inherit;
+  background: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.88) 0deg 9deg,
+    transparent 9deg 45deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 0 67%, #000 69% 100%);
+  mask: radial-gradient(circle, transparent 0 67%, #000 69% 100%);
   pointer-events: none;
 }
 
-.casino-chip--red .casino-chip__body { background: #c62828; }
-.casino-chip--blue .casino-chip__body { background: #1565c0; }
-.casino-chip--green .casino-chip__body { background: #2e7d32; }
+.casino-chip__body::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+.casino-chip--red {
+  --chip-main: #b62532;
+  --chip-dark: #65131c;
+  --chip-highlight: #e55460;
+}
+
+.casino-chip--blue {
+  --chip-main: #245c9f;
+  --chip-dark: #102f59;
+  --chip-highlight: #568bc8;
+}
+
+.casino-chip--green {
+  --chip-main: #28704d;
+  --chip-dark: #123d2a;
+  --chip-highlight: #55a47b;
+}
+
+.casino-chip--black {
+  --chip-main: #282828;
+  --chip-dark: #080808;
+  --chip-highlight: #66615a;
+}
+
+.casino-chip--gold {
+  --chip-main: #c69f4a;
+  --chip-dark: #76551d;
+  --chip-highlight: #ecd28a;
+}
 
 .casino-chip__inlay {
   position: absolute;
@@ -48,11 +99,14 @@
   width: 52%;
   height: 52%;
   border-radius: 50%;
-  background: #ffffff;
+  background: radial-gradient(circle at 40% 32%, #ffffff, #e8e3d8 78%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.35);
   z-index: 1;
 }
 
@@ -80,6 +134,15 @@
 
 .casino-chip--fly-to-table {
   animation: casinoChipFlyToTable 0.55s ease-out forwards;
+}
+
+.chip-stack--exchanging {
+  animation: casinoChipExchange 0.3s ease-out;
+}
+
+@keyframes casinoChipExchange {
+  0% { transform: scale(0.94); filter: brightness(0.82); }
+  100% { transform: scale(1); filter: brightness(1); }
 }
 
 @keyframes casinoChipFlyToTable {

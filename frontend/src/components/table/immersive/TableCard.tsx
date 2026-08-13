@@ -48,6 +48,8 @@ export function TableCard({
 }) {
   const isHidden = card.hidden;
   const color = isHidden ? "" : isRedSuit(card.suit) ? "red" : "black";
+  const revealColor = isRedSuit(card.suit) ? "red" : "black";
+  const isFlipReveal = motion === "flip";
   const faceStyle = useSyncExternalStore(subscribeCardFaceStyle, readCardFaceStyle, () => DEFAULT_CARD_FACE_STYLE);
 
   const motionClass =
@@ -61,7 +63,13 @@ export function TableCard({
 
   return (
     <div
-      className={`live-table-card live-table-card--${size} live-table-card--${variant} ${motionClass} ${isHidden ? "live-table-card--back" : `live-table-card--${color}`} ${className}`.trim()}
+      className={`live-table-card live-table-card--${size} live-table-card--${variant} ${motionClass} ${
+        isFlipReveal
+          ? `live-table-card--${revealColor}`
+          : isHidden
+            ? "live-table-card--back"
+            : `live-table-card--${color}`
+      } ${className}`.trim()}
       style={{
         animationDelay:
           motion === "deal" && animate && index > 0 ? `${index * 0.18}s` : undefined,
@@ -69,24 +77,50 @@ export function TableCard({
       }}
     >
       <div className="live-table-card-inner">
-        {!isHidden && (
-          // Data URI generado localmente; next/image no aporta optimización aquí.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            className="live-table-card-face-bg"
-            src={cardFaceFillDataUri(faceStyle)}
-            alt=""
-            aria-hidden
-            draggable={false}
-          />
-        )}
-        {isHidden ? (
-          <CardBackBrandLogo className="live-table-card-back-logo" />
+        {isFlipReveal ? (
+          <>
+            <span className="live-table-card-flip-face live-table-card-flip-face--back">
+              <CardBackBrandLogo className="live-table-card-back-logo" />
+            </span>
+            <span
+              className={`live-table-card-flip-face live-table-card-flip-face--front live-table-card-flip-face--${revealColor}`}
+            >
+              {/* Data URI local; next/image no aporta optimización. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="live-table-card-face-bg"
+                src={cardFaceFillDataUri(faceStyle)}
+                alt=""
+                aria-hidden
+                draggable={false}
+              />
+              <span className="live-table-card-rank">{card.rank}</span>
+              <span className="live-table-card-suit">{SUIT_SYMBOL[card.suit]}</span>
+              <span className="live-table-card-rank live-table-card-rank--bl">{card.rank}</span>
+            </span>
+          </>
         ) : (
           <>
-            <span className="live-table-card-rank">{card.rank}</span>
-            <span className="live-table-card-suit">{SUIT_SYMBOL[card.suit]}</span>
-            <span className="live-table-card-rank live-table-card-rank--bl">{card.rank}</span>
+            {!isHidden && (
+              // Data URI generado localmente; next/image no aporta optimización aquí.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                className="live-table-card-face-bg"
+                src={cardFaceFillDataUri(faceStyle)}
+                alt=""
+                aria-hidden
+                draggable={false}
+              />
+            )}
+            {isHidden ? (
+              <CardBackBrandLogo className="live-table-card-back-logo" />
+            ) : (
+              <>
+                <span className="live-table-card-rank">{card.rank}</span>
+                <span className="live-table-card-suit">{SUIT_SYMBOL[card.suit]}</span>
+                <span className="live-table-card-rank live-table-card-rank--bl">{card.rank}</span>
+              </>
+            )}
           </>
         )}
       </div>

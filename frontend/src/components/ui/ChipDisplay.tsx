@@ -1,20 +1,17 @@
 "use client";
 
-import { getChipColorForValue } from "@/lib/game-logic/chips";
+import { getChipColorForValue, type ChipColor } from "@/lib/game-logic/chips";
 import { CasinoChip } from "./CasinoChip";
 import "./casino-chip.css";
 
 interface ChipDisplayProps {
   amount: number;
   label?: string;
-  variant?: "red" | "blue" | "green" | "gold";
+  variant?: ChipColor;
 }
 
 export function ChipDisplay({ amount, label, variant }: ChipDisplayProps) {
-  const color =
-    variant && variant !== "gold"
-      ? variant
-      : getChipColorForValue(amount);
+  const color = variant ?? getChipColorForValue(amount);
 
   return (
     <div className="chip-display animate-chip-toss">

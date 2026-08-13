@@ -23,12 +23,13 @@ export function BrandImageSlot({
 }: BrandImageSlotProps) {
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
+  if (!src || failed) {
     return (
-      <div className={`brand-slot brand-slot--image ${className}`}>
-        <span>{placeholderLabel}</span>
-        <small>{src.replace("/brand/", "")}</small>
-      </div>
+      <div
+        className={`brand-image-layer brand-image-layer--fallback ${className}`}
+        data-fallback={placeholderLabel}
+        aria-hidden
+      />
     );
   }
 
