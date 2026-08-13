@@ -79,14 +79,13 @@
 
 @keyframes cardFlipReveal {
   0% {
-    transform: translateZ(0) rotateY(0deg);
+    transform: translate3d(0, 0, 0) rotateY(0deg);
   }
-  45% {
-    transform: translateZ(0) rotateY(82deg);
+  50% {
+    transform: translate3d(0, 0, 0) rotateY(90deg);
   }
-  55% { transform: translateZ(0) rotateY(98deg); }
   100% {
-    transform: translateZ(0) rotateY(180deg);
+    transform: translate3d(0, 0, 0) rotateY(180deg);
   }
 }
 
@@ -94,14 +93,14 @@
   0%, 100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
-  28%, 72% {
-    transform: translate3d(0, -10px, 0) scale(1.07);
+  50% {
+    transform: translate3d(0, -8px, 0) scale(1.04);
   }
 }
 
 @keyframes dealerRevealGlow {
   0%, 100% { opacity: 0; transform: scale(0.82); }
-  45%, 65% { opacity: 0.65; transform: scale(1.18); }
+  50% { opacity: 0.55; transform: scale(1.12); }
 }
 
 @keyframes dealerDrawPulse {
@@ -144,6 +143,7 @@
   /* alias legacy */
   --neon-purple: var(--brand-gold);
   --neon-violet: var(--brand-gold-dark);
+  --dealer-flip-duration: 1.6s;
 }
 
 .live-casino-root {
@@ -533,18 +533,26 @@
   border: 0;
   background: transparent;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.48);
-  animation: cardFlipReveal 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: cardFlipReveal var(--dealer-flip-duration) cubic-bezier(0.45, 0, 0.55, 1) both;
+  transform-origin: 50% 50%;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   will-change: transform;
+  transition: none;
 }
 
 .live-table-card--flip {
   position: relative;
   z-index: 24 !important;
-  animation: dealerHoleCardLift 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  isolation: isolate;
+  contain: layout style;
+  animation: dealerHoleCardLift var(--dealer-flip-duration) cubic-bezier(0.45, 0, 0.55, 1) both;
   will-change: transform;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .live-table-card--flip::after {
@@ -555,7 +563,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(198, 161, 91, 0.38), transparent 68%);
   opacity: 0;
-  animation: dealerRevealGlow 1.6s ease-in-out both;
+  animation: dealerRevealGlow var(--dealer-flip-duration) ease-in-out both;
   pointer-events: none;
 }
 
@@ -608,6 +616,7 @@
 .live-felt-card-spread--dealer {
   min-height: 72px;
   perspective: 900px;
+  -webkit-perspective: 900px;
 }
 
 .live-felt-zone--dealer-active {

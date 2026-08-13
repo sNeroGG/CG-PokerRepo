@@ -11,6 +11,10 @@
   --mafia-blood: #8b2635;
   --mafia-felt: #123a2b;
   --mafia-ivory: #f2efe8;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -28,6 +32,11 @@
   html {
     /* Evita Force Dark de Android Chrome (invertía cartas claras a negro) */
     color-scheme: dark;
+    min-height: 100%;
+    background: #000;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -39,11 +48,36 @@
       radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
       radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
     min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    overscroll-behavior-x: none;
+  }
+
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  input[type="range"] {
+    touch-action: manipulation;
   }
 
   :focus-visible {
     outline: 2px solid var(--mafia-gold-high);
     outline-offset: 3px;
+  }
+}
+
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+
+  .auth-page {
+    padding-top: max(1rem, var(--safe-area-top));
+    padding-right: max(0.85rem, var(--safe-area-right));
+    padding-bottom: max(1rem, var(--safe-area-bottom));
+    padding-left: max(0.85rem, var(--safe-area-left));
   }
 }
 
