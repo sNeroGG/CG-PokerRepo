@@ -1,9 +1,9 @@
 import type { Card } from "@cg/backend/types";
-import { CARD_DEAL_INTERVAL_MS } from "@/lib/table/deal-sequence";
 
-export const DEALER_REVEAL_START_DELAY_MS = 650;
-export const DEALER_HOLE_FLIP_DURATION_MS = 1050;
-const DRAW_INTERVAL_MS = CARD_DEAL_INTERVAL_MS;
+export const DEALER_REVEAL_START_DELAY_MS = 1000;
+export const DEALER_HOLE_FLIP_DURATION_MS = 1600;
+export const DEALER_REVEAL_SETTLE_MS = 1000;
+export const DEALER_DRAW_INTERVAL_MS = 1100;
 
 /** Cartas visibles según fase de animación del crupier */
 export function dealerCardsForPhase(fullHand: Card[], phase: number): Card[] {
@@ -24,7 +24,7 @@ export function dealerCardsForPhase(fullHand: Card[], phase: number): Card[] {
   return fullHand.slice(0, count).map((c) => ({ ...c, hidden: false }));
 }
 
-export type DealerRevealStage = "idle" | "pause" | "flip" | "draw" | "done";
+export type DealerRevealStage = "idle" | "pause" | "flip" | "settle" | "draw" | "done";
 
 /** Progreso del reveal según elapsed desde dealerRevealAt (reloj servidor). */
 export function computeRevealState(
@@ -87,6 +87,19 @@ export function computeRevealState(
 
   const afterFlip = afterStart - DEALER_HOLE_FLIP_DURATION_MS;
 
+  if (afterFlip < DEALER_REVEAL_SETTLE_MS) {
+    return {
+      phase: 1,
+      complete: false,
+      flipHole: false,
+      animatingCardIndex: null,
+      stage: "settle",
+      visibleCount: 2,
+    };
+  }
+
+  const afterSettle = afterFlip - DEALER_REVEAL_SETTLE_MS;
+
   if (handLen === 2) {
     return {
       phase: 1,
@@ -99,7 +112,7 @@ export function computeRevealState(
   }
 
   const extraCards = handLen - 2;
-  const drawIndex = Math.floor(afterFlip / DRAW_INTERVAL_MS);
+  const drawIndex = Math.floor(afterSettle / DEALER_DRAW_INTERVAL_MS);
 
   if (drawIndex >= extraCards) {
     return {

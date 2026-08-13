@@ -260,13 +260,15 @@ function DealerHandOnFelt({
   dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
   visibleGlobal: number;
   dealComplete: boolean;
-  revealStage?: "idle" | "pause" | "flip" | "draw" | "done";
+  revealStage?: "idle" | "pause" | "flip" | "settle" | "draw" | "done";
   revealVisible?: number;
   revealTotal?: number;
 }) {
   const revealLabel =
     revealStage === "flip"
       ? "Volteando carta oculta..."
+      : revealStage === "settle"
+        ? "Carta revelada"
       : revealStage === "draw" && revealTotal
         ? `Sacando carta ${revealVisible ?? 0}/${revealTotal}`
         : revealStage === "pause"
