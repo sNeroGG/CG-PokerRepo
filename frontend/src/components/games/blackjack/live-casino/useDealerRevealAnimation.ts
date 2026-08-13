@@ -5,6 +5,7 @@ import type { BlackjackState, Card } from "@cg/backend/types";
 import { handTotal } from "@/lib/game-logic/deck";
 import {
   computeRevealState,
+  dealerRevealBoundariesMs,
   dealerCardsForPhase,
   type DealerRevealStage,
 } from "./dealer-reveal-timing";
@@ -47,9 +48,14 @@ export function useDealerRevealAnimation(
     }
 
     setTick(activeClock.startedAt);
-    const id = setInterval(() => setTick(Date.now()), 40);
-    return () => clearInterval(id);
-  }, [activeClock.startedAt, animationKey, needsAnimation]);
+    const timers = dealerRevealBoundariesMs(handLen).map((boundary) =>
+      window.setTimeout(
+        () => setTick(activeClock.startedAt + boundary),
+        boundary
+      )
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [activeClock.startedAt, animationKey, handLen, needsAnimation]);
 
   if (!needsAnimation) {
     const waitingHand = waitingForCurrentDeal

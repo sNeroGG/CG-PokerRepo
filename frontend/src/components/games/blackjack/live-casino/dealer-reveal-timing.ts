@@ -37,6 +37,22 @@ export function dealerRevealDurationMs(handLen: number): number {
   );
 }
 
+/** Instantes donde cambia la etapa; CSS interpola el giro sin rerenders por frame. */
+export function dealerRevealBoundariesMs(handLen: number): number[] {
+  if (handLen <= 0) return [];
+  if (handLen === 1) return [dealerRevealDurationMs(1)];
+
+  const afterPause = DEALER_REVEAL_START_DELAY_MS;
+  const afterFlip = afterPause + DEALER_HOLE_FLIP_DURATION_MS;
+  const afterSettle = afterFlip + DEALER_REVEAL_SETTLE_MS;
+  const boundaries = [afterPause, afterFlip, afterSettle];
+
+  for (let index = 1; index <= Math.max(0, handLen - 2); index += 1) {
+    boundaries.push(afterSettle + index * DEALER_DRAW_INTERVAL_MS);
+  }
+  return boundaries;
+}
+
 /** Progreso del reveal según elapsed desde dealerRevealAt (reloj servidor). */
 export function computeRevealState(
   elapsed: number,

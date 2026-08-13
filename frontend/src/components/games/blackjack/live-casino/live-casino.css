@@ -79,25 +79,23 @@
 
 @keyframes cardFlipReveal {
   0% {
-    transform: rotateY(0deg);
+    transform: translateZ(0) rotateY(0deg);
   }
   45% {
-    transform: rotateY(82deg);
+    transform: translateZ(0) rotateY(82deg);
   }
-  55% { transform: rotateY(98deg); }
+  55% { transform: translateZ(0) rotateY(98deg); }
   100% {
-    transform: rotateY(180deg);
+    transform: translateZ(0) rotateY(180deg);
   }
 }
 
 @keyframes dealerHoleCardLift {
   0%, 100% {
-    transform: translateY(0) scale(1);
-    filter: brightness(0.9);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   28%, 72% {
-    transform: translateY(-10px) scale(1.07);
-    filter: brightness(1.12);
+    transform: translate3d(0, -10px, 0) scale(1.07);
   }
 }
 
@@ -535,7 +533,7 @@
   border: 0;
   background: transparent;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.48);
-  animation: cardFlipReveal 1.6s cubic-bezier(0.45, 0.05, 0.18, 1) both;
+  animation: cardFlipReveal 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -543,7 +541,10 @@
 .live-table-card--flip {
   position: relative;
   z-index: 24 !important;
-  animation: dealerHoleCardLift 1.6s cubic-bezier(0.34, 1.15, 0.64, 1) both;
+  animation: dealerHoleCardLift 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .live-table-card--flip::after {
