@@ -13,6 +13,7 @@ import { LiveActionButton } from "./LiveActionButton";
 import { HandTotalsTable, type HandTotalRow } from "./HandTotalsTable";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
 import { GameHeader } from "@/components/ui/GameHeader";
+import { CircleDollarSign, Clock3, Minus, Plus, RotateCcw } from "lucide-react";
 import { groupChipStacks } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
 import { TableCard } from "@/components/table/immersive/TableCard";
@@ -613,6 +614,7 @@ function ControlTablet({
   loading,
   error,
   onBet,
+  onSetBet,
   onIncrease,
   onDecrease,
   onClear,
@@ -645,6 +647,7 @@ function ControlTablet({
   loading: boolean;
   error: string;
   onBet: () => void;
+  onSetBet: (amount: number) => void;
   onIncrease: () => void;
   onDecrease: () => void;
   onClear: () => void;
@@ -663,6 +666,16 @@ function ControlTablet({
 }) {
   const phase = state.phase;
   const isCompact = phase === "playerTurn" || phase === "dealerTurn" || phase === "roundEnd" || dealerAnimating;
+  const betPresets = [
+    { label: "Mínima", amount: minBet },
+    { label: "¼ saldo", amount: Math.max(minBet, Math.floor(chips * 0.25 / step) * step) },
+    { label: "½ saldo", amount: Math.max(minBet, Math.floor(chips * 0.5 / step) * step) },
+    { label: "Máxima", amount: chips },
+  ].filter(
+    (preset, index, presets) =>
+      preset.amount <= chips &&
+      presets.findIndex((candidate) => candidate.amount === preset.amount) === index
+  );
 
   const statusLine =
     isCardDealing
@@ -698,56 +711,95 @@ function ControlTablet({
         <div className="live-betting-section">
           {phase === "betting" && canBet && !betPlaced && (
             <div className="live-bet-panel">
+              <div className="live-bet-panel__header">
+                <div>
+                  <span className="live-bet-panel__eyebrow">Mesa abierta</span>
+                  <h2>Elige tu apuesta</h2>
+                </div>
+                <span className="live-bet-panel__minimum">
+                  Mínimo {formatCurrency(minBet)}
+                </span>
+              </div>
+
               <div className="live-bet-panel__stats">
                 <div className="live-bet-stat">
                   <span className="live-bet-stat__label">Saldo</span>
                   <strong className="live-bet-stat__value">{formatCurrency(chips)}</strong>
                 </div>
                 <div className="live-bet-stat live-bet-stat--accent">
-                  <span className="live-bet-stat__label">Apuesta actual</span>
-                  <strong className="live-bet-stat__value">{formatCurrency(displayBet)}</strong>
+                  <span className="live-bet-stat__label">Saldo restante</span>
+                  <strong className="live-bet-stat__value">
+                    {formatCurrency(Math.max(0, chips - displayBet))}
+                  </strong>
                 </div>
                 {seconds > 0 && (
                   <div className="live-bet-stat live-bet-stat--timer">
-                    <span className="live-bet-stat__label">Tiempo</span>
+                    <span className="live-bet-stat__label">
+                      <Clock3 size={12} aria-hidden />
+                      Tiempo
+                    </span>
                     <strong className="live-bet-stat__value">{formatTime(seconds)}</strong>
                   </div>
                 )}
               </div>
 
-              <div className="live-bet-panel__preview">
-                <BetChipPreview amount={displayBet} />
+              <div className="live-bet-panel__composer">
+                <LiveActionButton
+                  className="live-bet-adjust"
+                  disabled={loading || displayBet <= minBet}
+                  onClick={onDecrease}
+                  aria-label={`Restar ${formatCurrency(step)}`}
+                >
+                  <Minus size={20} aria-hidden />
+                </LiveActionButton>
+                <div className="live-bet-panel__preview">
+                  <span className="live-bet-panel__amount-label">Tu apuesta</span>
+                  <strong className="live-bet-panel__amount">{formatCurrency(displayBet)}</strong>
+                  <BetChipPreview amount={displayBet} />
+                </div>
+                <LiveActionButton
+                  className="live-bet-adjust live-btn-increase"
+                  disabled={loading || displayBet + step > chips}
+                  onClick={onIncrease}
+                  aria-label={`Sumar ${formatCurrency(step)}`}
+                >
+                  <Plus size={20} aria-hidden />
+                </LiveActionButton>
+              </div>
+
+              <div className="live-bet-presets" aria-label="Apuestas rápidas">
+                {betPresets.map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.label}
+                    className={displayBet === preset.amount ? "is-selected" : ""}
+                    aria-pressed={displayBet === preset.amount}
+                    disabled={loading}
+                    onClick={() => onSetBet(preset.amount)}
+                  >
+                    <span>{preset.label}</span>
+                    <strong>{formatCurrency(preset.amount)}</strong>
+                  </button>
+                ))}
               </div>
 
               <div className="live-bet-panel__actions">
+                <button
+                  type="button"
+                  className="live-bet-reset"
+                  disabled={loading || displayBet === minBet}
+                  onClick={onClear}
+                >
+                  <RotateCcw size={15} aria-hidden />
+                  Restablecer
+                </button>
                 <LiveActionButton
                   className="live-btn-primary live-btn--apostar"
                   disabled={loading || displayBet < minBet || displayBet > chips}
                   onClick={onBet}
                 >
-                  Apostar
-                </LiveActionButton>
-                <LiveActionButton
-                  className="live-btn-increase"
-                  disabled={loading || displayBet + step > chips}
-                  onClick={onIncrease}
-                >
-                  +{formatCurrency(step)}
-                </LiveActionButton>
-                <LiveActionButton
-                  className="live-btn-muted"
-                  disabled={loading || displayBet <= minBet}
-                  onClick={onDecrease}
-                  aria-label="Reducir apuesta"
-                >
-                  −
-                </LiveActionButton>
-                <LiveActionButton
-                  className="live-btn-danger"
-                  disabled={loading}
-                  onClick={onClear}
-                >
-                  Borrar
+                  <CircleDollarSign size={19} aria-hidden />
+                  Confirmar {formatCurrency(displayBet)}
                 </LiveActionButton>
               </div>
             </div>
@@ -1138,6 +1190,7 @@ export function LiveCasinoBlackjackUI({
         loading={loading}
         error={error}
         onBet={onBet}
+        onSetBet={(amount) => setPendingBet(Math.min(chips, Math.max(state.minBet, amount)))}
         onIncrease={onIncrease}
         onDecrease={onDecrease}
         onClear={onClear}

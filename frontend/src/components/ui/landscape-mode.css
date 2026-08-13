@@ -306,7 +306,9 @@
       background: rgba(6, 4, 10, 0.98);
       border-top: 1px solid rgba(212, 175, 55, 0.12);
       box-sizing: border-box;
-      overflow: visible;
+      max-height: 56dvh;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .poker-table-root.mobile-play-root .poker-controls-top {

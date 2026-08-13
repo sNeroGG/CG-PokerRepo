@@ -410,8 +410,8 @@
   left: 0;
   right: 0;
   z-index: 40;
-  padding: 0.35rem 0.5rem 0.5rem;
-  background: linear-gradient(to top, rgba(6, 4, 10, 0.95), transparent);
+  padding: 0.45rem 0.65rem 0.65rem;
+  background: linear-gradient(to top, rgba(4, 4, 4, 0.98) 62%, transparent);
 }
 
 .poker-controls-top {
@@ -420,7 +420,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem;
-  margin-bottom: 0.25rem;
+  width: min(100%, 1080px);
+  margin: 0 auto 0.35rem;
+}
+
+.poker-table-controls .action-bar {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+  border-color: rgba(198, 161, 91, 0.25);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgba(25, 23, 19, 0.96), rgba(7, 7, 7, 0.98));
+  padding: 0.65rem;
+  box-shadow:
+    0 -1px 0 rgba(225, 201, 143, 0.1) inset,
+    0 16px 50px rgba(0, 0, 0, 0.55);
+}
+
+.poker-table-controls .action-bar-buttons {
+  width: 100%;
 }
 
 .poker-wallet {
@@ -535,38 +553,185 @@
   white-space: nowrap;
 }
 
-.poker-raise-control {
+.poker-betting-panel {
   display: grid;
-  grid-template-columns: minmax(112px, 1fr) 84px auto;
-  align-items: center;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(340px, 1.5fr) 140px;
+  grid-template-areas:
+    "summary raise allin"
+    "decisions raise allin";
+  align-items: stretch;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.poker-betting-panel__summary {
+  grid-area: summary;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.4rem;
+}
+
+.poker-betting-panel__summary > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 0.4rem 0.55rem;
+}
+
+.poker-betting-panel__summary span,
+.poker-raise-header span {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.poker-betting-panel__summary strong {
+  margin-top: 0.1rem;
+  overflow: hidden;
+  color: var(--mafia-ivory, #f2efe8);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+}
+
+.poker-decision-grid {
+  grid-area: decisions;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.poker-decision-grid .game-btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+}
+
+.poker-raise-control {
+  grid-area: raise;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
   gap: 0.45rem;
-  width: min(100%, 520px);
-  padding: 0.35rem;
-  border: 1px solid rgba(198, 161, 91, 0.18);
+  min-width: 0;
+  padding: 0.55rem;
+  border: 1px solid rgba(198, 161, 91, 0.24);
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.025);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(198, 161, 91, 0.12), transparent 42%),
+    rgba(0, 0, 0, 0.24);
+}
+
+.poker-raise-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.poker-raise-header > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.poker-raise-header strong {
+  color: var(--mafia-gold-high, #e1c98f);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.poker-raise-header small {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.55rem;
 }
 
 .poker-raise-presets {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
 }
 
 .poker-raise-presets button {
-  min-height: 32px;
-  border: 1px solid rgba(198, 161, 91, 0.28);
-  border-radius: 999px;
-  padding: 0.25rem 0.65rem;
+  display: flex;
+  min-width: 0;
+  min-height: 38px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 0.25rem 0.4rem;
+  color: rgba(255, 255, 255, 0.55);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.poker-raise-presets button:hover:not(:disabled),
+.poker-raise-presets button.is-selected {
+  border-color: rgba(198, 161, 91, 0.6);
+  background: rgba(198, 161, 91, 0.12);
+}
+
+.poker-raise-presets button span {
+  font-size: 0.48rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.poker-raise-presets button strong {
+  max-width: 100%;
+  overflow: hidden;
   color: var(--mafia-gold-high, #e1c98f);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+}
+
+.poker-raise-slider {
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.poker-raise-slider > span {
+  color: rgba(255, 255, 255, 0.36);
+  font-size: 0.52rem;
+}
+
+.poker-raise-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--mafia-gold, #c6a15b);
+  cursor: pointer;
+}
+
+.poker-raise-submit {
+  display: grid;
+  grid-template-columns: 88px minmax(150px, 1fr);
+  gap: 0.35rem;
 }
 
 .poker-raise-input {
-  width: 84px !important;
-  min-height: 42px;
+  width: 88px !important;
+  min-height: 48px;
   padding: 0.4rem !important;
   text-align: center;
+}
+
+.poker-raise-submit .game-btn {
+  width: 100%;
+  min-height: 48px;
+}
+
+.poker-allin-button {
+  grid-area: allin;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
 }
 
 @media (max-width: 900px) {
@@ -584,13 +749,23 @@
   }
 
   .poker-raise-control {
-    grid-template-columns: minmax(90px, 1fr) 74px;
     width: 100%;
   }
 
-  .poker-raise-control .game-btn {
-    grid-column: 1 / -1;
-    min-height: 44px;
+  .poker-betting-panel {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "summary summary"
+      "decisions allin"
+      "raise raise";
+  }
+
+  .poker-allin-button {
+    min-height: 52px;
+  }
+
+  .poker-raise-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .poker-side-pots {
