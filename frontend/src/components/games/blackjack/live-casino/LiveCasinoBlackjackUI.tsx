@@ -276,7 +276,10 @@ function DealerHandOnFelt({
           : "Sacando cartas...";
 
   return (
-    <div className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}>
+    <div
+      className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}
+      data-reveal-stage={revealStage}
+    >
       {(isAnimating || (progressiveDealActive && !dealComplete)) && (
         <div className="live-dealer-draw-indicator" aria-live="polite">
           <span className="live-dealer-draw-dot" />

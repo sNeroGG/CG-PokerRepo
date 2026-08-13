@@ -6,6 +6,7 @@ import {
   DEALER_HOLE_FLIP_DURATION_MS,
   DEALER_REVEAL_SETTLE_MS,
   computeRevealState,
+  dealerRevealDurationMs,
   dealerCardsForPhase,
 } from "./dealer-reveal-timing";
 
@@ -76,5 +77,13 @@ describe("computeRevealState (reloj servidor)", () => {
     assert.equal(settling.visibleCount, 2);
     assert.equal(after.stage, "done");
     assert.equal(after.visibleCount, 2);
+  });
+
+  it("no completa ni permite resultado antes de toda la secuencia visible", () => {
+    const duration = dealerRevealDurationMs(2);
+    assert.equal(duration, 3600);
+    assert.equal(computeRevealState(duration - 1, 2).complete, false);
+    assert.equal(computeRevealState(duration, 2).complete, true);
+    assert.equal(dealerRevealDurationMs(4), 5800);
   });
 });

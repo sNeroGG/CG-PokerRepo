@@ -26,6 +26,17 @@ export function dealerCardsForPhase(fullHand: Card[], phase: number): Card[] {
 
 export type DealerRevealStage = "idle" | "pause" | "flip" | "settle" | "draw" | "done";
 
+export function dealerRevealDurationMs(handLen: number): number {
+  if (handLen <= 0) return 0;
+  if (handLen === 1) return DEALER_HOLE_FLIP_DURATION_MS * 0.5;
+  return (
+    DEALER_REVEAL_START_DELAY_MS +
+    DEALER_HOLE_FLIP_DURATION_MS +
+    DEALER_REVEAL_SETTLE_MS +
+    Math.max(0, handLen - 2) * DEALER_DRAW_INTERVAL_MS
+  );
+}
+
 /** Progreso del reveal según elapsed desde dealerRevealAt (reloj servidor). */
 export function computeRevealState(
   elapsed: number,
