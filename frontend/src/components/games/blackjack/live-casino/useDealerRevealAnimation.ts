@@ -34,28 +34,27 @@ export function useDealerRevealAnimation(
   const revealAt = state.dealerRevealAt;
 
   const animationKey = needsAnimation ? `${revealAt ?? "local"}:${signature}` : "";
-  const [localClock, setLocalClock] = useState({ key: "", startedAt: 0 });
-  let activeClock = localClock;
-  if (animationKey && localClock.key !== animationKey) {
-    activeClock = { key: animationKey, startedAt: Date.now() };
-    setLocalClock(activeClock);
-  }
-  const [tick, setTick] = useState(0);
+  const [timeline, setTimeline] = useState({ key: "", elapsed: 0 });
 
   useEffect(() => {
     if (!needsAnimation || !animationKey) {
       return;
     }
 
-    setTick(activeClock.startedAt);
+    setTimeline({ key: animationKey, elapsed: 0 });
     const timers = dealerRevealBoundariesMs(handLen).map((boundary) =>
       window.setTimeout(
-        () => setTick(activeClock.startedAt + boundary),
+        () =>
+          setTimeline((current) =>
+            current.key === animationKey
+              ? { key: animationKey, elapsed: boundary }
+              : current
+          ),
         boundary
       )
     );
     return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [activeClock.startedAt, animationKey, handLen, needsAnimation]);
+  }, [animationKey, handLen, needsAnimation]);
 
   if (!needsAnimation) {
     const waitingHand = waitingForCurrentDeal
@@ -78,8 +77,7 @@ export function useDealerRevealAnimation(
     };
   }
 
-  const anchor = activeClock.startedAt || Date.now();
-  const elapsed = Math.max(0, (tick || anchor) - anchor);
+  const elapsed = timeline.key === animationKey ? timeline.elapsed : 0;
   const { phase, complete, flipHole, animatingCardIndex, stage, visibleCount } =
     computeRevealState(elapsed, handLen);
 
