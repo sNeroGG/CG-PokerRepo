@@ -165,7 +165,7 @@
 
     /* Panel de apuestas alto: scroll interno sin perder el bloque en viewport */
     .live-casino-root.mobile-play-root .live-tablet-panel--betting {
-      max-height: min(42svh, 280px);
+      max-height: min(46svh, 340px);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -176,11 +176,11 @@
     }
 
     .live-casino-root.mobile-play-root .live-bet-panel__stats {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .live-casino-root.mobile-play-root .live-bet-panel__actions {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: auto minmax(0, 1fr);
     }
 
     .live-casino-root.mobile-play-root .live-bet-panel__actions .live-btn-danger {
@@ -188,7 +188,7 @@
     }
 
     .live-casino-root.mobile-play-root .live-btn--apostar {
-      grid-column: 1 / -1;
+      grid-column: auto;
     }
 
     .live-casino-root.mobile-play-root .live-action-buttons {
@@ -317,9 +317,14 @@
     }
 
     .poker-table-root.mobile-play-root .action-bar {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-direction: column;
       gap: 0.35rem;
+    }
+
+    .poker-table-root.mobile-play-root .action-bar-buttons {
+      display: block;
+      width: 100%;
     }
 
     .poker-table-root.mobile-play-root .game-btn {

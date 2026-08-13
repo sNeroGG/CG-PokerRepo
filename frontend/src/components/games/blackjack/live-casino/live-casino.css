@@ -1306,22 +1306,19 @@
 
 @media (max-width: 900px) {
   .live-bet-panel__stats {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .live-bet-stat--timer {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    grid-column: auto;
   }
 
   .live-bet-panel__actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .live-btn--apostar {
-    grid-row: 1;
+    grid-row: auto;
   }
 
   .live-bet-panel__header h2 {
@@ -1329,16 +1326,34 @@
   }
 
   .live-bet-presets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .live-bet-panel__composer {
     grid-template-columns: 42px minmax(130px, 1fr) 42px;
+    min-height: 64px;
   }
 
   .live-bet-panel__preview {
     min-width: 0;
-    padding-inline: 0.25rem;
+    padding: 0.3rem 0.25rem;
+  }
+
+  .live-bet-panel__preview .live-digital-chips {
+    display: none;
+  }
+
+  .live-bet-panel__amount {
+    font-size: 1.2rem;
+  }
+
+  .live-bet-presets button {
+    min-height: 38px;
+    padding: 0.25rem 0.35rem;
+  }
+
+  .live-bet-reset {
+    padding-inline: 0.55rem;
   }
 }
 
