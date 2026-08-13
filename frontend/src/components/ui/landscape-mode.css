@@ -23,6 +23,8 @@
     max-height: 100dvh;
     max-height: 100svh;
     max-height: var(--app-height, 100svh);
+    width: 100%;
+    max-width: var(--app-width, 100vw);
     overflow: hidden;
     box-sizing: border-box;
   }
@@ -44,7 +46,11 @@
       grid-area: header;
       position: relative;
       inset: auto;
-      padding: 0.4rem 0.65rem;
+      padding:
+        max(0.4rem, var(--safe-area-top))
+        max(0.65rem, var(--safe-area-right))
+        0.4rem
+        max(0.65rem, var(--safe-area-left));
       background: rgba(0, 0, 0, 0.92);
       border-bottom: 1px solid rgba(212, 175, 55, 0.15);
     }
@@ -85,7 +91,11 @@
       flex-wrap: nowrap;
       overflow-x: auto;
       gap: 0.4rem;
-      padding: 0.35rem 0.5rem;
+      padding:
+        0.35rem
+        max(0.5rem, var(--safe-area-right))
+        0.35rem
+        max(0.5rem, var(--safe-area-left));
       border-radius: 0;
       border-left: none;
       border-right: none;
@@ -139,7 +149,11 @@
       flex-shrink: 0;
       align-self: end;
       /* safe-area iOS + margen mínimo Android (nav/gestos a menudo reportan 0) */
-      padding: 0.3rem 0.5rem max(0.85rem, calc(0.45rem + env(safe-area-inset-bottom, 0px)));
+      padding:
+        0.3rem
+        max(0.5rem, var(--safe-area-right))
+        max(0.85rem, calc(0.45rem + var(--safe-area-bottom)))
+        max(0.5rem, var(--safe-area-left));
       max-height: none;
       overflow: visible;
       -webkit-overflow-scrolling: touch;
@@ -244,7 +258,11 @@
       }
 
       .live-casino-root.mobile-play-root .brand-header-bar {
-        padding: 0.3rem 0.55rem;
+        padding:
+          max(0.3rem, var(--safe-area-top))
+          max(0.55rem, var(--safe-area-right))
+          0.3rem
+          max(0.55rem, var(--safe-area-left));
       }
     }
 
@@ -259,6 +277,18 @@
         "controls";
       gap: 0;
       padding: 0;
+    }
+
+    .poker-table-root.mobile-play-root > .brand-header-bar {
+      grid-area: header;
+      position: relative;
+      inset: auto;
+      padding:
+        max(0.4rem, var(--safe-area-top))
+        max(0.65rem, var(--safe-area-right))
+        0.4rem
+        max(0.65rem, var(--safe-area-left));
+      background: rgba(0, 0, 0, 0.94);
     }
 
     .poker-table-root.mobile-play-root > .poker-player-strip {
@@ -302,7 +332,11 @@
       inset: auto;
       flex-shrink: 0;
       align-self: end;
-      padding: 0.35rem 0.5rem max(0.7rem, calc(0.4rem + env(safe-area-inset-bottom, 0px)));
+      padding:
+        0.35rem
+        max(0.5rem, var(--safe-area-right))
+        max(0.7rem, calc(0.4rem + var(--safe-area-bottom)))
+        max(0.5rem, var(--safe-area-left));
       background: rgba(6, 4, 10, 0.98);
       border-top: 1px solid rgba(212, 175, 55, 0.12);
       box-sizing: border-box;
@@ -341,7 +375,11 @@
 
     /* Lobby / auth en vertical */
     .auth-page {
-      padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0px));
+      padding:
+        max(1rem, var(--safe-area-top))
+        max(0.85rem, var(--safe-area-right))
+        max(1rem, var(--safe-area-bottom))
+        max(0.85rem, var(--safe-area-left));
     }
 
     .auth-panel {
@@ -361,7 +399,7 @@
   @media (orientation: landscape) {
     .live-casino-root.mobile-play-root {
       display: grid;
-      grid-template-columns: 1fr minmax(180px, 26vw);
+      grid-template-columns: minmax(0, 1fr) minmax(160px, 24vw);
       grid-template-rows: auto 1fr auto;
       grid-template-areas:
         "header header"
@@ -374,7 +412,11 @@
       grid-area: header;
       position: relative;
       inset: auto;
-      padding: 0.25rem 0.5rem;
+      padding:
+        max(0.25rem, var(--safe-area-top))
+        max(0.5rem, var(--safe-area-right))
+        0.25rem
+        max(0.5rem, var(--safe-area-left));
     }
 
     .live-casino-root.mobile-play-root .brand-header-bar__title {
@@ -405,8 +447,28 @@
     }
 
     .live-casino-root.mobile-play-root .live-table-wrapper {
-      transform: rotateX(10deg) scale(0.72);
+      display: flex;
+      align-items: stretch;
+      width: min(100%, 760px);
+      height: 100%;
       max-width: 100%;
+      max-height: 100%;
+      transform: rotateX(8deg) scale(0.94);
+      transform-origin: center;
+    }
+
+    .live-casino-root.mobile-play-root .live-table-rail {
+      inset: -8px -12px;
+    }
+
+    .live-casino-root.mobile-play-root .live-table-felt {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+      padding: 0.65rem 0.85rem;
+      box-sizing: border-box;
     }
 
     .live-casino-root.mobile-play-root .live-player-sidebar {
@@ -419,14 +481,18 @@
       width: 100%;
       max-width: none;
       height: 100%;
-      padding: 0.35rem;
+      padding:
+        0.35rem
+        max(0.35rem, var(--safe-area-right))
+        0.35rem
+        0.35rem;
       overflow-y: auto;
     }
 
     .live-casino-root.mobile-play-root .live-players-panel {
       position: absolute;
       top: 2.25rem;
-      right: 0.25rem;
+      right: max(0.25rem, var(--safe-area-right));
       min-width: 90px;
       max-width: 22vw;
       font-size: 0.55rem;
@@ -439,9 +505,15 @@
       position: relative;
       inset: auto;
       flex-shrink: 0;
-      padding: 0.25rem 0.5rem max(0.55rem, calc(0.3rem + env(safe-area-inset-bottom, 0px)));
-      max-height: none;
-      overflow: visible;
+      padding:
+        0.25rem
+        max(0.5rem, var(--safe-area-right))
+        max(0.55rem, calc(0.3rem + var(--safe-area-bottom)))
+        max(0.5rem, var(--safe-area-left));
+      max-height: min(46dvh, 220px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
     }
 
@@ -500,13 +572,39 @@
       height: 62px;
     }
 
+    .live-casino-root.mobile-play-root .live-table-felt .live-table-card--md {
+      width: 48px;
+      height: 68px;
+      font-size: 0.62rem;
+    }
+
+    .live-casino-root.mobile-play-root .live-table-felt .live-table-card--md .live-table-card-suit {
+      font-size: 1.1rem;
+    }
+
     .poker-table-root.mobile-play-root {
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: auto 1fr auto;
       gap: 0.35rem;
-      padding: 0.35rem 0.5rem;
+      padding:
+        0
+        max(0.5rem, var(--safe-area-right))
+        max(0.35rem, var(--safe-area-bottom))
+        max(0.5rem, var(--safe-area-left));
       overflow: hidden;
+    }
+
+    .poker-table-root.mobile-play-root > .brand-header-bar {
+      grid-column: 1 / -1;
+      position: relative;
+      inset: auto;
+      padding:
+        max(0.25rem, var(--safe-area-top))
+        max(0.5rem, var(--safe-area-right))
+        0.25rem
+        max(0.5rem, var(--safe-area-left));
+      background: rgba(0, 0, 0, 0.94);
     }
 
     .poker-table-root.mobile-play-root > .hands-overview-panel {
@@ -535,6 +633,38 @@
       min-width: 72px;
       padding: 0.4rem 0.5rem;
       font-size: 0.7rem;
+    }
+
+    @media (max-height: 430px) {
+      .live-casino-root.mobile-play-root {
+        grid-template-columns: minmax(0, 1fr) minmax(144px, 22vw);
+      }
+
+      .live-casino-root.mobile-play-root .brand-header-bar .brand-logo-wrap {
+        width: 30px !important;
+        height: 30px !important;
+      }
+
+      .live-casino-root.mobile-play-root .live-table-wrapper {
+        transform: rotateX(6deg) scale(0.9);
+      }
+
+      .live-casino-root.mobile-play-root .live-table-felt .live-table-card--md {
+        width: 44px;
+        height: 62px;
+      }
+
+      .live-casino-root.mobile-play-root .live-tablet-panel {
+        padding: 0.35rem 0.5rem;
+      }
+
+      .live-casino-root.mobile-play-root .live-tablet-overlay {
+        max-height: min(42dvh, 170px);
+      }
+
+      .poker-table-root.mobile-play-root {
+        gap: 0.2rem;
+      }
     }
   }
 }

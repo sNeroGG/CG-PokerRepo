@@ -8,6 +8,7 @@ import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BRAND_ASSETS, BRAND_TAGLINE } from "@/lib/brand";
 import { BrandName } from "@/components/brand/BrandName";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import "@/components/brand/brand-slots.css";
 import { ArrowLeft, DoorOpen, Layers3, Plus, Spade } from "lucide-react";
 
@@ -158,6 +159,7 @@ export default function HomePage() {
             <p className="text-[10px] text-white/40">2–8 jugadores</p>
           </div>
         </div>
+        <InstallAppButton />
       </div>
     </main>
   );
