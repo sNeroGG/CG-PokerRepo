@@ -4,6 +4,14 @@ import { useEffect } from "react";
 
 const IDLE_TIMEOUT_MS = 2_000;
 
+type IdleCapableWindow = Window & {
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions
+  ) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 export function PwaRegistration() {
   useEffect(() => {
     if (
@@ -16,6 +24,7 @@ export function PwaRegistration() {
     let idleId: number | undefined;
     let timeoutId: number | undefined;
     let cancelled = false;
+    const browserWindow = window as IdleCapableWindow;
 
     const register = () => {
       if (cancelled) return;
@@ -23,12 +32,12 @@ export function PwaRegistration() {
     };
 
     const schedule = () => {
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(register, {
+      if (typeof browserWindow.requestIdleCallback === "function") {
+        idleId = browserWindow.requestIdleCallback(register, {
           timeout: IDLE_TIMEOUT_MS,
         });
       } else {
-        timeoutId = window.setTimeout(register, IDLE_TIMEOUT_MS);
+        timeoutId = browserWindow.setTimeout(register, IDLE_TIMEOUT_MS);
       }
     };
 
@@ -41,8 +50,11 @@ export function PwaRegistration() {
     return () => {
       cancelled = true;
       window.removeEventListener("load", schedule);
-      if (idleId !== undefined && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(idleId);
+      if (
+        idleId !== undefined &&
+        typeof browserWindow.cancelIdleCallback === "function"
+      ) {
+        browserWindow.cancelIdleCallback(idleId);
       }
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
