@@ -29,6 +29,7 @@ export function useDealerRevealAnimation(
   const signature = handSignature(state.dealerHand);
   const fullHand = state.dealerHand.map((c) => ({ ...c, hidden: false }));
   const needsAnimation = enabled && isRoundEnd && handLen >= 1;
+  const waitingForCurrentDeal = !enabled && isRoundEnd && handLen >= 1;
   const revealAt = state.dealerRevealAt;
 
   const [tick, setTick] = useState(0);
@@ -44,15 +45,22 @@ export function useDealerRevealAnimation(
   }, [needsAnimation, revealAt, signature]);
 
   if (!needsAnimation) {
+    const waitingHand = waitingForCurrentDeal
+      ? dealerCardsForPhase(fullHand, 0)
+      : state.dealerHand;
     return {
-      displayedHand: state.dealerHand,
-      displayedTotal: handTotal(state.dealerHand.map((c) => ({ ...c, hidden: false }))),
+      displayedHand: waitingHand,
+      displayedTotal: handTotal(
+        waitingForCurrentDeal
+          ? waitingHand
+          : state.dealerHand.map((c) => ({ ...c, hidden: false }))
+      ),
       isAnimating: false,
       animatingCardIndex: null as number | null,
       flipHole: false,
-      complete: true,
-      stage: "done" as DealerRevealStage,
-      visibleCount: handLen,
+      complete: !waitingForCurrentDeal,
+      stage: (waitingForCurrentDeal ? "pause" : "done") as DealerRevealStage,
+      visibleCount: waitingForCurrentDeal ? Math.min(1, handLen) : handLen,
       totalCount: handLen,
     };
   }

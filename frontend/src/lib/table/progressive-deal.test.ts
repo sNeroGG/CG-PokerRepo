@@ -4,6 +4,7 @@ import { CARD_DEAL_INTERVAL_MS } from "@/lib/table/deal-sequence";
 import {
   computeProgressiveDeal,
   resolvePresentationStart,
+  resolveUpdatedBatchStart,
 } from "@/lib/table/progressive-deal";
 
 describe("resolvePresentationStart", () => {
@@ -19,6 +20,12 @@ describe("resolvePresentationStart", () => {
     const now = 10_000 + CARD_DEAL_INTERVAL_MS + 50;
     const start = resolvePresentationStart(dealStartedAt, 1, now);
     assert.equal(start, dealStartedAt);
+  });
+
+  it("una carta pedida siempre inicia su animación local aunque la API tarde", () => {
+    const dealStartedAt = 10_000;
+    const receivedAt = dealStartedAt + CARD_DEAL_INTERVAL_MS + 500;
+    assert.equal(resolveUpdatedBatchStart(dealStartedAt, 1, receivedAt), receivedAt);
   });
 });
 
