@@ -92,37 +92,40 @@ export function CasinoChipStack({
   const prev = Math.min(previousAmount, amount);
 
   if (animate === "add-chips" && prev > 0 && amount > prev) {
-    const baseChips = decomposeIntoChips(prev, maxChips);
-    const deltaChips = decomposeIntoChips(amount - prev, Math.max(2, maxChips - baseChips.length));
-    const baseOffset = baseChips.length * stackHeight;
+    const previousChips = decomposeIntoChips(prev, maxChips);
+    const finalChips = decomposeIntoChips(amount, maxChips);
+    const remainingPrevious = new Map<string, number>();
+    for (const chip of previousChips) {
+      const key = `${chip.color}-${chip.value}`;
+      remainingPrevious.set(key, (remainingPrevious.get(key) ?? 0) + 1);
+    }
+    let addedIndex = 0;
 
     return (
-      <div className={`chip-stack chip-stack--${size} ${className}`.trim()}>
-        {baseChips.map((chip, i) => (
-          <CasinoChip
-            key={`base-${chip.color}-${chip.value}-${i}`}
-            value={chip.value}
-            color={chip.color}
-            label={chip.label}
-            size={size}
-            stacked
-            stackOffset={i * stackHeight}
-            animate="land"
-          />
-        ))}
-        {deltaChips.map((chip, i) => (
-          <CasinoChip
-            key={`delta-${chip.color}-${chip.value}-${i}`}
-            value={chip.value}
-            color={chip.color}
-            label={chip.label}
-            size={size}
-            stacked
-            stackOffset={baseOffset + i * stackHeight}
-            animate="add-chip"
-            animationDelay={baseDelay + i * 90}
-          />
-        ))}
+      <div
+        className={`chip-stack chip-stack--${size} chip-stack--exchanging ${className}`.trim()}
+        aria-label={`Fichas por un total de ${amount}`}
+      >
+        {finalChips.map((chip, index) => {
+          const denominationKey = `${chip.color}-${chip.value}`;
+          const previousCount = remainingPrevious.get(denominationKey) ?? 0;
+          const persists = previousCount > 0;
+          if (persists) remainingPrevious.set(denominationKey, previousCount - 1);
+          const delay = persists ? 0 : baseDelay + addedIndex++ * 90;
+          return (
+            <CasinoChip
+              key={`final-${denominationKey}-${index}`}
+              value={chip.value}
+              color={chip.color}
+              label={chip.label}
+              size={size}
+              stacked
+              stackOffset={index * stackHeight}
+              animate={persists ? "land" : "add-chip"}
+              animationDelay={delay}
+            />
+          );
+        })}
       </div>
     );
   }
