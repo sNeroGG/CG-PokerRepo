@@ -5,9 +5,22 @@ import {
   DEALER_REVEAL_START_DELAY_MS,
   DEALER_HOLE_FLIP_DURATION_MS,
   computeRevealState,
+  dealerCardsForPhase,
 } from "./dealer-reveal-timing";
 
 describe("computeRevealState (reloj servidor)", () => {
+  it("mantiene la segunda carta oculta mientras termina una carta pedida", () => {
+    const waiting = dealerCardsForPhase(
+      [
+        { suit: "clubs", rank: "10" },
+        { suit: "hearts", rank: "A" },
+      ],
+      0
+    );
+    assert.equal(waiting[0].hidden, false);
+    assert.equal(waiting[1].hidden, true);
+  });
+
   it("está en pausa inicial antes del flip", () => {
     const view = computeRevealState(100, 3);
     assert.equal(view.stage, "pause");

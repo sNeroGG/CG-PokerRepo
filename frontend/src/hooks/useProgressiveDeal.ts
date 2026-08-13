@@ -8,6 +8,7 @@ import {
 import {
   computeProgressiveDeal,
   resolvePresentationStart,
+  resolveUpdatedBatchStart,
 } from "@/lib/table/progressive-deal";
 
 export { CARD_DEAL_INTERVAL_MS };
@@ -37,9 +38,7 @@ export function useProgressiveDeal(
     if (!dealStartedAt || !dealCardCount) {
       setPresentationStart(undefined);
     } else {
-      setPresentationStart(
-        resolvePresentationStart(dealStartedAt, dealCardCount, Date.now())
-      );
+      setPresentationStart(resolveUpdatedBatchStart(dealStartedAt, dealCardCount, Date.now()));
     }
   }
 

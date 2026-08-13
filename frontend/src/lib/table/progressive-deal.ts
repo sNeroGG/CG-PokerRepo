@@ -30,6 +30,20 @@ export function resolvePresentationStart(
 }
 
 /**
+ * Un batch recibido después del primer render corresponde a una acción nueva
+ * (pedir, doblar, split). Siempre inicia una presentación local completa,
+ * aunque la respuesta HTTP haya consumido el intervalo del reloj servidor.
+ */
+export function resolveUpdatedBatchStart(
+  dealStartedAt: number | undefined,
+  dealCardCount: number | undefined,
+  now: number
+): number | undefined {
+  if (!dealStartedAt || !dealCardCount) return undefined;
+  return now;
+}
+
+/**
  * Progreso del deal según ancla de presentación.
  * La carta N aparece en (N-1)*INTERVAL; el batch termina tras count*INTERVAL
  * para que la última carta (hit/double) tenga ventana de animación CSS.
