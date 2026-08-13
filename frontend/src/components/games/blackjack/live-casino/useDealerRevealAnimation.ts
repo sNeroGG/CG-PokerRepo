@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { BlackjackState, Card } from "@cg/backend/types";
 import { handTotal } from "@/lib/game-logic/deck";
 import {
@@ -31,17 +31,11 @@ export function useDealerRevealAnimation(
   const needsAnimation = enabled && isRoundEnd && handLen >= 1;
   const revealAt = state.dealerRevealAt;
 
-  const lastSignatureRef = useRef("");
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
     if (!needsAnimation || !revealAt) {
-      lastSignatureRef.current = "";
       return;
-    }
-
-    if (signature !== lastSignatureRef.current) {
-      lastSignatureRef.current = signature;
     }
 
     setTick(Date.now());

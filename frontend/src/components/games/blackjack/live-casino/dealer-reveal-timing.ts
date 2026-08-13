@@ -1,8 +1,8 @@
 import type { Card } from "@cg/backend/types";
 import { CARD_DEAL_INTERVAL_MS } from "@/lib/table/deal-sequence";
 
-export const DEALER_REVEAL_START_DELAY_MS = 550;
-const FLIP_DURATION_MS = CARD_DEAL_INTERVAL_MS;
+export const DEALER_REVEAL_START_DELAY_MS = 650;
+export const DEALER_HOLE_FLIP_DURATION_MS = 1050;
 const DRAW_INTERVAL_MS = CARD_DEAL_INTERVAL_MS;
 
 /** Cartas visibles según fase de animación del crupier */
@@ -50,7 +50,7 @@ export function computeRevealState(
   }
 
   if (handLen === 1) {
-    const done = elapsed >= FLIP_DURATION_MS * 0.5;
+    const done = elapsed >= DEALER_HOLE_FLIP_DURATION_MS * 0.5;
     return {
       phase: 0,
       complete: done,
@@ -74,7 +74,7 @@ export function computeRevealState(
 
   const afterStart = elapsed - DEALER_REVEAL_START_DELAY_MS;
 
-  if (afterStart < FLIP_DURATION_MS) {
+  if (afterStart < DEALER_HOLE_FLIP_DURATION_MS) {
     return {
       phase: 0,
       complete: false,
@@ -85,7 +85,7 @@ export function computeRevealState(
     };
   }
 
-  const afterFlip = afterStart - FLIP_DURATION_MS;
+  const afterFlip = afterStart - DEALER_HOLE_FLIP_DURATION_MS;
 
   if (handLen === 2) {
     return {
