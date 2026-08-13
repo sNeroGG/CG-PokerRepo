@@ -70,6 +70,8 @@ export function TableCard({
     >
       <div className="live-table-card-inner">
         {!isHidden && (
+          // Data URI generado localmente; next/image no aporta optimización aquí.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             className="live-table-card-face-bg"
             src={cardFaceFillDataUri(faceStyle)}

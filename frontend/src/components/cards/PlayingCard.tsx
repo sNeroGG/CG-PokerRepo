@@ -1,6 +1,6 @@
 "use client";
 
-import type { Card as CardType, Rank, Suit } from "@cg/backend/types";
+import type { Card as CardType, Rank } from "@cg/backend/types";
 import { CardBackBrandLogo } from "@/components/brand/CardBackBrandLogo";
 import { SUIT_SYMBOL } from "@/lib/game-logic/deck";
 import { isRedSuit } from "@/lib/game-logic/card-utils";

@@ -504,6 +504,25 @@
   font-size: 0.72rem;
 }
 
+.poker-winner-stack {
+  position: absolute;
+  z-index: 38;
+  top: 7rem;
+  left: 50%;
+  display: grid;
+  width: min(92vw, 560px);
+  transform: translateX(-50%);
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.poker-winner-stack .status-banner {
+  border: 1px solid rgba(198, 161, 91, 0.4);
+  background: rgba(8, 8, 8, 0.9);
+  color: var(--mafia-gold-high, #e1c98f);
+  backdrop-filter: blur(12px);
+}
+
 .poker-turn-timer--urgent {
   border-color: rgba(139, 38, 53, 0.8);
   color: #ffc8cf;
@@ -576,6 +595,11 @@
 
   .poker-side-pots {
     max-width: 100%;
+  }
+
+  .poker-winner-stack {
+    top: 6.2rem;
+    width: calc(100% - 1rem);
   }
 }
 

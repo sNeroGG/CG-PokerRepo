@@ -16,11 +16,12 @@ test("ocho invitados pueden preparar e iniciar una mesa sin perder mutaciones", 
   const identities = Array.from({ length: 8 }, createGuestSession);
   const room = await createRoom("Jugador 1", identities[0].playerId, identities[0].tokenHash);
 
-  await Promise.all(
+  const joins = await Promise.all(
     identities.slice(1).map((identity, index) =>
       joinRoom(room.code, `Jugador ${index + 2}`, identity.playerId, identity.tokenHash)
     )
   );
+  assert.equal(joins.filter((result) => "error" in result).length, 0);
 
   const ninth = createGuestSession();
   const overflow = await joinRoom(room.code, "Jugador 9", ninth.playerId, ninth.tokenHash);

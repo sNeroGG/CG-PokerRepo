@@ -195,7 +195,6 @@ export function PokerTable({
     room.players.filter((p) => state.players.some((ps) => ps.playerId === p.id)),
     playerId
   );
-  const orderedIds = orderedPlayers.map((p) => p.id);
   const dealOrderIds = reorderHandPlayerIds(
     state.players.map((p) => p.playerId),
     playerId
@@ -426,16 +425,20 @@ export function PokerTable({
           </div>
         </ImmersiveTableScene>
 
-        {state.winners.map((w) => {
-          const player = room.players.find((p) => p.id === w.playerId);
-          return (
-            <StatusBanner
-              key={w.playerId}
-              type="success"
-              message={`${player?.name} gana $${w.amount} — ${w.hand}`}
-            />
-          );
-        })}
+        {state.winners.length > 0 && (
+          <div className="poker-winner-stack">
+            {state.winners.map((winner) => {
+              const player = room.players.find((candidate) => candidate.id === winner.playerId);
+              return (
+                <StatusBanner
+                  key={winner.playerId}
+                  type="success"
+                  message={`${player?.name} gana $${winner.amount} — ${winner.hand}`}
+                />
+              );
+            })}
+          </div>
+        )}
 
         <div className="poker-table-controls">
           <div className="poker-controls-top">

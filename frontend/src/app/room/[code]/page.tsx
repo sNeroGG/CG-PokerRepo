@@ -125,7 +125,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (playing) {
     return (
-      <main className="game-shell min-h-0 overflow-hidden">
+      <main className="game-shell h-[100dvh] min-h-screen overflow-hidden">
         {isBlackjack ? (
           <BlackjackTable room={room} playerId={playerId} onUpdate={setRoom} isHost={isHost} />
         ) : (

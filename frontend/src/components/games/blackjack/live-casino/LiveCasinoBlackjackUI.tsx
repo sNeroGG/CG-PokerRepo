@@ -1046,8 +1046,6 @@ export function LiveCasinoBlackjackUI({
     playerId,
     state.players,
     state.dealerHand,
-    state.dealStartedAt,
-    state.dealCardCount,
     isRoundEnd,
     dealerReveal.displayedHand,
     dealerReveal.displayedTotal,

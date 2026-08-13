@@ -1607,7 +1607,7 @@
   filter: brightness(0.9);
 }
 
-.live-btn.live-btn--pressed:not(:disabled):: {
+.live-btn.live-btn--pressed:not(:disabled) {
   animation: liveBtnPressPulse 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 

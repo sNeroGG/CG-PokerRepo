@@ -3,12 +3,21 @@ ALTER TABLE rooms
   ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
 
 ALTER TABLE room_players
-  ADD COLUMN IF NOT EXISTS session_token_hash TEXT,
   ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_room_player_session_token
-  ON room_players(room_id, session_token_hash)
-  WHERE session_token_hash IS NOT NULL;
+CREATE TABLE IF NOT EXISTS room_player_sessions (
+  room_id UUID NOT NULL,
+  player_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (room_id, player_id),
+  UNIQUE (room_id, token_hash),
+  FOREIGN KEY (room_id, player_id)
+    REFERENCES room_players(room_id, player_id)
+    ON DELETE CASCADE
+);
+
+ALTER TABLE room_player_sessions ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION save_room_atomic(
   p_code TEXT,
@@ -74,7 +83,6 @@ BEGIN
       is_connected,
       seat_status,
       game_vote,
-      session_token_hash,
       last_seen_at
     )
     VALUES (
@@ -86,7 +94,6 @@ BEGIN
       COALESCE((v_player->>'isConnected')::BOOLEAN, true),
       COALESCE(v_player->>'seatStatus', 'active'),
       NULLIF(v_player->>'gameVote', ''),
-      NULLIF(v_player->>'sessionTokenHash', ''),
       COALESCE(to_timestamp((v_player->>'lastSeenAt')::DOUBLE PRECISION / 1000), now())
     )
     ON CONFLICT (room_id, player_id) DO UPDATE SET
@@ -96,8 +103,14 @@ BEGIN
       is_connected = EXCLUDED.is_connected,
       seat_status = EXCLUDED.seat_status,
       game_vote = EXCLUDED.game_vote,
-      session_token_hash = COALESCE(EXCLUDED.session_token_hash, room_players.session_token_hash),
       last_seen_at = EXCLUDED.last_seen_at;
+
+    IF NULLIF(v_player->>'sessionTokenHash', '') IS NOT NULL THEN
+      INSERT INTO room_player_sessions(room_id, player_id, token_hash)
+      VALUES (v_room_id, v_player->>'id', v_player->>'sessionTokenHash')
+      ON CONFLICT (room_id, player_id) DO UPDATE
+        SET token_hash = EXCLUDED.token_hash;
+    END IF;
   END LOOP;
 
   DELETE FROM room_players existing

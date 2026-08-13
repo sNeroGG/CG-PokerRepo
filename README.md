@@ -32,7 +32,7 @@ CG-PokerRepo/
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 15 → **Vercel** |
+| Frontend | Next.js 16 → **Vercel** |
 | Backend / DB | **Supabase** PostgreSQL |
 | Tiempo real | **Supabase Realtime** channels |
 | Lógica juegos | `@cg/backend` (workspace) |

@@ -162,8 +162,22 @@ export async function getRoom(code: string): Promise<Room | null> {
       .select("*")
       .eq("room_id", row.id)
       .order("joined_at");
+    const { data: sessions } = await supabase
+      .from("room_player_sessions")
+      .select("player_id, token_hash")
+      .eq("room_id", row.id);
+    const tokenByPlayer = new Map(
+      (sessions ?? []).map((session) => [
+        session.player_id as string,
+        session.token_hash as string,
+      ])
+    );
+    const playersWithSessions = (players ?? []).map((player) => ({
+      ...player,
+      session_token_hash: tokenByPlayer.get(player.player_id as string) ?? null,
+    }));
 
-    return assembleRoom(row as DatabaseRoom, (players ?? []) as DatabasePlayer[]);
+    return assembleRoom(row as DatabaseRoom, playersWithSessions as DatabasePlayer[]);
   }
 
   const mem = globalMemory().get(normalized);

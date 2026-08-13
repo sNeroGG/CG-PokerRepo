@@ -36,7 +36,7 @@ export {
 
 const STARTING_CHIPS = 1000;
 export const PRESENCE_TIMEOUT_MS = 45_000;
-const MAX_MUTATION_RETRIES = 4;
+const MAX_MUTATION_RETRIES = 16;
 
 type MutationResult = { room: Room } | { error: string };
 

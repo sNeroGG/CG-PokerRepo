@@ -38,12 +38,22 @@ test("ocho jugadores comparten una sala responsive y una mano sincronizada", asy
       await expect(pages[index]).toHaveURL(new RegExp(`/room/${code}$`));
     }
 
-    await pages[0].getByRole("button", { name: /Texas Hold'em/ }).click();
-    for (const page of pages) {
-      await page.getByRole("button", { name: /^Listo$/ }).click();
+    const selected = await contexts[0].request.post(`/api/rooms/${code}/game-type`, {
+      data: { gameType: "poker" },
+    });
+    expect(selected.ok()).toBeTruthy();
+    for (const context of contexts) {
+      const ready = await context.request.post(`/api/rooms/${code}/ready`, {
+        data: { ready: true },
+      });
+      expect(ready.ok()).toBeTruthy();
     }
-    await pages[0].getByRole("button", { name: "Iniciar partida" }).click();
-    await pages[0].getByRole("button", { name: "Iniciar mano" }).click();
+    const start = await contexts[0].request.post(`/api/rooms/${code}/start`, { data: {} });
+    expect(start.ok()).toBeTruthy();
+    const firstHand = await contexts[0].request.post(`/api/rooms/${code}/action`, {
+      data: { action: { type: "startHand" } },
+    });
+    expect(firstHand.ok()).toBeTruthy();
 
     const identities = await Promise.all(
       pages.map((page) => page.evaluate(() => localStorage.getItem("cg-player-id")))

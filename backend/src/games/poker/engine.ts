@@ -87,7 +87,7 @@ function beginHand(state: PokerState): PokerState {
   if (playable.length < 2) return state;
 
   let deck = shuffleDeck(createDeck());
-  const players = playable.map((player) => {
+  const players: PokerPlayerState[] = playable.map((player) => {
     const { drawn, remaining } = drawCards(deck, 2);
     deck = remaining;
     return {
@@ -171,6 +171,9 @@ function awardUncontested(state: PokerState): PokerState {
     winnersPaid: false,
     turnStartedAt: undefined,
     turnDeadlineAt: undefined,
+    dealStartedAt: undefined,
+    dealCardCount: undefined,
+    dealSlots: undefined,
     message: "Mano ganada por retirada",
     dealerMessage: "El bote se entrega al último jugador activo.",
   };

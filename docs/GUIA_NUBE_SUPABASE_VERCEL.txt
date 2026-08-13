@@ -25,11 +25,11 @@
 Stack
 -----
   - Monorepo npm workspaces: frontend + backend (@cg/backend)
-  - Frontend: Next.js 15, React 19, Tailwind 3
+  - Frontend: Next.js 16, React 19, Tailwind 3
   - Backend: Lógica en @cg/backend, expuesta vía API routes de Next.js
   - Base de datos: Supabase PostgreSQL (o memoria local solo para desarrollo)
-  - Tiempo real: Supabase Realtime + polling cada 2 segundos como respaldo
-  - Identidad de jugador: UUID en localStorage + nombre (sin Supabase Auth aún)
+  - Tiempo real: Supabase Realtime + polling cada 10 segundos como respaldo
+  - Identidad: sesión invitada por sala en cookie HttpOnly; el servidor valida el token
   - Deploy previsto: Vercel (frontend) + Supabase (DB + Realtime)
 
 Flujo de una partida
@@ -46,14 +46,15 @@ Flujo de una partida
 
   3. Gameplay
      POST /api/rooms/[code]/action → valida acción, muta estado, guarda en DB
-     GET  /api/rooms/[code]?playerId=... → estado público (oculta cartas rivales)
+     GET  /api/rooms/[code] → estado personalizado según cookie (oculta cartas rivales)
 
   4. Sincronización entre clientes
      Hook useRoom() en el navegador:
        - Suscripción Realtime al canal room:{code}
        - Escucha cambios en tablas rooms y room_players
        - Al detectar cambio → refetch vía REST
-       - Polling cada 2000 ms siempre activo (respaldo)
+       - Polling cada 10000 ms siempre activo (respaldo)
+       - Heartbeat cada 20000 ms para presencia y reconexión
 
 Diagrama simplificado
 ---------------------
@@ -88,6 +89,11 @@ Supabase
     - game_state JSONB para estado del juego
     - Realtime habilitado en ambas tablas
     - RLS: políticas de solo lectura (SELECT) para clientes anónimos
+
+  backend/supabase/migrations/005_secure_atomic_rooms.sql
+    - Versión y guardado transaccional de sala + jugadores
+    - Tokens invitados hasheados en tabla privada
+    - Presencia y última actividad
 
   backend/src/services/supabase.ts
     - Cliente admin con SERVICE_ROLE_KEY (solo servidor)
@@ -130,8 +136,8 @@ Tiempo real
   frontend/src/hooks/useRoom.ts
     - Canal Supabase: room:{code}
     - postgres_changes en rooms (filtrado por code)
-    - postgres_changes en room_players (sin filtro por sala aún)
-    - Polling cada 2000 ms
+    - Polling cada 10000 ms
+    - Heartbeat cada 20000 ms
 
 Deploy
 ------
@@ -222,25 +228,21 @@ room-service.ts — Por añadir
   transitionRoomStatus(room, 'finished')
   validateHostAction() — centralizar checks de host
 
-store.ts — Por añadir
----------------------
-  upsertRoomPlayers() — sync eficiente de jugadores
-  withRoomLock(code, fn) — lock/transacción para acciones concurrentes
+store.ts — Implementado
+-----------------------
+  save_room_atomic() — guarda sala y jugadores con lock y compare-and-swap
+  Reintentos controlados — evita perder acciones concurrentes
 
-useRoom.ts — Por mejorar
-------------------------
-  - Polling solo si Realtime no está conectado
-  - Filtro room_players por room_id
-  - (Opcional) optimistic updates en UI
+useRoom.ts — Implementado
+-------------------------
+  - Realtime Broadcast + postgres_changes
+  - Polling de respaldo y heartbeat de presencia
+  - Merge seguro de cartas privadas
 
-Supabase — Por añadir (migraciones)
------------------------------------
-  002_presence.sql (sugerido):
-    - Columna last_seen_at en room_players
-    - Índices adicionales si hace falta
-
-  RPC apply_game_action (opcional):
-    - Read-modify-write atómico de game_state
+Supabase — Migraciones disponibles
+----------------------------------
+  - 001 a 004: esquema, asientos, votos y estadísticas
+  - 005: presencia, sesiones invitadas privadas y RPC atómica
 
 UI responsive — Archivos a tocar
 ----------------------------------
@@ -266,9 +268,9 @@ Paso 1 — Crear proyecto
 Paso 2 — Ejecutar migración SQL
 -------------------------------
   1. Dashboard Supabase → SQL Editor → New query
-  2. Copiar TODO el contenido del archivo:
-       backend/supabase/migrations/001_initial_schema.sql
-  3. Pulsar Run
+  2. Ejecutar en orden todos los archivos de:
+       backend/supabase/migrations/001...005
+  3. Pulsar Run tras pegar el contenido de cada archivo
 
   Esto crea:
     - Tabla rooms (salas, game_state JSONB, status lobby/playing/finished)
@@ -277,6 +279,7 @@ Paso 2 — Ejecutar migración SQL
     - Trigger updated_at en rooms
     - Realtime en rooms y room_players
     - RLS con políticas rooms_read y players_read (solo SELECT)
+    - Sesiones privadas, presencia y guardado transaccional
 
   NOTA: Si falla "ALTER PUBLICATION supabase_realtime ADD TABLE...",
   puede que las tablas ya estén en la publicación. En ese caso:
@@ -316,7 +319,7 @@ Paso 5 — Probar en local (recomendado antes de Vercel)
 
 Paso 6 — Qué NO hace falta configurar ahora
 ---------------------------------------------
-  - Supabase Auth (el juego usa UUID en localStorage)
+  - Supabase Auth (el juego usa tokens invitados seguros por sala)
   - Edge Functions (la lógica está en API routes de Next.js)
   - Storage
   - Docker
@@ -417,7 +420,7 @@ Sin Supabase configurado
 
 Supabase
   [ ] Proyecto creado en supabase.com
-  [ ] Migración 001_initial_schema.sql ejecutada en SQL Editor
+  [ ] Migraciones 001 a 005 ejecutadas en orden en SQL Editor
   [ ] Realtime activo en tablas rooms y room_players
   [ ] Tres claves API copiadas (URL, anon, service_role)
   [ ] Prueba local con .env.local OK
