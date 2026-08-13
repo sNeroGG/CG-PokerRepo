@@ -1,5 +1,20 @@
 "use client";
 
+import {
+  Check,
+  Coins,
+  CopyPlus,
+  Equal,
+  Flag,
+  Hand,
+  Plus,
+  Split,
+  TrendingUp,
+  XCircle,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+
 type GameButtonVariant = "hit" | "stand" | "double" | "bet" | "fold" | "check" | "call" | "raise" | "allin" | "split" | "surrender" | "primary" | "secondary";
 
 const VARIANT_STYLES: Record<GameButtonVariant, string> = {
@@ -18,18 +33,18 @@ const VARIANT_STYLES: Record<GameButtonVariant, string> = {
   secondary: "game-btn game-btn-secondary",
 };
 
-const VARIANT_ICONS: Partial<Record<GameButtonVariant, string>> = {
-  hit: "➕",
-  stand: "✋",
-  double: "✕2",
-  bet: "🪙",
-  fold: "🚫",
-  check: "✓",
-  call: "=",
-  raise: "↑",
-  allin: "🔥",
-  split: "✂️",
-  surrender: "🏳",
+const VARIANT_ICONS: Partial<Record<GameButtonVariant, LucideIcon>> = {
+  hit: Plus,
+  stand: Hand,
+  double: CopyPlus,
+  bet: Coins,
+  fold: XCircle,
+  check: Check,
+  call: Equal,
+  raise: TrendingUp,
+  allin: Zap,
+  split: Split,
+  surrender: Flag,
 };
 
 interface GameButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -46,14 +61,14 @@ export function GameButton({
   disabled,
   ...props
 }: GameButtonProps) {
-  const icon = VARIANT_ICONS[variant];
+  const Icon = VARIANT_ICONS[variant];
   return (
     <button
       className={`${VARIANT_STYLES[variant]} ${disabled ? "game-btn-disabled" : ""} ${className}`}
       disabled={disabled}
       {...props}
     >
-      {icon && <span className="game-btn-icon">{icon}</span>}
+      {Icon && <Icon className="game-btn-icon" size={18} strokeWidth={1.8} aria-hidden />}
       <span className="game-btn-text">
         <span className="game-btn-label">{label}</span>
         {sublabel && <span className="game-btn-sub">{sublabel}</span>}
@@ -84,7 +99,11 @@ export function StatusBanner({
   type?: "info" | "success" | "error" | "turn";
 }) {
   return (
-    <div className={`status-banner status-${type}`}>
+    <div
+      className={`status-banner status-${type}`}
+      role={type === "error" ? "alert" : "status"}
+      aria-live={type === "turn" || type === "error" ? "polite" : undefined}
+    >
       {type === "turn" && <span className="status-dot" />}
       {message}
     </div>

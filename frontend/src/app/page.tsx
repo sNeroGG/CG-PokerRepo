@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, getPlayerId, getPlayerName, setPlayerName } from "@/lib/client";
+import { api, getPlayerName, setPlayerId, setPlayerName } from "@/lib/client";
 import type { Room } from "@cg/backend/types";
 import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BRAND_ASSETS, BRAND_TAGLINE } from "@/lib/brand";
 import { BrandName } from "@/components/brand/BrandName";
 import "@/components/brand/brand-slots.css";
+import { ArrowLeft, DoorOpen, Layers3, Plus, Spade } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,10 +25,11 @@ export default function HomePage() {
     setError("");
     try {
       setPlayerName(name.trim());
-      const { room } = await api<{ room: Room }>("/api/rooms", {
+      const { room, playerId } = await api<{ room: Room; playerId: string }>("/api/rooms", {
         method: "POST",
-        body: JSON.stringify({ playerName: name.trim(), playerId: getPlayerId() }),
+        body: JSON.stringify({ playerName: name.trim() }),
       });
+      setPlayerId(playerId);
       router.push(`/room/${room.code}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
@@ -45,10 +47,11 @@ export default function HomePage() {
     setError("");
     try {
       setPlayerName(name.trim());
-      const { room } = await api<{ room: Room }>(
+      const { room, playerId } = await api<{ room: Room; playerId: string }>(
         `/api/rooms/${joinCode.trim().toUpperCase()}/join`,
-        { method: "POST", body: JSON.stringify({ playerName: name.trim(), playerId: getPlayerId() }) }
+        { method: "POST", body: JSON.stringify({ playerName: name.trim() }) }
       );
+      setPlayerId(playerId);
       router.push(`/room/${room.code}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
@@ -94,8 +97,10 @@ export default function HomePage() {
 
         {/* Nombre */}
         <div className="space-y-2">
-          <label className="auth-label">Tu nombre</label>
+          <label className="auth-label" htmlFor="player-name">Tu nombre</label>
           <input
+            id="player-name"
+            autoComplete="nickname"
             className="auth-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -107,17 +112,21 @@ export default function HomePage() {
         {mode === "menu" ? (
           <div className="space-y-3">
             <button className="auth-btn-primary" disabled={loading} onClick={handleCreate}>
-              {loading ? "Creando sala..." : "Crear Sala"}
+              <Plus size={18} aria-hidden />
+              {loading ? "Creando sala..." : "Crear sala"}
             </button>
             <button className="auth-btn-secondary" onClick={() => setMode("join")}>
-              Unirse con Código
+              <DoorOpen size={18} aria-hidden />
+              Unirse con código
             </button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="auth-label">Código de sala</label>
+              <label className="auth-label" htmlFor="room-code">Código de sala</label>
               <input
+                id="room-code"
+                autoComplete="off"
                 className="auth-input-code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
@@ -129,7 +138,8 @@ export default function HomePage() {
               {loading ? "Entrando..." : "Entrar a la Sala"}
             </button>
             <button className="auth-btn-secondary" onClick={() => setMode("menu")}>
-              ← Volver al menú
+              <ArrowLeft size={18} aria-hidden />
+              Volver al menú
             </button>
           </div>
         )}
@@ -138,14 +148,14 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-5">
           <div className="rounded-xl border border-white/5 bg-black p-3 text-center">
-            <span className="text-2xl">🃏</span>
+            <Layers3 className="mx-auto text-casino-gold" size={24} strokeWidth={1.5} aria-hidden />
             <p className="mt-1 text-xs font-medium text-white">Blackjack</p>
-            <p className="text-[10px] text-white/40">1–6 jugadores</p>
+            <p className="text-[10px] text-white/40">1–8 jugadores</p>
           </div>
           <div className="rounded-xl border border-white/5 bg-black p-3 text-center">
-            <span className="text-2xl">♠️</span>
+            <Spade className="mx-auto text-casino-gold" size={24} strokeWidth={1.5} aria-hidden />
             <p className="mt-1 text-xs font-medium text-white">Texas Hold&apos;em</p>
-            <p className="text-[10px] text-white/40">2–6 jugadores</p>
+            <p className="text-[10px] text-white/40">2–8 jugadores</p>
           </div>
         </div>
       </div>

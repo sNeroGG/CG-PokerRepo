@@ -8,7 +8,13 @@ export {
   getRoomIdByCode,
   deleteStaleRooms,
   ROOM_IDLE_TTL_MS,
+  RoomVersionConflictError,
 } from "./services/store";
+export {
+  createGuestSession,
+  hashGuestToken,
+  playerForGuestToken,
+} from "./services/guest-session";
 export { createSupabaseAdmin, isSupabaseConfigured } from "./services/supabase";
 export {
   broadcastRoomPayload,

@@ -3,12 +3,12 @@ const PLAYER_NAME_KEY = "cg-player-name";
 
 export function getPlayerId(): string {
   if (typeof window === "undefined") return "";
-  let id = localStorage.getItem(PLAYER_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(PLAYER_ID_KEY, id);
-  }
-  return id;
+  return localStorage.getItem(PLAYER_ID_KEY) ?? "";
+}
+
+export function setPlayerId(playerId: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PLAYER_ID_KEY, playerId);
 }
 
 export function getPlayerName(): string {
@@ -23,8 +23,12 @@ export function setPlayerName(name: string): void {
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Error de servidor");

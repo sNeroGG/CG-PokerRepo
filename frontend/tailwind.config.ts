@@ -10,24 +10,17 @@ const config: Config = {
     extend: {
       colors: {
         casino: {
-          felt: "#0d5c2e",
-          feltDark: "#094020",
-          gold: "#d4af37",
-          goldLight: "#f0d060",
-          card: "#faf8f5",
-          red: "#c41e3a",
-        },
-        neon: {
-          purple: "#bf00ff",
-          violet: "#8a2be2",
-          deep: "#1a0033",
-          abyss: "#0d001a",
-          black: "#0a0a0a",
+          felt: "#123a2b",
+          feltDark: "#0b281e",
+          gold: "#c6a15b",
+          goldLight: "#e1c98f",
+          card: "#f2efe8",
+          red: "#8b2635",
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-playfair)", "Georgia", "serif"],
+        sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        display: ["var(--font-cinzel)", "Georgia", "serif"],
       },
       animation: {
         "deal-in": "dealIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
@@ -36,8 +29,6 @@ const config: Config = {
         "chip-toss": "chipToss 0.4s ease-out forwards",
         "pulse-glow": "pulseGlow 2s ease-in-out infinite",
         "turn-ring": "turnRing 1.5s ease-in-out infinite",
-        "neon-pulse": "neonPulse 2s ease-in-out infinite",
-        "neon-border": "neonBorder 1.5s ease-in-out infinite",
         "shuffle-fan": "shuffleFan 3s ease-in-out infinite",
         "timer-tick": "timerTick 1s ease-in-out infinite",
         "glow-drift": "glowDrift 6s ease-in-out infinite",
@@ -68,26 +59,6 @@ const config: Config = {
         turnRing: {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(212, 175, 55, 0.5)" },
           "50%": { boxShadow: "0 0 0 6px rgba(212, 175, 55, 0)" },
-        },
-        neonPulse: {
-          "0%, 100%": {
-            textShadow: "0 0 8px rgba(191, 0, 255, 0.6), 0 0 20px rgba(191, 0, 255, 0.3)",
-            opacity: "1",
-          },
-          "50%": {
-            textShadow: "0 0 16px rgba(191, 0, 255, 1), 0 0 40px rgba(191, 0, 255, 0.6)",
-            opacity: "0.92",
-          },
-        },
-        neonBorder: {
-          "0%, 100%": {
-            boxShadow:
-              "0 0 12px rgba(191, 0, 255, 0.7), 0 0 24px rgba(138, 43, 226, 0.4), inset 0 0 12px rgba(191, 0, 255, 0.15)",
-          },
-          "50%": {
-            boxShadow:
-              "0 0 24px rgba(191, 0, 255, 1), 0 0 48px rgba(138, 43, 226, 0.7), inset 0 0 20px rgba(191, 0, 255, 0.3)",
-          },
         },
         shuffleFan: {
           "0%, 100%": { transform: "rotateY(0deg) rotateZ(-2deg)" },

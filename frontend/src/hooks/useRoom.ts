@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Room } from "@cg/backend/types";
-import { api, getPlayerName } from "@/lib/client";
+import { api, getPlayerName, setPlayerId } from "@/lib/client";
 import { createSupabaseBrowser, isSupabaseEnabled } from "@/lib/supabase/client";
 import {
   mergeRoomUpdate,
@@ -11,6 +11,7 @@ import {
 
 /** Fallback si Broadcast/Realtime fallan. */
 const POLL_MS = 10_000;
+const HEARTBEAT_MS = 20_000;
 const ROOM_BROADCAST_EVENT = "room_state";
 
 export function useRoom(code: string, playerId: string) {
@@ -21,6 +22,8 @@ export function useRoom(code: string, playerId: string) {
   const triedRejoin = useRef(false);
   const roomRef = useRef<Room | null>(null);
   const fetchingPrivate = useRef(false);
+  const viewerIdRef = useRef(playerId);
+  const [viewerId, setViewerId] = useState(playerId);
 
   useEffect(() => {
     roomRef.current = room;
@@ -28,29 +31,29 @@ export function useRoom(code: string, playerId: string) {
 
   const fetchRoom = useCallback(async () => {
     try {
-      let { room: data } = await api<{ room: Room }>(
-        `/api/rooms/${code}?playerId=${playerId}`
-      );
-
-      if (
-        playerId &&
-        !data.players.some((p) => p.id === playerId) &&
-        !triedRejoin.current
-      ) {
+      let response: { room: Room; playerId?: string };
+      try {
+        response = await api<{ room: Room; playerId?: string }>(
+          `/api/rooms/${code}`
+        );
+      } catch (fetchError) {
+        if (triedRejoin.current) throw fetchError;
         triedRejoin.current = true;
-        try {
-          const playerName = getPlayerName().trim() || "Jugador";
-          const joined = await api<{ room: Room }>(
-            `/api/rooms/${code}/join`,
-            {
-              method: "POST",
-              body: JSON.stringify({ playerId, playerName }),
-            }
-          );
-          data = joined.room;
-        } catch {
-          /* rejoin falló — se reintenta al recargar la página */
-        }
+        const playerName = getPlayerName().trim() || "Jugador";
+        response = await api<{ room: Room; playerId: string }>(
+          `/api/rooms/${code}/join`,
+          {
+            method: "POST",
+            body: JSON.stringify({ playerName }),
+          }
+        );
+      }
+
+      const data = response.room;
+      if (response.playerId) {
+        viewerIdRef.current = response.playerId;
+        setViewerId(response.playerId);
+        setPlayerId(response.playerId);
       }
 
       // GET personalizado puede reemplazar el mismo updatedAt del Broadcast compartido
@@ -68,7 +71,7 @@ export function useRoom(code: string, playerId: string) {
     } finally {
       if (mounted.current) setLoading(false);
     }
-  }, [code, playerId]);
+  }, [code]);
 
   const applyBroadcast = useCallback(
     (incoming: Room) => {
@@ -78,7 +81,7 @@ export function useRoom(code: string, playerId: string) {
       const { room: merged, needsPrivateRefetch } = mergeRoomUpdate(
         roomRef.current,
         incoming,
-        playerId
+        viewerIdRef.current
       );
       setRoom(merged);
       setError("");
@@ -90,7 +93,7 @@ export function useRoom(code: string, playerId: string) {
         });
       }
     },
-    [fetchRoom, playerId]
+    [fetchRoom]
   );
 
   useEffect(() => {
@@ -125,13 +128,19 @@ export function useRoom(code: string, playerId: string) {
     const poll = setInterval(() => {
       void fetchRoom();
     }, POLL_MS);
+    const heartbeat = setInterval(() => {
+      void api(`/api/rooms/${code}/heartbeat`, { method: "POST", body: "{}" }).catch(
+        () => undefined
+      );
+    }, HEARTBEAT_MS);
 
     return () => {
       mounted.current = false;
       clearInterval(poll);
+      clearInterval(heartbeat);
       if (channel && supabase) supabase.removeChannel(channel);
     };
   }, [applyBroadcast, code, fetchRoom]);
 
-  return { room, loading, error, setRoom, refresh: fetchRoom };
+  return { room, loading, error, setRoom, refresh: fetchRoom, playerId: viewerId };
 }

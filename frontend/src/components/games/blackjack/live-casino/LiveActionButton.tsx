@@ -32,7 +32,6 @@ export function LiveActionButton({
       type="button"
       className={`live-btn ${pressed ? "live-btn--pressed" : ""} ${className}`.trim()}
       disabled={disabled}
-      aria-pressed={pressed}
       onPointerDown={(e) => {
         if (disabled) return;
         if (e.button !== 0 && e.pointerType === "mouse") return;

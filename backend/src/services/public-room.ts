@@ -18,18 +18,22 @@ export function hydrateLobbyVotes(room: Room): Room {
 
 export function getPublicRoom(room: Room, viewerId?: string): Room {
   const hydrated = hydrateLobbyVotes(room);
-  if (
-    hydrated.status === "lobby" ||
-    !hydrated.gameType ||
-    !hydrated.gameState ||
-    isLobbyState(hydrated.gameState)
-  ) {
-    return hydrated;
-  }
-  const engine = getEngine(hydrated.gameType);
-  return {
+  const safeRoom: Room = {
     ...hydrated,
-    gameState: engine.getPublicState(hydrated.gameState, viewerId),
+    players: hydrated.players.map(({ sessionTokenHash: _secret, ...player }) => player),
+  };
+  if (
+    safeRoom.status === "lobby" ||
+    !safeRoom.gameType ||
+    !safeRoom.gameState ||
+    isLobbyState(safeRoom.gameState)
+  ) {
+    return safeRoom;
+  }
+  const engine = getEngine(safeRoom.gameType);
+  return {
+    ...safeRoom,
+    gameState: engine.getPublicState(safeRoom.gameState, viewerId),
   };
 }
 

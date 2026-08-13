@@ -251,12 +251,24 @@
     /* Poker — portrait */
     .poker-table-root.mobile-play-root {
       display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
       grid-template-areas:
+        "header"
+        "players"
         "table"
         "controls";
       gap: 0;
       padding: 0;
+    }
+
+    .poker-table-root.mobile-play-root > .poker-player-strip {
+      grid-area: players;
+      position: relative;
+      inset: auto;
+      width: 100%;
+      transform: none;
+      border-bottom: 1px solid rgba(198, 161, 91, 0.12);
+      background: rgba(6, 6, 6, 0.94);
     }
 
     .poker-table-root.mobile-play-root > .hands-overview-panel {

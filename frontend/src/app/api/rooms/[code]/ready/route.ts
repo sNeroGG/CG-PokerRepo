@@ -1,5 +1,6 @@
 import { setPlayerReady, getPublicRoom } from "@cg/backend";
 import { NextRequest, NextResponse } from "next/server";
+import { authenticatedRoomPlayer } from "@/lib/server/room-session";
 
 export async function POST(
   req: NextRequest,
@@ -7,15 +8,19 @@ export async function POST(
 ) {
   try {
     const { code } = await params;
-    const { playerId, ready } = await req.json();
+    const player = await authenticatedRoomPlayer(req, code);
+    if (!player) {
+      return NextResponse.json({ error: "Sesión de sala no válida" }, { status: 401 });
+    }
+    const { ready } = await req.json();
     if (typeof ready !== "boolean") {
       return NextResponse.json({ error: "ready debe ser boolean" }, { status: 400 });
     }
-    const result = await setPlayerReady(code, playerId, ready);
+    const result = await setPlayerReady(code, player.id, ready);
     if ("error" in result) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
-    return NextResponse.json({ room: getPublicRoom(result.room, playerId) });
+    return NextResponse.json({ room: getPublicRoom(result.room, player.id) });
   } catch {
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }

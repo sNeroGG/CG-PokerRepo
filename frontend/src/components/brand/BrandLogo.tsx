@@ -38,6 +38,7 @@ export function BrandLogo({ className = "", size = "md", showPlaceholder = true 
         width={px}
         height={px}
         className="brand-logo-img"
+        loading="eager"
         onError={() => setFailed(true)}
         unoptimized
       />

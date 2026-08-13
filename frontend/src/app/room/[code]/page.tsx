@@ -13,17 +13,18 @@ import { CardStylePicker } from "@/components/lobby/CardStylePicker";
 import { BlackjackTable } from "@/components/games/blackjack/BlackjackTable";
 import { PokerTable } from "@/components/games/poker/PokerTable";
 import type { GameType, Room } from "@cg/backend/types";
+import { ArrowLeft, Check, Copy, Layers3, Play, Spade } from "lucide-react";
 
 const GAMES = [
-  { id: "blackjack" as GameType, name: "Blackjack", icon: "🃏", desc: "21 contra el crupier", min: 1, max: 8 },
-  { id: "poker" as GameType, name: "Texas Hold'em", icon: "♠️", desc: "Póker multijugador", min: 2, max: 8 },
+  { id: "blackjack" as GameType, name: "Blackjack", Icon: Layers3, desc: "21 contra el crupier", min: 1, max: 8 },
+  { id: "poker" as GameType, name: "Texas Hold'em", Icon: Spade, desc: "Póker multijugador", min: 2, max: 8 },
 ];
 
 export default function RoomPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const router = useRouter();
-  const playerId = getPlayerId();
-  const { room, loading, error, setRoom } = useRoom(code, playerId);
+  const storedPlayerId = getPlayerId();
+  const { room, loading, error, setRoom, playerId } = useRoom(code, storedPlayerId);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -124,7 +125,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (playing) {
     return (
-      <main className="game-shell min-h-0 overflow-hidden">
+      <main className="game-shell h-[100dvh] min-h-screen overflow-hidden">
         {isBlackjack ? (
           <BlackjackTable room={room} playerId={playerId} onUpdate={setRoom} isHost={isHost} />
         ) : (
@@ -146,7 +147,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             onClick={() => router.push("/")}
             className="text-xs text-white/40 transition-colors hover:text-casino-gold"
           >
-            ← Menú principal
+            <ArrowLeft className="mr-1 inline" size={14} aria-hidden />
+            Menú principal
           </button>
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/35">
             <BrandName variant="header" />
@@ -165,7 +167,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               setTimeout(() => setCopied(false), 2000);
             }}
           >
-            {copied ? "✓ Copiado" : `Código: ${code}`}
+            {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
+            {copied ? "Copiado" : `Código: ${code}`}
           </button>
         </div>
       </header>
@@ -218,7 +221,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
                       cursor-pointer hover:border-casino-gold/40`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-4xl">{g.icon}</span>
+                      <g.Icon className="text-casino-gold" size={34} strokeWidth={1.4} aria-hidden />
                       {isSelected && (
                         <span className="auth-badge shrink-0">Elegido</span>
                       )}
@@ -256,7 +259,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               {actionLoading
                 ? "…"
                 : iAmReady
-                  ? "✓ Listo — tocar para cancelar"
+                  ? "Listo — tocar para cancelar"
                   : "Listo"}
             </button>
 
@@ -275,7 +278,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
                 disabled={actionLoading || !selectedGame || !allReady}
                 onClick={startGame}
               >
-                {actionLoading ? "Iniciando..." : "▶ Iniciar Partida"}
+                {!actionLoading && <Play size={17} aria-hidden />}
+                {actionLoading ? "Iniciando..." : "Iniciar partida"}
               </button>
             )}
 
