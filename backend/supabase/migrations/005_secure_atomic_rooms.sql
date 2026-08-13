@@ -96,7 +96,7 @@ BEGIN
       NULLIF(v_player->>'gameVote', ''),
       COALESCE(to_timestamp((v_player->>'lastSeenAt')::DOUBLE PRECISION / 1000), now())
     )
-    ON CONFLICT (room_id, player_id) DO UPDATE SET
+    ON CONFLICT ON CONSTRAINT room_players_room_id_player_id_key DO UPDATE SET
       name = EXCLUDED.name,
       chips = EXCLUDED.chips,
       is_host = EXCLUDED.is_host,
@@ -108,7 +108,7 @@ BEGIN
     IF NULLIF(v_player->>'sessionTokenHash', '') IS NOT NULL THEN
       INSERT INTO room_player_sessions(room_id, player_id, token_hash)
       VALUES (v_room_id, v_player->>'id', v_player->>'sessionTokenHash')
-      ON CONFLICT (room_id, player_id) DO UPDATE
+      ON CONFLICT ON CONSTRAINT room_player_sessions_pkey DO UPDATE
         SET token_hash = EXCLUDED.token_hash;
     END IF;
   END LOOP;
