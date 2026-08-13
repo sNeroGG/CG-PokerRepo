@@ -6,6 +6,7 @@ import {
   DEALER_HOLE_FLIP_DURATION_MS,
   DEALER_REVEAL_SETTLE_MS,
   computeRevealState,
+  dealerRevealBoundariesMs,
   dealerRevealDurationMs,
   dealerCardsForPhase,
 } from "./dealer-reveal-timing";
@@ -85,5 +86,10 @@ describe("computeRevealState (reloj servidor)", () => {
     assert.equal(computeRevealState(duration - 1, 2).complete, false);
     assert.equal(computeRevealState(duration, 2).complete, true);
     assert.equal(dealerRevealDurationMs(4), 5800);
+  });
+
+  it("solo programa renders cuando cambia la etapa visible", () => {
+    assert.deepEqual(dealerRevealBoundariesMs(2), [1000, 2600, 3600]);
+    assert.deepEqual(dealerRevealBoundariesMs(4), [1000, 2600, 3600, 4700, 5800]);
   });
 });
