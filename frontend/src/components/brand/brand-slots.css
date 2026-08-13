@@ -85,6 +85,25 @@
   opacity: 0.4;
 }
 
+.brand-image-layer--fallback {
+  background: transparent;
+}
+
+.brand-image-layer--fallback.brand-image-layer--felt {
+  opacity: 0.42;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(198, 161, 91, 0.055), transparent 58%),
+    repeating-linear-gradient(
+      116deg,
+      rgba(255, 255, 255, 0.012) 0 1px,
+      transparent 1px 5px
+    );
+}
+
+.brand-image-layer--fallback.brand-image-layer--watermark {
+  opacity: 0;
+}
+
 .brand-image-layer--watermark .brand-image-layer__img {
   object-fit: contain;
   opacity: 0.12;

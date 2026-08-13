@@ -12,9 +12,10 @@ export const BRAND_TAGLINE = "Poker & Blackjack";
 
 export const BRAND_ASSETS = {
   logo: "/brand/logo.png",
-  tableFelt: "/brand/table-felt.jpg",
-  tableWatermark: "/brand/table-watermark.png",
-  heroBackground: "/brand/hero-bg.jpg",
+  // Opcionales: deja vacío para usar el fallback CSS sin peticiones 404.
+  tableFelt: "",
+  tableWatermark: "",
+  heroBackground: "",
 } as const;
 
 export const BRAND_COLORS = {
