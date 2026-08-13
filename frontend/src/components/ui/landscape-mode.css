@@ -523,6 +523,11 @@
       margin-bottom: 0.25rem;
     }
 
+    /* El lateral ya contiene las cartas: evitar un segundo panel sobre la mesa. */
+    .live-casino-root.mobile-play-root:not(.poker-table-root) > .hands-overview-panel {
+      display: none;
+    }
+
     .live-casino-root.mobile-play-root .live-btn {
       min-height: 40px;
     }

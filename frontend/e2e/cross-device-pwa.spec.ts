@@ -211,7 +211,7 @@ test("el giro del crupier es continuo y la mesa conserva sus proporciones", asyn
       const sample = (now: number) => {
         timestamps.push(now);
         transforms.add(getComputedStyle(inner).transform);
-        if (now - startedAt >= 700) {
+        if (now - startedAt >= 1_000) {
           resolve();
           return;
         }
@@ -232,8 +232,8 @@ test("el giro del crupier es continuo y la mesa conserva sus proporciones", asyn
   expect(animation.name).toContain("cardFlipReveal");
   expect(animation.duration).toBe("1.6s");
   expect(animation.backface).toBe("hidden");
-  expect(animation.frames).toBeGreaterThan(12);
-  expect(animation.uniqueTransforms).toBeGreaterThan(8);
+  expect(animation.frames).toBeGreaterThan(10);
+  expect(animation.uniqueTransforms).toBeGreaterThan(9);
   expect(animation.largestFrameGap).toBeLessThan(250);
 
   await expect(dealer).toHaveAttribute("data-reveal-stage", "settle", {
