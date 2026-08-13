@@ -164,3 +164,61 @@ test("el panel de apuestas de blackjack es claro y cabe en móvil", async ({ bro
     await context.close();
   }
 });
+
+test("el reveal del crupier respeta cada etapa antes del resultado", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  try {
+    await enterName(page, "Reloj Blackjack");
+    await page.getByRole("button", { name: "Crear sala" }).click();
+    await expect(page).toHaveURL(/\/room\/[A-Z0-9]{6}$/);
+    const code = page.url().split("/").pop()!;
+
+    await context.request.post(`/api/rooms/${code}/game-type`, {
+      data: { gameType: "blackjack" },
+    });
+    await context.request.post(`/api/rooms/${code}/ready`, { data: { ready: true } });
+    await context.request.post(`/api/rooms/${code}/start`, { data: {} });
+
+    let playable = false;
+    for (let attempt = 0; attempt < 6 && !playable; attempt += 1) {
+      if (attempt > 0) {
+        await context.request.post(`/api/rooms/${code}/action`, {
+          data: { action: { type: "newRound" } },
+        });
+      }
+      const bet = await context.request.post(`/api/rooms/${code}/action`, {
+        data: { action: { type: "bet", amount: 100 } },
+      });
+      const payload = await bet.json();
+      playable = payload.room?.gameState?.phase === "playerTurn";
+    }
+    expect(playable).toBeTruthy();
+
+    await page.reload();
+    const stand = page.getByRole("button", { name: /Plantarse/i });
+    await expect(stand).toBeVisible({ timeout: 15_000 });
+    const dealer = page.locator(".live-felt-zone--dealer");
+    const result = page.locator(".live-result-overlay");
+    const startedAt = Date.now();
+    await stand.click();
+
+    await expect(dealer).toHaveAttribute("data-reveal-stage", "pause");
+    await expect(dealer).toHaveAttribute("data-reveal-stage", "flip", { timeout: 2_500 });
+    const flipAt = Date.now();
+    expect(flipAt - startedAt).toBeGreaterThanOrEqual(750);
+
+    await expect(dealer).toHaveAttribute("data-reveal-stage", "settle", { timeout: 2_500 });
+    const settleAt = Date.now();
+    // El polling puede detectar el inicio del flip hasta ~300 ms tarde.
+    expect(settleAt - flipAt).toBeGreaterThanOrEqual(1_200);
+    await expect(result).toHaveCount(0);
+
+    await expect(result).toBeVisible({ timeout: 8_000 });
+    const resultAt = Date.now();
+    expect(resultAt - settleAt).toBeGreaterThanOrEqual(800);
+    expect(resultAt - startedAt).toBeGreaterThanOrEqual(3_200);
+  } finally {
+    await context.close();
+  }
+});

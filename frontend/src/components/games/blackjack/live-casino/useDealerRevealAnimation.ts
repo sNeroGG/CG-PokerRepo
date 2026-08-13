@@ -32,17 +32,24 @@ export function useDealerRevealAnimation(
   const waitingForCurrentDeal = !enabled && isRoundEnd && handLen >= 1;
   const revealAt = state.dealerRevealAt;
 
+  const animationKey = needsAnimation ? `${revealAt ?? "local"}:${signature}` : "";
+  const [localClock, setLocalClock] = useState({ key: "", startedAt: 0 });
+  let activeClock = localClock;
+  if (animationKey && localClock.key !== animationKey) {
+    activeClock = { key: animationKey, startedAt: Date.now() };
+    setLocalClock(activeClock);
+  }
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!needsAnimation || !revealAt) {
+    if (!needsAnimation || !animationKey) {
       return;
     }
 
-    setTick(Date.now());
+    setTick(activeClock.startedAt);
     const id = setInterval(() => setTick(Date.now()), 40);
     return () => clearInterval(id);
-  }, [needsAnimation, revealAt, signature]);
+  }, [activeClock.startedAt, animationKey, needsAnimation]);
 
   if (!needsAnimation) {
     const waitingHand = waitingForCurrentDeal
@@ -65,8 +72,8 @@ export function useDealerRevealAnimation(
     };
   }
 
-  const anchor = revealAt ?? Date.now();
-  const elapsed = Math.max(0, (tick || Date.now()) - anchor);
+  const anchor = activeClock.startedAt || Date.now();
+  const elapsed = Math.max(0, (tick || anchor) - anchor);
   const { phase, complete, flipHole, animatingCardIndex, stage, visibleCount } =
     computeRevealState(elapsed, handLen);
 

@@ -260,13 +260,15 @@ function DealerHandOnFelt({
   dealPlan: ReturnType<typeof buildBlackjackDealPlan>;
   visibleGlobal: number;
   dealComplete: boolean;
-  revealStage?: "idle" | "pause" | "flip" | "draw" | "done";
+  revealStage?: "idle" | "pause" | "flip" | "settle" | "draw" | "done";
   revealVisible?: number;
   revealTotal?: number;
 }) {
   const revealLabel =
     revealStage === "flip"
       ? "Volteando carta oculta..."
+      : revealStage === "settle"
+        ? "Carta revelada"
       : revealStage === "draw" && revealTotal
         ? `Sacando carta ${revealVisible ?? 0}/${revealTotal}`
         : revealStage === "pause"
@@ -274,7 +276,10 @@ function DealerHandOnFelt({
           : "Sacando cartas...";
 
   return (
-    <div className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}>
+    <div
+      className={`live-felt-zone live-felt-zone--dealer ${isAnimating ? "live-felt-zone--dealer-active" : ""}`}
+      data-reveal-stage={revealStage}
+    >
       {(isAnimating || (progressiveDealActive && !dealComplete)) && (
         <div className="live-dealer-draw-indicator" aria-live="polite">
           <span className="live-dealer-draw-dot" />

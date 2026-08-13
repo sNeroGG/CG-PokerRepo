@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CARD_DEAL_INTERVAL_MS } from "@/lib/table/deal-sequence";
 import {
+  DEALER_DRAW_INTERVAL_MS,
   DEALER_REVEAL_START_DELAY_MS,
   DEALER_HOLE_FLIP_DURATION_MS,
+  DEALER_REVEAL_SETTLE_MS,
   computeRevealState,
+  dealerRevealDurationMs,
   dealerCardsForPhase,
 } from "./dealer-reveal-timing";
 
@@ -29,7 +31,10 @@ describe("computeRevealState (reloj servidor)", () => {
 
   it("alinea late joiners en la misma fase", () => {
     const elapsed =
-      DEALER_REVEAL_START_DELAY_MS + DEALER_HOLE_FLIP_DURATION_MS + 20;
+      DEALER_REVEAL_START_DELAY_MS +
+      DEALER_HOLE_FLIP_DURATION_MS +
+      DEALER_REVEAL_SETTLE_MS +
+      20;
     const a = computeRevealState(elapsed, 4);
     const b = computeRevealState(elapsed, 4);
     assert.deepEqual(a, b);
@@ -41,26 +46,44 @@ describe("computeRevealState (reloj servidor)", () => {
     const elapsed =
       DEALER_REVEAL_START_DELAY_MS +
       DEALER_HOLE_FLIP_DURATION_MS +
-      CARD_DEAL_INTERVAL_MS * 2;
+      DEALER_REVEAL_SETTLE_MS +
+      DEALER_DRAW_INTERVAL_MS * 2;
     const view = computeRevealState(elapsed, handLen);
     assert.equal(view.complete, true);
     assert.equal(view.visibleCount, handLen);
   });
 
-  it("mantiene la carta oculta durante todo el giro y la revela al finalizar", () => {
+  it("mantiene la carta oculta durante el giro y hace una pausa antes del resultado", () => {
     const during = computeRevealState(
       DEALER_REVEAL_START_DELAY_MS + DEALER_HOLE_FLIP_DURATION_MS - 1,
       2
     );
-    const after = computeRevealState(
+    const settling = computeRevealState(
       DEALER_REVEAL_START_DELAY_MS + DEALER_HOLE_FLIP_DURATION_MS,
+      2
+    );
+    const after = computeRevealState(
+      DEALER_REVEAL_START_DELAY_MS +
+        DEALER_HOLE_FLIP_DURATION_MS +
+        DEALER_REVEAL_SETTLE_MS,
       2
     );
 
     assert.equal(during.stage, "flip");
     assert.equal(during.flipHole, true);
     assert.equal(during.animatingCardIndex, 1);
+    assert.equal(settling.stage, "settle");
+    assert.equal(settling.complete, false);
+    assert.equal(settling.visibleCount, 2);
     assert.equal(after.stage, "done");
     assert.equal(after.visibleCount, 2);
+  });
+
+  it("no completa ni permite resultado antes de toda la secuencia visible", () => {
+    const duration = dealerRevealDurationMs(2);
+    assert.equal(duration, 3600);
+    assert.equal(computeRevealState(duration - 1, 2).complete, false);
+    assert.equal(computeRevealState(duration, 2).complete, true);
+    assert.equal(dealerRevealDurationMs(4), 5800);
   });
 });
