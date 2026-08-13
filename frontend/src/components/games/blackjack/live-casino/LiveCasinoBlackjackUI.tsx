@@ -5,7 +5,6 @@ import type { BlackjackState, Card, Room } from "@cg/backend/types";
 import { canSplitCards, handTotal, visibleDealerTotal } from "@/lib/game-logic/deck";
 import { api } from "@/lib/client";
 import { BRAND_ASSETS, BRAND_NAME } from "@/lib/brand";
-import { BrandName } from "@/components/brand/BrandName";
 import { BrandImageSlot } from "@/components/brand/BrandImageSlot";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import "@/components/brand/brand-slots.css";
@@ -13,7 +12,7 @@ import { useDealerRevealAnimation } from "./useDealerRevealAnimation";
 import { LiveActionButton } from "./LiveActionButton";
 import { HandTotalsTable, type HandTotalRow } from "./HandTotalsTable";
 import { GameLandscapeGate } from "@/components/ui/GameLandscapeGate";
-import { CardStylePicker } from "@/components/lobby/CardStylePicker";
+import { GameHeader } from "@/components/ui/GameHeader";
 import { groupChipStacks } from "@/lib/game-logic/chips";
 import { CasinoChip, CasinoChipStack } from "@/components/ui/CasinoChip";
 import { TableCard } from "@/components/table/immersive/TableCard";
@@ -807,41 +806,6 @@ function ControlTablet({
   );
 }
 
-function BrandHeaderBar({
-  roomCode,
-  copied,
-  onCopy,
-  onHome,
-}: {
-  roomCode: string;
-  copied: boolean;
-  onCopy: () => void;
-  onHome: () => void;
-}) {
-  return (
-    <header className="brand-header-bar">
-      <div className="brand-header-bar__left">
-        <BrandLogo size="md" />
-        <div>
-          <p className="brand-header-bar__title">
-            <BrandName variant="header" />
-          </p>
-          <p className="brand-header-bar__code">Sala {roomCode}</p>
-        </div>
-      </div>
-      <div className="brand-header-bar__actions">
-        <CardStylePicker />
-        <button type="button" className="brand-header-btn" onClick={onCopy}>
-          {copied ? "✓ Copiado" : `📋 ${roomCode}`}
-        </button>
-        <button type="button" className="brand-header-btn" onClick={onHome}>
-          ← Inicio
-        </button>
-      </div>
-    </header>
-  );
-}
-
 export function LiveCasinoBlackjackUI({
   room,
   playerId,
@@ -1093,7 +1057,7 @@ export function LiveCasinoBlackjackUI({
   return (
     <GameLandscapeGate>
       <div className="live-casino-root mobile-play-root">
-      <BrandHeaderBar
+      <GameHeader
         roomCode={room.code}
         copied={copied}
         onCopy={() => {

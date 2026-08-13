@@ -9,15 +9,15 @@
 @keyframes neonRingPulse {
   0%, 100% {
     box-shadow:
-      0 0 20px rgba(57, 255, 136, 0.35),
-      0 0 40px rgba(57, 255, 136, 0.15),
-      inset 0 0 16px rgba(57, 255, 136, 0.08);
+      0 0 16px rgba(198, 161, 91, 0.3),
+      0 0 34px rgba(198, 161, 91, 0.12),
+      inset 0 0 16px rgba(198, 161, 91, 0.06);
   }
   50% {
     box-shadow:
-      0 0 32px rgba(57, 255, 136, 0.55),
-      0 0 64px rgba(57, 255, 136, 0.25),
-      inset 0 0 24px rgba(57, 255, 136, 0.12);
+      0 0 24px rgba(198, 161, 91, 0.48),
+      0 0 48px rgba(198, 161, 91, 0.2),
+      inset 0 0 20px rgba(198, 161, 91, 0.1);
   }
 }
 
@@ -90,7 +90,7 @@
   top: 18%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(57, 255, 136, 0.12);
+  background: rgba(198, 161, 91, 0.09);
 }
 
 .immersive-lounge-glow--blue {
@@ -158,7 +158,7 @@
 }
 
 .brand-table-logo-zone {
-  border: 2px solid rgba(57, 255, 136, 0.45) !important;
+  border: 1px solid rgba(198, 161, 91, 0.45) !important;
   animation: neonRingPulse 3s ease-in-out infinite;
 }
 
@@ -173,7 +173,7 @@
 }
 
 .live-seat-spot__name {
-  font-size: 0.42rem;
+  font-size: clamp(0.65rem, 0.75vw, 0.76rem);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -189,7 +189,7 @@
 }
 
 .live-seat-spot--turn .live-seat-spot__name {
-  color: rgba(57, 255, 136, 0.95);
+  color: var(--mafia-gold-high, #e1c98f);
 }
 
 .live-seat-spot__cards {
@@ -214,7 +214,7 @@
   position: absolute;
   inset: -6px -10px;
   border-radius: 12px;
-  border: 1px solid rgba(57, 255, 136, 0.35);
+  border: 1px solid rgba(198, 161, 91, 0.5);
   animation: neonRingPulse 2s ease-in-out infinite;
   pointer-events: none;
 }
@@ -322,11 +322,11 @@
 }
 
 .hands-overview-panel__entry--dealer {
-  border: 1px solid rgba(57, 255, 136, 0.15);
+  border: 1px solid rgba(198, 161, 91, 0.2);
 }
 
 .hands-overview-panel__entry--active {
-  outline: 1px solid rgba(57, 255, 136, 0.35);
+  outline: 1px solid rgba(198, 161, 91, 0.45);
 }
 
 .hands-overview-panel__label {
@@ -383,7 +383,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(57, 255, 136, 0.85);
+  color: var(--mafia-ivory, #f2efe8);
   margin-top: 0.15rem;
 }
 
@@ -425,4 +425,167 @@
 
 .poker-wallet {
   flex-shrink: 0;
+}
+
+.poker-position-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  margin-right: 0.25rem;
+  padding: 0.08rem 0.22rem;
+  border: 1px solid rgba(198, 161, 91, 0.55);
+  border-radius: 999px;
+  color: var(--mafia-gold-high, #e1c98f);
+  font-size: 0.55rem;
+}
+
+.poker-player-strip {
+  position: absolute;
+  z-index: 29;
+  top: 4.25rem;
+  left: 50%;
+  display: flex;
+  width: min(92vw, 920px);
+  transform: translateX(-50%);
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.poker-player-pill {
+  display: inline-flex;
+  min-width: 104px;
+  flex: 1 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(8, 8, 8, 0.78);
+  padding: 0.35rem 0.55rem;
+  color: rgba(242, 239, 232, 0.72);
+  font-size: 0.68rem;
+  backdrop-filter: blur(10px);
+}
+
+.poker-player-pill span {
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poker-player-pill strong {
+  margin-left: auto;
+  color: var(--mafia-gold-high, #e1c98f);
+  font-size: 0.65rem;
+}
+
+.poker-player-pill--turn {
+  border-color: rgba(198, 161, 91, 0.7);
+  color: #fff;
+}
+
+.poker-player-pill--folded {
+  opacity: 0.42;
+}
+
+.poker-turn-timer,
+.poker-side-pots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(8, 8, 8, 0.82);
+  padding: 0.4rem 0.65rem;
+  color: var(--mafia-ivory, #f2efe8);
+  font-size: 0.72rem;
+}
+
+.poker-turn-timer--urgent {
+  border-color: rgba(139, 38, 53, 0.8);
+  color: #ffc8cf;
+}
+
+.poker-side-pots {
+  max-width: min(48vw, 420px);
+  overflow-x: auto;
+  border-radius: 0.65rem;
+  white-space: nowrap;
+}
+
+.poker-raise-control {
+  display: grid;
+  grid-template-columns: minmax(112px, 1fr) 84px auto;
+  align-items: center;
+  gap: 0.45rem;
+  width: min(100%, 520px);
+  padding: 0.35rem;
+  border: 1px solid rgba(198, 161, 91, 0.18);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.poker-raise-presets {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.poker-raise-presets button {
+  min-height: 32px;
+  border: 1px solid rgba(198, 161, 91, 0.28);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  color: var(--mafia-gold-high, #e1c98f);
+  font-size: 0.66rem;
+}
+
+.poker-raise-input {
+  width: 84px !important;
+  min-height: 42px;
+  padding: 0.4rem !important;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .poker-player-strip {
+    top: 3.35rem;
+    left: 0;
+    width: 100%;
+    transform: none;
+    padding-inline: max(0.35rem, env(safe-area-inset-left));
+  }
+
+  .poker-player-pill {
+    min-width: 96px;
+    font-size: 0.64rem;
+  }
+
+  .poker-raise-control {
+    grid-template-columns: minmax(90px, 1fr) 74px;
+    width: 100%;
+  }
+
+  .poker-raise-control .game-btn {
+    grid-column: 1 / -1;
+    min-height: 44px;
+  }
+
+  .poker-side-pots {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .live-seat-spot:not(.live-seat-spot--me):not(.live-seat-spot--turn) {
+    opacity: 0;
+  }
+
+  .live-seat-spot__name {
+    max-width: 96px;
+    font-size: 0.66rem;
+  }
 }

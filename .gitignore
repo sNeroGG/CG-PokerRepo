@@ -6,6 +6,8 @@ backend/node_modules
 # next.js
 frontend/.next/
 frontend/out/
+frontend/playwright-report/
+frontend/test-results/
 
 # env
 .env

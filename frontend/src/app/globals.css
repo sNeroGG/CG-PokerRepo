@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --mafia-void: #060606;
+  --mafia-smoke: #121212;
+  --mafia-panel: #181817;
+  --mafia-gold: #c6a15b;
+  --mafia-gold-high: #e1c98f;
+  --mafia-blood: #8b2635;
+  --mafia-felt: #123a2b;
+  --mafia-ivory: #f2efe8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer base {
   html {
     /* Evita Force Dark de Android Chrome (invertía cartas claras a negro) */
@@ -17,6 +39,11 @@
       radial-gradient(circle at 0% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
       radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
     min-height: 100vh;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--mafia-gold-high);
+    outline-offset: 3px;
   }
 }
 
@@ -400,7 +427,7 @@
   }
 
   .auth-btn-primary {
-    @apply w-full rounded-xl bg-gradient-to-b from-casino-goldLight to-casino-gold
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-casino-goldLight to-casino-gold
       px-6 py-3.5 font-semibold text-black shadow-lg transition-all
       hover:brightness-110 hover:shadow-casino-gold/30
       active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
@@ -408,7 +435,7 @@
   }
 
   .auth-btn-secondary {
-    @apply w-full rounded-xl border border-casino-gold/50 bg-transparent px-6 py-3.5
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl border border-casino-gold/50 bg-transparent px-6 py-3.5
       font-semibold text-white transition-all
       hover:border-casino-gold hover:bg-casino-gold/10 hover:text-casino-goldLight
       active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
@@ -558,15 +585,15 @@
   }
 
   .game-btn-hit {
-    @apply bg-gradient-to-b from-green-400 to-green-600 text-white hover:brightness-110;
+    @apply border border-casino-gold/50 bg-casino-gold text-black hover:brightness-110;
   }
 
   .game-btn-stand {
-    @apply bg-gradient-to-b from-blue-400 to-blue-600 text-white hover:brightness-110;
+    @apply border border-white/15 bg-[#171717] text-white hover:bg-white/10;
   }
 
   .game-btn-double {
-    @apply bg-gradient-to-b from-purple-400 to-purple-600 text-white hover:brightness-110;
+    @apply border border-casino-gold/40 bg-[#171717] text-casino-goldLight hover:bg-casino-gold/10;
   }
 
   .game-btn-bet {
@@ -578,19 +605,19 @@
   }
 
   .game-btn-check {
-    @apply bg-gradient-to-b from-teal-400 to-teal-600 text-white;
+    @apply border border-white/15 bg-[#171717] text-white;
   }
 
   .game-btn-call {
-    @apply bg-gradient-to-b from-cyan-500 to-cyan-700 text-white;
+    @apply border border-casino-gold/40 bg-casino-gold/15 text-casino-goldLight;
   }
 
   .game-btn-raise {
-    @apply bg-gradient-to-b from-amber-500 to-amber-700 text-white;
+    @apply border border-casino-gold/50 bg-casino-gold text-black;
   }
 
   .game-btn-allin {
-    @apply bg-gradient-to-b from-red-500 to-red-700 text-white animate-pulse;
+    @apply border border-casino-red/70 bg-casino-red/30 text-red-100;
   }
 
   .game-btn-primary {

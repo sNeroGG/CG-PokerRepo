@@ -20,7 +20,7 @@ export interface Card {
   hidden?: boolean;
 }
 
-export type SeatStatus = "active" | "waiting";
+export type SeatStatus = "active" | "waiting" | "sitting-out";
 
 export interface Player {
   id: string;
@@ -35,6 +35,10 @@ export interface Player {
   gameVote?: GameType | null;
   /** Listo para iniciar (solo lobby) */
   isReady?: boolean;
+  /** Última señal de presencia recibida por el servidor. */
+  lastSeenAt?: number;
+  /** Hash interno del token de sesión. Nunca se expone al cliente. */
+  sessionTokenHash?: string;
 }
 
 export type GameType = "blackjack" | "poker";
@@ -66,6 +70,8 @@ export interface Room {
   gameState: GameState | LobbyState | null;
   createdAt: number;
   updatedAt: number;
+  /** Versión de persistencia para compare-and-swap. */
+  version: number;
 }
 
 export type GameState = BlackjackState | PokerState;
@@ -162,6 +168,15 @@ export interface PokerPlayerState {
   folded: boolean;
   allIn: boolean;
   lastAction: PokerActionType | null;
+  /** Fichas disponibles durante la mano; fuente de verdad del stack. */
+  stack: number;
+  /** Indica si el jugador respondió desde el último raise completo. */
+  acted: boolean;
+}
+
+export interface PokerPot {
+  amount: number;
+  eligiblePlayerIds: string[];
 }
 
 export interface PokerState extends BaseGameState {
@@ -178,6 +193,12 @@ export interface PokerState extends BaseGameState {
   bigBlind: number;
   winners: { playerId: string; amount: number; hand: string }[];
   winnersPaid?: boolean;
+  pots: PokerPot[];
+  lastFullRaise: number;
+  smallBlindIndex: number;
+  bigBlindIndex: number;
+  turnStartedAt?: number;
+  turnDeadlineAt?: number;
 }
 
 export interface GameActionPayload {

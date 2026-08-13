@@ -50,12 +50,14 @@ npm install
 npm run dev
 ```
 
-Sin Supabase configurado funciona en **memoria** (solo misma instancia del servidor).
+Sin Supabase configurado funciona en **memoria únicamente durante desarrollo local**. En
+producción, el servidor rechaza el arranque de la persistencia si faltan las credenciales
+de Supabase para evitar salas inconsistentes entre instancias.
 
 ## Configurar Supabase
 
 1. Crea proyecto en [supabase.com](https://supabase.com)
-2. Ejecuta `backend/supabase/migrations/001_initial_schema.sql` en el SQL Editor
+2. Ejecuta en orden las migraciones de `backend/supabase/migrations/001` a `005`.
 3. Copia `frontend/.env.example` → `frontend/.env.local`:
 
 ```
@@ -71,9 +73,47 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 3. Agrega las 3 variables de entorno de Supabase
 4. Deploy
 
+La migración `005_secure_atomic_rooms.sql` añade:
+
+- versión y escritura transaccional por sala;
+- tokens invitados almacenados como hash;
+- presencia y última actividad de cada jugador.
+
+## Sesiones invitadas
+
+Crear o unirse a una sala emite una cookie `HttpOnly`, `SameSite=Lax` distinta para cada
+sala. El identificador enviado por el navegador nunca autoriza acciones: todas las rutas
+validan el token del servidor. La cookie dura siete días y permite reconexión sin crear
+cuentas.
+
 ## Realtime
 
-El hook `useRoom` suscribe al canal `room:{code}` y escucha cambios en `rooms` y `room_players`. Si Supabase no está configurado, hace polling cada 2s como fallback.
+El hook `useRoom` suscribe al canal `room:{code}`, escucha cambios en `rooms`, mantiene
+presencia cada 20 segundos y usa polling cada 10 segundos como respaldo.
+
+## Calidad y pruebas
+
+```bash
+npm test          # motores, salas, concurrencia y privacidad
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e # Playwright: 8 navegadores en una sala
+```
+
+La prueba E2E crea ocho contextos aislados, inicia una mesa de Poker, comprueba cartas
+privadas y sincronización, cierra una mano y valida ausencia de overflow en:
+
+- 1440×900 (escritorio)
+- 1024×768 (tablet)
+- 390×844 (móvil vertical)
+- 844×390 (móvil horizontal)
+
+La primera ejecución de Playwright puede requerir:
+
+```bash
+npx playwright install chromium
+```
 
 ## Agregar un juego
 

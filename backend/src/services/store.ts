@@ -37,6 +37,8 @@ function dbPlayerToPlayer(row: DatabasePlayer): Player {
     joinedAt: new Date(row.joined_at).getTime(),
     seatStatus: row.seat_status ?? "active",
     gameVote: (row.game_vote as GameType | null) ?? null,
+    sessionTokenHash: row.session_token_hash ?? undefined,
+    lastSeenAt: row.last_seen_at ? new Date(row.last_seen_at).getTime() : Date.now(),
   };
 }
 
@@ -50,6 +52,7 @@ function assembleRoom(row: DatabaseRoom, players: DatabasePlayer[]): Room {
     gameState: row.game_state as Room["gameState"],
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
+    version: row.version ?? 1,
   };
   return hydrateLobbyVotes(room);
 }
@@ -167,55 +170,60 @@ export async function getRoom(code: string): Promise<Room | null> {
   return mem ? hydrateLobbyVotes(structuredClone(mem)) : null;
 }
 
+export class RoomVersionConflictError extends Error {
+  constructor() {
+    super("La sala cambió mientras se procesaba la acción");
+    this.name = "RoomVersionConflictError";
+  }
+}
+
 export async function saveRoom(room: Room): Promise<void> {
   room.code = room.code.toUpperCase();
   room.updatedAt = Date.now();
   const supabase = createSupabaseAdmin();
 
   if (supabase) {
-    const { data: existing } = await supabase
-      .from("rooms")
-      .select("id")
-      .eq("code", room.code)
-      .single();
+    const expectedVersion = room.version > 0 ? room.version : null;
+    const { data, error } = await supabase.rpc("save_room_atomic", {
+      p_code: room.code,
+      p_expected_version: expectedVersion,
+      p_room: {
+        hostId: room.hostId,
+        gameType: room.gameType ?? "",
+        status: room.status,
+        gameState: room.gameState,
+      },
+      p_players: room.players,
+    });
 
-    let roomId = existing?.id as string | undefined;
-
-    if (!roomId) {
-      const { data: inserted, error } = await supabase
-        .from("rooms")
-        .insert({
-          code: room.code,
-          host_id: room.hostId,
-          game_type: room.gameType,
-          status: room.status,
-          game_state: room.gameState,
-        })
-        .select("id")
-        .single();
-      if (error || !inserted?.id) throw error ?? new Error("No se pudo crear la sala");
-      roomId = inserted.id;
-    } else {
-      const { error } = await supabase
-        .from("rooms")
-        .update({
-          host_id: room.hostId,
-          game_type: room.gameType,
-          status: room.status,
-          game_state: room.gameState,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", roomId);
-      if (error) throw error;
+    if (error) {
+      if (error.message.includes("ROOM_VERSION_CONFLICT")) {
+        throw new RoomVersionConflictError();
+      }
+      if (error.message.includes("save_room_atomic")) {
+        throw new Error(
+          "Falta la migración 005_secure_atomic_rooms.sql en Supabase"
+        );
+      }
+      throw error;
     }
 
-    if (!roomId) throw new Error("ID de sala no disponible");
-
-    memoryRoomIds.set(room.code, roomId);
-    await syncRoomPlayers(supabase, roomId, room.players);
+    const result = (Array.isArray(data) ? data[0] : data) as
+      | { room_id?: string; room_version?: number }
+      | null;
+    if (!result?.room_id || !result.room_version) {
+      throw new Error("Supabase no devolvió la versión de la sala");
+    }
+    memoryRoomIds.set(room.code, result.room_id);
+    room.version = result.room_version;
     return;
   }
 
+  const current = globalMemory().get(room.code);
+  if (current && current.version !== room.version) {
+    throw new RoomVersionConflictError();
+  }
+  room.version = (current?.version ?? 0) + 1;
   globalMemory().set(room.code, structuredClone(room));
 }
 
