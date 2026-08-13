@@ -210,7 +210,8 @@ test("el reveal del crupier respeta cada etapa antes del resultado", async ({ br
 
     await expect(dealer).toHaveAttribute("data-reveal-stage", "settle", { timeout: 2_500 });
     const settleAt = Date.now();
-    expect(settleAt - flipAt).toBeGreaterThanOrEqual(1_300);
+    // El polling puede detectar el inicio del flip hasta ~300 ms tarde.
+    expect(settleAt - flipAt).toBeGreaterThanOrEqual(1_200);
     await expect(result).toHaveCount(0);
 
     await expect(result).toBeVisible({ timeout: 8_000 });
