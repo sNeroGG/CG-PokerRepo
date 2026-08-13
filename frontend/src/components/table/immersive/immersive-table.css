@@ -752,6 +752,11 @@
     width: 100%;
   }
 
+  .poker-table-root .poker-raise-submit .poker-raise-input {
+    grid-column: auto;
+    width: 88px !important;
+  }
+
   .poker-betting-panel {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
